@@ -5,16 +5,17 @@ import { useRouter } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 import Navigation from '../../components/Navigation'
 
+// MOVE THIS OUTSIDE THE COMPONENT
+// We provide an empty string fallback so the build doesn't crash if env vars are missing
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+
+const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey)
+
 export default function AboutPage() {
   const router = useRouter()
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-
-  // Initialize Supabase inside the component to ensure env vars are ready
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
 
   useEffect(() => {
     async function getUser() {
@@ -30,7 +31,7 @@ export default function AboutPage() {
       }
     }
     getUser()
-  }, [supabase])
+  }, []) // Removed supabase from dependency array as it is now a stable constant outside the component
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
