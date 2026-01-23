@@ -17,7 +17,7 @@ export default function PlantDetailPage() {
   
   const [plant, setPlant] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [addingToProject, setAddingToProject] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false) // Combined loading state for buttons
   const [userPlantRecordId, setUserPlantRecordId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
@@ -78,13 +78,42 @@ export default function PlantDetailPage() {
     setIsDeleting(false)
   }
 
+  // UPDATED: Standard Project Add
   async function handleAddToProject() {
-    setAddingToProject(true)
+    setIsProcessing(true)
     const { data: { session } } = await supabase.auth.getSession()
     if (!session?.user) return alert("Please log in first!")
-    const { error } = await supabase.from('user_plants').insert([{ user_id: session.user.id, plant_id: Number(id), is_project: true, status: 'Planning' }])
+    
+    const { error } = await supabase
+      .from('user_plants')
+      .insert([{ 
+        user_id: session.user.id, 
+        plant_id: Number(id), 
+        is_project: true, 
+        status: 'Planning' 
+      }])
+    
     if (!error) router.push('/dashboard')
-    setAddingToProject(false)
+    setIsProcessing(false)
+  }
+
+  // NEW: Direct Add Shortcut
+  async function handleDirectAdd() {
+    setIsProcessing(true)
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.user) return alert("Please log in first!")
+    
+    const { error } = await supabase
+      .from('user_plants')
+      .insert([{ 
+        user_id: session.user.id, 
+        plant_id: Number(id), 
+        is_project: false, 
+        status: 'Ongoing' 
+      }])
+    
+    if (!error) router.push('/dashboard')
+    setIsProcessing(false)
   }
 
   if (loading) return <div className="min-h-screen bg-white flex items-center justify-center font-bold text-gray-400 uppercase tracking-widest text-xs">Loading...</div>
@@ -139,13 +168,32 @@ export default function PlantDetailPage() {
           </div>
         </header>
 
-        <div className="mb-10">
+        {/* UPDATED ACTION SECTION */}
+        <div className="mb-10 flex flex-col items-center gap-4">
           {!mode && !userPlantRecordId && <AddPlantButton plantId={Number(id)} />}
+          
           {userPlantRecordId && !mode && (
-            <div className="text-center py-4 bg-green-50 rounded-2xl border border-green-100 text-[10px] font-black text-green-700 uppercase tracking-widest italic">In Your Garden</div>
+            <div className="w-full text-center py-4 bg-green-50 rounded-2xl border border-green-100 text-[10px] font-black text-green-700 uppercase tracking-widest italic">In Your Garden</div>
           )}
+
           {mode === 'builder' && (
-            <button onClick={handleAddToProject} disabled={addingToProject} className="w-full py-6 rounded-[2.5rem] bg-[#2d5a3f] text-white font-bold uppercase tracking-[0.2em] text-[11px] shadow-xl">{addingToProject ? 'Adding...' : 'Add to Project List'}</button>
+            <>
+              <button 
+                onClick={handleAddToProject} 
+                disabled={isProcessing} 
+                className="w-full py-6 rounded-[2.5rem] bg-[#2d5a3f] text-white font-bold uppercase tracking-[0.2em] text-[11px] shadow-xl active:scale-95 transition-all"
+              >
+                {isProcessing ? 'Adding...' : 'Add to Project List'}
+              </button>
+
+              <button 
+                onClick={handleDirectAdd}
+                disabled={isProcessing}
+                className="text-[10px] font-black text-green-700/50 uppercase tracking-[0.2em] border-b border-green-700/20 pb-1 italic hover:text-green-700 transition-colors"
+              >
+                or add directly to current garden
+              </button>
+            </>
           )}
         </div>
 
@@ -154,7 +202,6 @@ export default function PlantDetailPage() {
           <h3 className="text-xs font-black text-gray-300 uppercase tracking-widest mb-6 underline decoration-green-200 decoration-4 underline-offset-4">Care Requirements</h3>
           
           <div className="space-y-6">
-            {/* TRIMMING */}
             <div className="flex gap-4">
               <span className="text-2xl pt-1">✂️</span>
               <div>
@@ -163,7 +210,6 @@ export default function PlantDetailPage() {
               </div>
             </div>
 
-            {/* FEEDING */}
             <div className="flex gap-4">
               <span className="text-2xl pt-1">🧪</span>
               <div>
@@ -172,7 +218,6 @@ export default function PlantDetailPage() {
               </div>
             </div>
 
-            {/* HEALTH */}
             <div className="flex gap-4">
               <span className="text-2xl pt-1">🩺</span>
               <div>
