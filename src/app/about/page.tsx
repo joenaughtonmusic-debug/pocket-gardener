@@ -5,12 +5,13 @@ import { useRouter } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 import Navigation from '../../components/Navigation'
 
-// MOVE THIS OUTSIDE THE COMPONENT
-// We provide an empty string fallback so the build doesn't crash if env vars are missing
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-
-const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey)
+// Lazy initializer to prevent build-time crashes
+const getSupabase = () => {
+  return createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder'
+  )
+}
 
 export default function AboutPage() {
   const router = useRouter()
@@ -18,6 +19,9 @@ export default function AboutPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // Create the client only when the component mounts in the browser
+    const supabase = getSupabase()
+
     async function getUser() {
       try {
         const { data: { user } } = await supabase.auth.getUser()
@@ -31,9 +35,10 @@ export default function AboutPage() {
       }
     }
     getUser()
-  }, []) // Removed supabase from dependency array as it is now a stable constant outside the component
+  }, [])
 
   const handleSignOut = async () => {
+    const supabase = getSupabase()
     await supabase.auth.signOut()
     router.push('/')
     router.refresh()
