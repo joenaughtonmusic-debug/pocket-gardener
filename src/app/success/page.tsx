@@ -1,17 +1,16 @@
 'use client';
-export const dynamic = 'force-dynamic'
 
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
-export default function SuccessPage() {
+// 1. This component handles the logic and UI
+function SuccessContent() {
   const [loading, setLoading] = useState(true);
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('session_id');
 
   useEffect(() => {
-    // In a real app, you'd verify the session_id with your API here
     if (sessionId) {
       setLoading(false);
     }
@@ -53,5 +52,18 @@ export default function SuccessPage() {
         </p>
       </div>
     </main>
+  );
+}
+
+// 2. This is the main page export that wraps everything in Suspense
+export default function SuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#f8fbf9] flex items-center justify-center">
+        <p className="text-green-900 font-black uppercase tracking-widest text-[11px]">Loading...</p>
+      </div>
+    }>
+      <SuccessContent />
+    </Suspense>
   );
 }
