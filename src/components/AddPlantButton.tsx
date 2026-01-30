@@ -41,6 +41,29 @@ export default function AddPlantButton({ plantId }: { plantId: number }) {
       return
     }
 
+    // --- NEW: LIMIT CHECK START ---
+    // 1. Fetch the user's profile to see if they are PRO
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_pro')
+      .eq('id', session.user.id)
+      .single();
+
+    // 2. If not Pro, count their current entries (including projects)
+    if (!profile?.is_pro) {
+      const { count } = await supabase
+        .from('user_plants')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', session.user.id);
+
+      if (count !== null && count >= 3) {
+        alert("🌿 Garden limit reached! Free accounts can only track 3 plants. Upgrade to Pro for unlimited garden space!");
+        setLoading(null);
+        return; // Stop the process here
+      }
+    }
+    // --- NEW: LIMIT CHECK END ---
+
     const { error } = await supabase
       .from('user_plants')
       .insert([{ 

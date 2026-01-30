@@ -1,6 +1,7 @@
 'use client'
 import Navigation from "../../components/Navigation";
 import Link from "next/link";
+import PageHelp from "../../components/PageHelp"; // ADD THIS
 
 export default function GuidesPage() {
   const categories = [
@@ -12,8 +13,20 @@ export default function GuidesPage() {
   return (
     <main className="min-h-screen bg-[#f8fbf9] p-6 pb-32">
       <header className="mb-8 pt-4">
-        <h1 className="text-3xl font-bold text-green-900">Expert Guides</h1>
-        <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">Grow like a pro</p>
+        {/* WRAPPED IN FLEX FOR ICON ALIGNMENT */}
+        <div className="flex items-center gap-3">
+          <h1 className="text-3xl font-bold text-green-900 leading-none">Expert Guides</h1>
+          <PageHelp 
+            title="Expert Guides"
+            description="Access specialized knowledge for maintaining your Auckland garden throughout the year."
+            bullets={[
+              "The Planting Masterclass for new additions",
+              "Weed identification and removal strategies",
+              "Specific guides for pests, feeding, and pruning"
+            ]}
+          />
+        </div>
+        <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-2">Grow like a pro</p>
       </header>
 
       {/* FEATURED: PLANTING MASTERCLASS */}

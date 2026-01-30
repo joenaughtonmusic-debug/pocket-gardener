@@ -5,6 +5,7 @@ import { createBrowserClient } from '@supabase/ssr'
 import Link from 'next/link'
 import Navigation from '../../components/Navigation'
 import PlantThumbnail from '../../components/PlantThumbnail'
+import PageHelp from '../../components/PageHelp' // ADD THIS
 
 export default function IdentifyPage() {
   const [plants, setPlants] = useState<any[]>([])
@@ -77,8 +78,21 @@ export default function IdentifyPage() {
   return (
     <main className="min-h-screen bg-[#f8fbf9] p-6 pb-40 text-gray-900">
       <header className="mb-8 pt-4">
-        <h1 className="text-3xl font-black text-green-900 tracking-tight italic uppercase">Identify</h1>
-        <p className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-black mt-1">Auckland Plant Finder</p>
+        {/* WRAPPED IN FLEX FOR ICON ALIGNMENT */}
+        <div className="flex items-center gap-3">
+          <h1 className="text-3xl font-black text-green-900 tracking-tight italic uppercase leading-none">Identify</h1>
+          <PageHelp 
+            title="Identify Plants"
+            description="Trying to figure out what is growing in your garden? Use these filters to narrow down the search."
+            bullets={[
+              "Filter by Category (Hedges, Trees, etc.)",
+              "Filter by Native or Exotic status",
+              "Filter by Flower Color to match what you see",
+              "A checkmark (✓) means the plant is already in your garden"
+            ]}
+          />
+        </div>
+        <p className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-black mt-2">Auckland Plant Finder</p>
       </header>
 
       {/* FILTERS SECTION */}

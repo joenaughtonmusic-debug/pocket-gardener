@@ -22,13 +22,23 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
       },
     })
 
     if (error) setMessage(`Error: ${error.message}`)
     else setMessage('Check your email for the magic link!')
     setLoading(false)
+  }
+
+  // --- NEW: GOOGLE LOGIN HANDLER ---
+  const handleGoogleLogin = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+      },
+    })
   }
 
   return (
@@ -55,6 +65,30 @@ export default function LoginPage() {
             {loading ? 'Sending link...' : 'Get Magic Link'}
           </button>
         </form>
+
+        {/* --- NEW: DIVIDER AND GOOGLE BUTTON --- */}
+        <div className="relative my-10">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-100"></div>
+          </div>
+          <div className="relative flex justify-center text-[10px] uppercase font-black text-gray-300 italic bg-white px-4">
+            or
+          </div>
+        </div>
+
+        <button
+          onClick={handleGoogleLogin}
+          type="button"
+          className="w-full bg-white border border-gray-100 hover:border-green-200 text-gray-700 font-bold py-5 rounded-[1.5rem] uppercase tracking-widest text-[11px] shadow-sm active:scale-95 transition-all flex items-center justify-center gap-3"
+        >
+          <img 
+            src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
+            alt="Google" 
+            className="w-4 h-4"
+          />
+          Continue with Google
+        </button>
+        {/* --- END NEW SECTION --- */}
 
         {message && (
           <p className={`mt-6 text-xs font-bold p-4 rounded-2xl ${message.includes('Error') ? 'text-red-500 bg-red-50' : 'text-green-700 bg-green-50'}`}>

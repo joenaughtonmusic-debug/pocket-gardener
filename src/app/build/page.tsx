@@ -5,12 +5,13 @@ import { createBrowserClient } from '@supabase/ssr'
 import Link from 'next/link'
 import Navigation from "../../components/Navigation"
 import PlantThumbnail from "../../components/PlantThumbnail"
+import PageHelp from '../../components/PageHelp'
 
 export default function BuildPage() {
   const [sun, setSun] = useState('Full Sun')
   const [soil, setSoil] = useState('Clay')
   const [water, setWater] = useState('Drains Well')
-  const [size, setSize] = useState('1-2m') // New Size State
+  const [size, setSize] = useState('1-2m') 
   const [matches, setMatches] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
 
@@ -22,16 +23,21 @@ export default function BuildPage() {
   useEffect(() => {
     async function getLiveMatches() {
       setLoading(true)
-      // Logic: checks if selection exists inside the DB arrays for each category
       const { data } = await supabase
         .from('plants')
         .select('*')
         .contains('sun_requirement', [sun])
         .contains('soil_type', [soil])
         .contains('water_behavior', [water])
-        .contains('mature_size', [size]) // New size filter
+        .contains('mature_size', [size]) 
       
-      if (data) setMatches(data)
+      if (data) {
+        // Sort results alphabetically by common_name
+        const sortedMatches = [...data].sort((a, b) => 
+          (a.common_name || "").localeCompare(b.common_name || "")
+        );
+        setMatches(sortedMatches)
+      }
       setLoading(false)
     }
     getLiveMatches()
@@ -45,7 +51,7 @@ export default function BuildPage() {
   const soilOptions = [
     { name: 'Clay', icon: '🧱' }, 
     { name: 'Sandy', icon: '🏖️' }, 
-    { name: 'Healthy/loam', icon: '🪴' }, 
+    { name: 'Loam', icon: '🪴' }, 
     { name: 'Potting Mix', icon: '🥡' }
   ]
   const waterOptions = [
@@ -64,12 +70,25 @@ export default function BuildPage() {
   return (
     <main className="min-h-screen bg-[#f8fbf9] p-6 pb-40 text-gray-900">
       <header className="mb-8 pt-4">
-        <h1 className="text-3xl font-black text-green-900 tracking-tight italic uppercase">Garden Builder</h1>
-        <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] mt-1">Plant recommendations for your place</p>
+        <div className="flex items-center gap-3">
+          <h1 className="text-3xl font-black text-green-900 tracking-tight italic uppercase leading-none">Garden Builder</h1>
+          <PageHelp 
+            title="Garden Builder"
+            description="Find plants that match your garden's specific conditions. Select your filters below and see what thrives best."
+            bullets={[
+              "Sun or Shade requirements",
+              "Soil type (Clay, Sandy, etc.)",
+              "Water drainage behavior",
+              "Desired mature plant size"
+            ]}
+            example="If you have a shady corner with clay soil that holds water, select: Full Shade, Clay, and Holds Water."
+          />
+        </div>
+        <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] mt-2">Plant recommendations for your place</p>
       </header>
 
       <div className="space-y-10">
-        {/* SUN EXPOSURE SELECTOR */}
+        {/* SUN SECTION */}
         <section>
           <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 px-2">Sun Exposure</h3>
           <div className="grid grid-cols-2 gap-3">
@@ -90,7 +109,7 @@ export default function BuildPage() {
           </div>
         </section>
 
-        {/* SOIL TYPE SELECTOR */}
+        {/* SOIL SECTION */}
         <section>
           <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 px-2">Soil Type</h3>
           <div className="grid grid-cols-2 gap-3">
@@ -111,7 +130,7 @@ export default function BuildPage() {
           </div>
         </section>
 
-        {/* WATER & DRAINAGE SELECTOR */}
+        {/* WATER SECTION */}
         <section>
           <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 px-2">Water & Drainage</h3>
           <div className="grid grid-cols-2 gap-3">
@@ -132,9 +151,9 @@ export default function BuildPage() {
           </div>
         </section>
 
-        {/* EVENTUAL SIZE SELECTOR */}
+        {/* SIZE SECTION */}
         <section>
-          <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 px-2">Eventual Size</h3>
+          <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 px-2">Eventual Size Preference</h3>
           <div className="grid grid-cols-2 gap-3">
             {sizeOptions.map((opt) => (
               <button 
@@ -153,7 +172,6 @@ export default function BuildPage() {
           </div>
         </section>
 
-        {/* RESULTS SECTION */}
         <section className="pt-8 border-t border-gray-100">
           <div className="flex justify-between items-center mb-6 px-2">
             <h3 className="text-[10px] font-black text-green-900 uppercase tracking-[0.2em]">
