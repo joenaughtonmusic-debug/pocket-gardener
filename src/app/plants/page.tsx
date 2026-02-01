@@ -146,6 +146,24 @@ export default function LibraryPage() {
         ))}
       </div>
 
+      {/* --- NEW SECTION: CAN'T FIND PLANT --- */}
+      <footer className="mt-20 mb-10 px-4 text-center">
+        <div className="inline-block p-8 border-2 border-dashed border-gray-200 rounded-[3rem]">
+          <p className="text-[11px] font-black uppercase tracking-widest text-gray-400 mb-3">
+            Can't find your plant?
+          </p>
+          <a 
+            href="mailto:hello@yourdomain.com?subject=Plant%20Library%20Request&body=Hi%20there,%20I%20couldn't%20find%20this%20plant%20in%20the%20library:%20" 
+            className="text-xs font-black text-green-700 uppercase underline decoration-green-200 decoration-2 underline-offset-4 hover:text-green-900 transition-colors"
+          >
+            Contact us here
+          </a>
+          <p className="text-[10px] font-bold text-gray-300 uppercase tracking-tighter mt-2">
+            and we'll see if we can add it to the library
+          </p>
+        </div>
+      </footer>
+
       {/* IMAGE LIGHTBOX MODAL */}
       {selectedPlantImage && (
         <div 

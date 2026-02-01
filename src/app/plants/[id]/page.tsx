@@ -6,6 +6,7 @@ import { createBrowserClient } from '@supabase/ssr'
 import Navigation from "../../../components/Navigation"
 import AddPlantButton from "../../../components/AddPlantButton"
 import PlantThumbnail from "../../../components/PlantThumbnail"
+import { Check } from 'lucide-react'
 
 export default function PlantDetailPage() {
   const params = useParams()
@@ -50,6 +51,19 @@ export default function PlantDetailPage() {
       .eq('user_plant_id', userPlantId)
       .order('created_at', { ascending: false })
     if (data) setIssueHistory(data)
+  }
+
+  async function handleResolveIssue(logId: string) {
+    setIsProcessing(true)
+    const { error } = await supabase
+      .from('plant_logs')
+      .update({ status: 'Resolved', resolved_at: new Date().toISOString() })
+      .eq('id', logId)
+    
+    if (!error) {
+      if (userPlantRecordId) fetchIssueHistory(userPlantRecordId)
+    }
+    setIsProcessing(false)
   }
 
   async function fetchPlantPhotos(userPlantId: string) {
@@ -326,11 +340,25 @@ export default function PlantDetailPage() {
             <div className="space-y-4">
               {issueHistory.map((log) => (
                 <div key={log.id} className="flex justify-between items-center p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                  <div>
+                  <div className="flex-grow">
                     <p className="text-[11px] font-black text-gray-800 uppercase tracking-tight">{log.issue_type}</p>
                     <p className="text-[10px] text-gray-400 italic">Logged: {new Date(log.created_at).toLocaleDateString()}</p>
                   </div>
-                  <div className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${log.status === 'Resolved' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>{log.status}</div>
+                  <div className="flex items-center gap-3">
+                    {log.status === 'Ongoing' && (
+                      <button 
+                        onClick={() => handleResolveIssue(log.id)}
+                        disabled={isProcessing}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-green-800 text-white rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm active:scale-95 transition-all"
+                      >
+                        <Check size={10} strokeWidth={4} />
+                        Resolve
+                      </button>
+                    )}
+                    <div className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${log.status === 'Resolved' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
+                      {log.status}
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>

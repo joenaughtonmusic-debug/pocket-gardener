@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 // The new slides content
 const slides = [
   { title: "Expert Garden Management", desc: "Track every plant in your Auckland garden.", icon: "🏡" },
-  { title: "The Garden Builder", desc: "Find plants that actually thrive in your soil.", icon: "📋" },
+  { title: "The Garden Matchmaker", desc: "Match plants to your particular garden areas and conditions.", icon: "📋" },
   { title: "Gardening Guides", desc: "In depth guides for weeds, pests, planting and more", icon: "📖" },
   { title: "Pro Tip", desc: "Look for the 'i' icon at the top of any page for quick help!", icon: "ℹ️" }
 ]

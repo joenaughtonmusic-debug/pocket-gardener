@@ -14,12 +14,6 @@ export default function Navigation() {
   }
 
   return (
-    /* CHANGES MADE:
-      - Changed to a 5-column GRID (grid-cols-5) to force equal sizing.
-      - Removed 'justify-around' as the grid handles the spacing now.
-      - Reduced text size slightly to text-[8px] for safety on small phones.
-      - Added 'flex-shrink' and 'truncate' safety.
-    */
     <nav className="fixed bottom-6 left-3 right-3 max-w-md mx-auto bg-white/90 backdrop-blur-lg border border-gray-100 rounded-full py-2 shadow-2xl z-50">
       <div className="grid grid-cols-5 items-center w-full px-1">
         
@@ -35,10 +29,10 @@ export default function Navigation() {
           <span className={`text-[8px] font-black uppercase tracking-tighter transition-colors ${pathname === '/plants' ? 'text-green-800' : 'text-gray-400'}`}>Library</span>
         </Link>
 
-        {/* BUILD */}
-        <Link href="/build" className="flex flex-col items-center group">
-          <span className={`text-lg transition-transform ${pathname === '/build' ? 'scale-125 mb-1' : 'opacity-70'}`}>📋</span>
-          <span className={`text-[8px] font-black uppercase tracking-tighter transition-colors ${pathname === '/build' ? 'text-green-800' : 'text-gray-400'}`}>Build</span>
+        {/* MATCH - Using Emoji to match the House style */}
+        <Link href="/match" className="flex flex-col items-center group">
+          <span className={`text-lg transition-transform ${pathname === '/match' ? 'scale-125 mb-1' : 'opacity-70'}`}>✅</span>
+          <span className={`text-[8px] font-black uppercase tracking-tighter transition-colors ${pathname === '/match' ? 'text-green-800' : 'text-gray-400'}`}>Match</span>
         </Link>
 
         {/* IDENTIFY */}
