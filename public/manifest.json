@@ -1,6 +1,6 @@
 {
   "name": "Pocket Gardener",
-  "short_name": "Gardener",
+  "short_name": "Pocket Gardener",
   "description": "Garden management for Aucklanders.",
   "start_url": "/",
   "display": "standalone",

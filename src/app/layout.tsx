@@ -1,4 +1,4 @@
-import type { Metadata, Viewport } from "next"; // Added Viewport type
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Gardener",
+    title: "Pocket Gardener",
   },
   icons: {
     apple: "/icon.png",
