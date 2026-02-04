@@ -21,7 +21,8 @@ interface Plant {
 export default function LibraryPage() {
   const [plants, setPlants] = useState<Plant[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedPlantImage, setSelectedPlantImage] = useState<Plant | null>(null); // State for the popup
+  const [selectedPlantImage, setSelectedPlantImage] = useState<Plant | null>(null);
+  const [searchQuery, setSearchQuery] = useState(""); // Search state
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -50,7 +51,14 @@ export default function LibraryPage() {
     fetchPlants();
   }, [supabase]);
 
-  const groupedPlants = plants.reduce((acc: any, plant) => {
+  // Filter plants based on search query
+  const filteredPlants = plants.filter(plant => 
+    plant.common_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    plant.scientific_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    plant.plant_type?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const groupedPlants = filteredPlants.reduce((acc: any, plant) => {
     const firstLetter = plant.common_name[0].toUpperCase();
     if (!acc[firstLetter]) acc[firstLetter] = [];
     acc[firstLetter].push(plant);
@@ -82,7 +90,7 @@ export default function LibraryPage() {
       </header>
 
       {/* IDENTIFY PROMO CARD */}
-      <div className="mb-12 p-7 bg-[#2d5a3f] rounded-[2.5rem] text-white relative overflow-hidden shadow-lg shadow-green-900/10">
+      <div className="mb-6 p-7 bg-[#2d5a3f] rounded-[2.5rem] text-white relative overflow-hidden shadow-lg shadow-green-900/10">
         <div className="relative z-10">
           <h3 className="font-black text-xl mb-1 uppercase italic tracking-tight">Identify a Plant</h3>
           <p className="text-[11px] text-green-100/80 mb-5 font-medium leading-relaxed max-w-[200px]">
@@ -98,55 +106,78 @@ export default function LibraryPage() {
         <div className="absolute -right-2 -bottom-4 text-7xl opacity-20 rotate-12 select-none">🔍</div>
       </div>
 
-      <div className="space-y-10">
-        {alphabet.map((letter) => (
-          <div key={letter}>
-            <h2 className="text-xs font-black text-green-800 uppercase tracking-[0.3em] mb-4 px-2">
-              {letter}
-            </h2>
-            <div className="grid grid-cols-1 gap-4">
-              {groupedPlants[letter].map((plant: Plant) => (
-                <div key={plant.id} className="relative group">
-                  <div className="flex items-center p-5 bg-white rounded-[2.5rem] border border-gray-100 shadow-sm 
-                                  group-hover:shadow-md group-hover:border-green-100 transition-all duration-200">
-                    
-                    {/* THUMBNAIL - Trigger selectedPlantImage on click */}
-                    <button 
-                      onClick={() => setSelectedPlantImage(plant)}
-                      className="w-14 h-14 flex-shrink-0 z-20 transition-transform duration-200 hover:scale-110 active:scale-90"
-                    >
-                      <PlantThumbnail plant={plant} size="sm" />
-                    </button>
-
-                    <Link 
-                      href={`/plants/${plant.id}`} 
-                      className="flex-grow flex items-center justify-between ml-4 active:scale-[0.98] transition-transform"
-                    >
-                      <div>
-                        <h3 className="font-black text-gray-800 text-sm uppercase tracking-tight leading-none mb-1">
-                          {plant.common_name}
-                        </h3>
-                        <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest italic">
-                          {plant.plant_type || 'General'}
-                        </p>
-                      </div>
-                      <div className="text-gray-200 group-hover:text-green-600 group-hover:translate-x-1 transition-all text-lg mr-12">
-                        →
-                      </div>
-                    </Link>
-                    
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 z-30">
-                      <QuickAddButton plantId={plant.id} plantName={plant.common_name} />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
+      {/* SEARCH BAR */}
+      <div className="mb-10 relative">
+        <input 
+          type="text"
+          placeholder="Search by name or category..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full bg-white border border-gray-100 rounded-full px-6 py-4 text-sm font-bold shadow-sm outline-none focus:border-green-200 transition-colors"
+        />
+        <div className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none">
+          {searchQuery ? (
+            <button onClick={() => setSearchQuery("")} className="pointer-events-auto text-xs font-black uppercase text-gray-400">Clear</button>
+          ) : (
+            "🔍"
+          )}
+        </div>
       </div>
 
-      {/* --- NEW SECTION: CAN'T FIND PLANT --- */}
+      <div className="space-y-10">
+        {alphabet.length > 0 ? (
+          alphabet.map((letter) => (
+            <div key={letter}>
+              <h2 className="text-xs font-black text-green-800 uppercase tracking-[0.3em] mb-4 px-2">
+                {letter}
+              </h2>
+              <div className="grid grid-cols-1 gap-4">
+                {groupedPlants[letter].map((plant: Plant) => (
+                  <div key={plant.id} className="relative group">
+                    <div className="flex items-center p-5 bg-white rounded-[2.5rem] border border-gray-100 shadow-sm 
+                                    group-hover:shadow-md group-hover:border-green-100 transition-all duration-200">
+                      
+                      <button 
+                        onClick={() => setSelectedPlantImage(plant)}
+                        className="w-14 h-14 flex-shrink-0 z-20 transition-transform duration-200 hover:scale-110 active:scale-90"
+                      >
+                        <PlantThumbnail plant={plant} size="sm" />
+                      </button>
+
+                      <Link 
+                        href={`/plants/${plant.id}`} 
+                        className="flex-grow flex items-center justify-between ml-4 active:scale-[0.98] transition-transform"
+                      >
+                        <div>
+                          <h3 className="font-black text-gray-800 text-sm uppercase tracking-tight leading-none mb-1">
+                            {plant.common_name}
+                          </h3>
+                          <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest italic">
+                            {plant.plant_type || 'General'}
+                          </p>
+                        </div>
+                        <div className="text-gray-200 group-hover:text-green-600 group-hover:translate-x-1 transition-all text-lg mr-12">
+                          →
+                        </div>
+                      </Link>
+                      
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 z-30">
+                        <QuickAddButton plantId={plant.id} plantName={plant.common_name} />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="text-center py-10">
+            <p className="text-[10px] font-black uppercase tracking-widest text-gray-300 italic">No plants match your search</p>
+          </div>
+        )}
+      </div>
+
+      {/* --- CAN'T FIND PLANT --- */}
       <footer className="mt-20 mb-10 px-4 text-center">
         <div className="inline-block p-8 border-2 border-dashed border-gray-200 rounded-[3rem]">
           <p className="text-[11px] font-black uppercase tracking-widest text-gray-400 mb-3">

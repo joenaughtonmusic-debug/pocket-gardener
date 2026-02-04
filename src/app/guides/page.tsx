@@ -1,7 +1,7 @@
 'use client'
 import Navigation from "../../components/Navigation";
 import Link from "next/link";
-import PageHelp from "../../components/PageHelp"; // ADD THIS
+import PageHelp from "../../components/PageHelp";
 
 export default function GuidesPage() {
   const categories = [
@@ -13,7 +13,6 @@ export default function GuidesPage() {
   return (
     <main className="min-h-screen bg-[#f8fbf9] p-6 pb-32">
       <header className="mb-8 pt-4">
-        {/* WRAPPED IN FLEX FOR ICON ALIGNMENT */}
         <div className="flex items-center gap-3">
           <h1 className="text-3xl font-bold text-green-900 leading-none">Expert Guides</h1>
           <PageHelp 
@@ -29,19 +28,23 @@ export default function GuidesPage() {
         <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-2">Grow like a pro</p>
       </header>
 
-      {/* FEATURED: PLANTING MASTERCLASS */}
+      {/* FEATURED: PLANTING MASTERCLASS - UPDATED LINK */}
       <section className="mb-6">
-        <div className="bg-[#2d5a3f] p-8 rounded-[2.5rem] text-white shadow-xl relative overflow-hidden">
-          <div className="relative z-10">
-            <span className="bg-white/20 text-[10px] font-bold px-3 py-1 rounded-full uppercase mb-4 inline-block text-white">Essential Reading</span>
-            <h2 className="text-2xl font-bold mb-2 tracking-tight leading-none">The Ultimate Planting Guide<br/></h2>
-            <p className="text-green-100 text-sm mb-6 leading-relaxed opacity-90 max-w-[220px]">
-              Give your plants the best chance at success.
-            </p>
-            <button className="bg-white text-[#2d5a3f] px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest">Read Guide</button>
+        <Link href="/guides/planting" className="block no-underline">
+          <div className="bg-[#2d5a3f] p-8 rounded-[2.5rem] text-white shadow-xl relative overflow-hidden active:scale-[0.98] transition-all group">
+            <div className="relative z-10">
+              <span className="bg-white/20 text-[10px] font-bold px-3 py-1 rounded-full uppercase mb-4 inline-block text-white">Essential Reading</span>
+              <h2 className="text-2xl font-bold mb-2 tracking-tight leading-none">The Ultimate Planting Guide<br/></h2>
+              <p className="text-green-100 text-sm mb-6 leading-relaxed opacity-90 max-w-[220px]">
+                Give your plants the best chance at success.
+              </p>
+              <div className="bg-white text-[#2d5a3f] px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest inline-block group-hover:bg-green-50 transition-colors">
+                Read Guide
+              </div>
+            </div>
+            <span className="absolute -bottom-4 -right-4 text-8xl opacity-10">🪴</span>
           </div>
-          <span className="absolute -bottom-4 -right-4 text-8xl opacity-10">🪴</span>
-        </div>
+        </Link>
       </section>
 
       {/* NEW: COMMON WEEDS BUTTON */}

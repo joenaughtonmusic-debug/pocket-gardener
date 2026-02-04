@@ -5,7 +5,7 @@ import { createBrowserClient } from '@supabase/ssr'
 import Link from 'next/link'
 import Navigation from '../../components/Navigation'
 import PlantThumbnail from '../../components/PlantThumbnail'
-import PageHelp from '../../components/PageHelp' // ADD THIS
+import PageHelp from '../../components/PageHelp'
 
 export default function IdentifyPage() {
   const [plants, setPlants] = useState<any[]>([])
@@ -67,8 +67,8 @@ export default function IdentifyPage() {
       list = list.filter(p => p.is_native === nativeBool)
     }
 
+    // Simplified sort to be strictly alphabetical by common_name
     const sortedList = list.sort((a, b) => {
-      if (a.is_common !== b.is_common) return a.is_common ? -1 : 1
       return a.common_name.localeCompare(b.common_name)
     })
 
@@ -78,7 +78,6 @@ export default function IdentifyPage() {
   return (
     <main className="min-h-screen bg-[#f8fbf9] p-6 pb-40 text-gray-900">
       <header className="mb-8 pt-4">
-        {/* WRAPPED IN FLEX FOR ICON ALIGNMENT */}
         <div className="flex items-center gap-3">
           <h1 className="text-3xl font-black text-green-900 tracking-tight italic uppercase leading-none">Identify</h1>
           <PageHelp 
