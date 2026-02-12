@@ -3,13 +3,11 @@
 import { useEffect, useState } from "react"; 
 import { createBrowserClient } from "@supabase/ssr";
 import Link from "next/link";
-// Added HelpCircle and Mail for the "No Match" UI
 import { ChevronDown, ChevronUp, Search, X, Camera, RefreshCw, Plus, CheckCircle, ArrowRight, HelpCircle, Mail } from "lucide-react"; 
 import Navigation from "../../components/Navigation";
 import PlantThumbnail from "../../components/PlantThumbnail";
 import QuickAddButton from "../../components/QuickAddButton";
 import PageHelp from "../../components/PageHelp";
-// Import for image compression to prevent "Low Memory" crashes on mobile
 import imageCompression from 'browser-image-compression';
 
 interface Plant {
@@ -30,12 +28,10 @@ export default function LibraryPage() {
   const [selectedPlantImage, setSelectedPlantImage] = useState<Plant | null>(null);
   const [showIdentifier, setShowIdentifier] = useState(false); 
   
-  // --- AI IDENTIFIER STATES ---
   const [isScanning, setIsScanning] = useState(false);
   const [aiMatch, setAiMatch] = useState<Plant | null>(null);
   const [aiResultName, setAiResultName] = useState<string | null>(null);
 
-  // Filter States
   const [searchQuery, setSearchQuery] = useState("");
   const [isNative, setIsNative] = useState("");
   const [flowerColor, setFlowerColor] = useState("");
@@ -68,7 +64,6 @@ export default function LibraryPage() {
     fetchPlants();
   }, [supabase]);
 
-  // --- AI SCANNING LOGIC WITH COMPRESSION ---
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -78,57 +73,53 @@ export default function LibraryPage() {
     setAiResultName(null);
 
     try {
-      // 1. Compress the image to prevent "Low Memory" browser crashes
+      // 1. Compress image to prevent mobile browser memory spikes
       const options = {
-        maxSizeMB: 1,           // Shrink to ~1MB
-        maxWidthOrHeight: 1280, // High enough resolution for AI to work
+        maxSizeMB: 0.8,
+        maxWidthOrHeight: 1280,
         useWebWorker: true,
+        fileType: "image/jpeg" as const,
       };
       
       const compressedFile = await imageCompression(file, options);
 
-      // 2. Convert to Base64 and send to API
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64String = reader.result?.toString().split(',')[1];
+      // 2. Prepare FormData (sending a file blob is better for RAM than Base64)
+      const formData = new FormData();
+      formData.append("image", compressedFile, "plant.jpg");
 
-        try {
-          const response = await fetch('/api/identify', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ image: base64String }),
-          });
+      // 3. Post to API
+      const response = await fetch('/api/identify', {
+        method: 'POST',
+        body: formData, 
+      });
 
-          const data = await response.json();
-          const scientificName = data.suggestions?.[0]?.scientific_name;
-          
-          if (scientificName) {
-            setAiResultName(scientificName);
+      if (!response.ok) throw new Error("Identification failed");
 
-            // Check if this scientific name exists in our Supabase library
-            const { data: dbMatch } = await supabase
-              .from("plants")
-              .select("*")
-              .ilike('scientific_name', `%${scientificName}%`)
-              .single();
+      const data = await response.json();
+      
+      // Handle Plant.id v3 response structure
+      const scientificName = data.result?.classification?.suggestions?.[0]?.name 
+                             || data.suggestions?.[0]?.scientific_name;
+      
+      if (scientificName) {
+        setAiResultName(scientificName);
 
-            if (dbMatch) setAiMatch(dbMatch);
-          } else {
-            setAiResultName("Unknown Plant");
-          }
-        } catch (apiErr) {
-          console.error("API error:", apiErr);
-          setAiResultName("Unknown Plant");
-        } finally {
-          setIsScanning(false);
-        }
-      };
-      reader.readAsDataURL(compressedFile);
+        const { data: dbMatch } = await supabase
+          .from("plants")
+          .select("*")
+          .ilike('scientific_name', `%${scientificName}%`)
+          .single();
 
-    } catch (compressionErr) {
-      console.error("Compression error:", compressionErr);
+        if (dbMatch) setAiMatch(dbMatch);
+      } else {
+        setAiResultName("Unknown Plant");
+      }
+    } catch (err) {
+      console.error("Scan error:", err);
+      alert("Scan failed. Try taking the photo from slightly further away.");
+    } finally {
       setIsScanning(false);
-      alert("Memory error: Try taking a photo from further away or using a smaller file.");
+      e.target.value = ""; 
     }
   };
 
@@ -177,7 +168,6 @@ export default function LibraryPage() {
         </p>
       </header>
 
-      {/* SEARCH BAR */}
       <div className="mb-6 relative">
         <input 
           type="text"
@@ -195,7 +185,6 @@ export default function LibraryPage() {
         </div>
       </div>
 
-      {/* COLLAPSIBLE IDENTIFIER TOOL */}
       <div className="mb-10 transition-all duration-300">
         <button 
           onClick={() => setShowIdentifier(!showIdentifier)}
@@ -218,8 +207,6 @@ export default function LibraryPage() {
 
         {showIdentifier && (
           <div className="mt-4 space-y-4 animate-in slide-in-from-top-4 duration-300">
-            
-            {/* AI CAMERA SECTION */}
             <div className="bg-white rounded-[2rem] border-2 border-dashed border-green-100 p-6 text-center shadow-sm">
               {!isScanning && !aiResultName ? (
                 <label className="flex flex-col items-center gap-2 mx-auto group cursor-pointer">
@@ -259,12 +246,12 @@ export default function LibraryPage() {
                     <div className="bg-orange-50 p-4 rounded-2xl border border-orange-100 text-center">
                        <HelpCircle className="mx-auto text-orange-400 mb-2" size={20} />
                        <h4 className="font-black text-[10px] uppercase text-orange-800 mb-1">Could not Identify</h4>
-                       <p className="text-[9px] text-orange-600/70 font-bold mb-3">Try a clearer photo or contact us below</p>
+                       <p className="text-[9px] text-orange-600/70 font-bold mb-3">Try a clearer photo</p>
                     </div>
                   ) : (
                     <div className="flex flex-col gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
                       <div className="text-left">
-                        <span className="text-[8px] font-black uppercase text-gray-400">AI Result (Not in your library)</span>
+                        <span className="text-[8px] font-black uppercase text-gray-400">AI Result (Not in library)</span>
                         <h4 className="font-black text-sm uppercase text-slate-800 leading-tight">{aiResultName}</h4>
                       </div>
                       <a 
@@ -290,7 +277,6 @@ export default function LibraryPage() {
               <div className="relative flex justify-center text-[8px] uppercase font-black text-gray-300 bg-[#f8fbf9] px-2 w-max mx-auto tracking-widest">Or Filter Manually</div>
             </div>
 
-            {/* MANUAL FILTERS */}
             <div className="bg-white rounded-[1.5rem] border border-gray-100 px-5 py-3 shadow-sm">
               <label className="text-[8px] font-black text-gray-300 uppercase tracking-widest block mb-1">Plant Category</label>
               <select 
@@ -346,7 +332,6 @@ export default function LibraryPage() {
         )}
       </div>
 
-      {/* PLANT LIST SECTION */}
       <div className="space-y-10">
         <h2 className="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] px-2 mb-[-2rem]">
           {filteredPlants.length} Plants Available
@@ -409,7 +394,6 @@ export default function LibraryPage() {
         )}
       </div>
 
-      {/* --- FOOTER --- */}
       <footer className="mt-20 mb-10 px-4 text-center">
         <div className="inline-block p-8 border-2 border-dashed border-gray-200 rounded-[3rem]">
           <p className="text-[11px] font-black uppercase tracking-widest text-gray-400 mb-3">
@@ -424,7 +408,6 @@ export default function LibraryPage() {
         </div>
       </footer>
 
-      {/* IMAGE LIGHTBOX MODAL */}
       {selectedPlantImage && (
         <div 
           className="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center p-6 backdrop-blur-sm"
