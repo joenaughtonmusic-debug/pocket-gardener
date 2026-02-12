@@ -3,11 +3,14 @@
 import { useEffect, useState } from "react"; 
 import { createBrowserClient } from "@supabase/ssr";
 import Link from "next/link";
+// Added HelpCircle and Mail for the "No Match" UI
 import { ChevronDown, ChevronUp, Search, X, Camera, RefreshCw, Plus, CheckCircle, ArrowRight, HelpCircle, Mail } from "lucide-react"; 
 import Navigation from "../../components/Navigation";
 import PlantThumbnail from "../../components/PlantThumbnail";
 import QuickAddButton from "../../components/QuickAddButton";
 import PageHelp from "../../components/PageHelp";
+// Import for image compression to prevent "Low Memory" crashes on mobile
+import imageCompression from 'browser-image-compression';
 
 interface Plant {
   id: number;
@@ -65,7 +68,7 @@ export default function LibraryPage() {
     fetchPlants();
   }, [supabase]);
 
-  // --- AI SCANNING LOGIC ---
+  // --- AI SCANNING LOGIC WITH COMPRESSION ---
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -74,40 +77,59 @@ export default function LibraryPage() {
     setAiMatch(null);
     setAiResultName(null);
 
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      const base64String = reader.result?.toString().split(',')[1];
+    try {
+      // 1. Compress the image to prevent "Low Memory" browser crashes
+      const options = {
+        maxSizeMB: 1,           // Shrink to ~1MB
+        maxWidthOrHeight: 1280, // High enough resolution for AI to work
+        useWebWorker: true,
+      };
+      
+      const compressedFile = await imageCompression(file, options);
 
-      try {
-        const response = await fetch('/api/identify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ image: base64String }),
-        });
+      // 2. Convert to Base64 and send to API
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64String = reader.result?.toString().split(',')[1];
 
-        const data = await response.json();
-        const scientificName = data.suggestions?.[0]?.scientific_name;
-        
-        if (scientificName) {
-          setAiResultName(scientificName);
+        try {
+          const response = await fetch('/api/identify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: base64String }),
+          });
 
-          const { data: dbMatch } = await supabase
-            .from("plants")
-            .select("*")
-            .ilike('scientific_name', `%${scientificName}%`)
-            .single();
+          const data = await response.json();
+          const scientificName = data.suggestions?.[0]?.scientific_name;
+          
+          if (scientificName) {
+            setAiResultName(scientificName);
 
-          if (dbMatch) setAiMatch(dbMatch);
-        } else {
+            // Check if this scientific name exists in our Supabase library
+            const { data: dbMatch } = await supabase
+              .from("plants")
+              .select("*")
+              .ilike('scientific_name', `%${scientificName}%`)
+              .single();
+
+            if (dbMatch) setAiMatch(dbMatch);
+          } else {
+            setAiResultName("Unknown Plant");
+          }
+        } catch (apiErr) {
+          console.error("API error:", apiErr);
           setAiResultName("Unknown Plant");
+        } finally {
+          setIsScanning(false);
         }
-      } catch (err) {
-        console.error("Scan error:", err);
-      } finally {
-        setIsScanning(false);
-      }
-    };
-    reader.readAsDataURL(file);
+      };
+      reader.readAsDataURL(compressedFile);
+
+    } catch (compressionErr) {
+      console.error("Compression error:", compressionErr);
+      setIsScanning(false);
+      alert("Memory error: Try taking a photo from further away or using a smaller file.");
+    }
   };
 
   const filteredPlants = plants.filter(plant => {
