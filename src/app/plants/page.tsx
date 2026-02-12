@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"; 
 import { createBrowserClient } from "@supabase/ssr";
 import Link from "next/link";
+import { ChevronDown, ChevronUp, Search, X, Camera, RefreshCw, Plus, CheckCircle, ArrowRight, HelpCircle, Mail } from "lucide-react"; 
 import Navigation from "../../components/Navigation";
 import PlantThumbnail from "../../components/PlantThumbnail";
 import QuickAddButton from "../../components/QuickAddButton";
@@ -16,13 +17,26 @@ interface Plant {
   image_url?: string | null;
   plant_type?: string | null;
   is_star_performer?: boolean;
+  is_native?: boolean;
+  flower_color?: string | null;
 }
 
 export default function LibraryPage() {
   const [plants, setPlants] = useState<Plant[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPlantImage, setSelectedPlantImage] = useState<Plant | null>(null);
-  const [searchQuery, setSearchQuery] = useState(""); // Search state
+  const [showIdentifier, setShowIdentifier] = useState(false); 
+  
+  // --- AI IDENTIFIER STATES ---
+  const [isScanning, setIsScanning] = useState(false);
+  const [aiMatch, setAiMatch] = useState<Plant | null>(null);
+  const [aiResultName, setAiResultName] = useState<string | null>(null);
+
+  // Filter States
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isNative, setIsNative] = useState("");
+  const [flowerColor, setFlowerColor] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -51,12 +65,64 @@ export default function LibraryPage() {
     fetchPlants();
   }, [supabase]);
 
-  // Filter plants based on search query
-  const filteredPlants = plants.filter(plant => 
-    plant.common_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    plant.scientific_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    plant.plant_type?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // --- AI SCANNING LOGIC ---
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsScanning(true);
+    setAiMatch(null);
+    setAiResultName(null);
+
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64String = reader.result?.toString().split(',')[1];
+
+      try {
+        const response = await fetch('/api/identify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: base64String }),
+        });
+
+        const data = await response.json();
+        const scientificName = data.suggestions?.[0]?.scientific_name;
+        
+        if (scientificName) {
+          setAiResultName(scientificName);
+
+          const { data: dbMatch } = await supabase
+            .from("plants")
+            .select("*")
+            .ilike('scientific_name', `%${scientificName}%`)
+            .single();
+
+          if (dbMatch) setAiMatch(dbMatch);
+        } else {
+          setAiResultName("Unknown Plant");
+        }
+      } catch (err) {
+        console.error("Scan error:", err);
+      } finally {
+        setIsScanning(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const filteredPlants = plants.filter(plant => {
+    const matchesSearch = plant.common_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         plant.scientific_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         plant.plant_type?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesNative = isNative === "" ? true : 
+                         (isNative === "Yes" ? plant.is_native === true : plant.is_native === false);
+    
+    const matchesColor = flowerColor === "" ? true : plant.flower_color === flowerColor;
+    const matchesType = typeFilter === "" ? true : plant.plant_type === typeFilter;
+
+    return matchesSearch && matchesNative && matchesColor && matchesType;
+  });
 
   const groupedPlants = filteredPlants.reduce((acc: any, plant) => {
     const firstLetter = plant.common_name[0].toUpperCase();
@@ -76,11 +142,11 @@ export default function LibraryPage() {
           <h1 className="text-3xl font-black text-green-900 tracking-tight italic uppercase leading-none">Plant Library</h1>
           <PageHelp 
             title="Plant Library"
-            description="Browse and search the full database of plants curated for Auckland gardens."
+            description="Browse the full database or use the AI Camera to identify a mystery plant."
             bullets={[
-              "Search by name or type",
-              "Tap the image to see it full-screen",
-              "Tap the '+' button to quickly add a plant to your garden"
+              "Use the Search Bar for quick name lookup",
+              "Open the Identifier Tool to use the AI Camera",
+              "Tap '+' to add plants to your garden instantly"
             ]}
           />
         </div>
@@ -89,42 +155,181 @@ export default function LibraryPage() {
         </p>
       </header>
 
-      {/* IDENTIFY PROMO CARD */}
-      <div className="mb-6 p-7 bg-[#2d5a3f] rounded-[2.5rem] text-white relative overflow-hidden shadow-lg shadow-green-900/10">
-        <div className="relative z-10">
-          <h3 className="font-black text-xl mb-1 uppercase italic tracking-tight">Identify a Plant</h3>
-          <p className="text-[11px] text-green-100/80 mb-5 font-medium leading-relaxed max-w-[200px]">
-            Unsure what's growing in your garden?
-          </p>
-          <Link 
-            href="/identify" 
-            className="inline-block bg-white text-[#2d5a3f] px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest active:scale-95 transition-transform"
-          >
-            Identify your plant here →
-          </Link>
-        </div>
-        <div className="absolute -right-2 -bottom-4 text-7xl opacity-20 rotate-12 select-none">🔍</div>
-      </div>
-
       {/* SEARCH BAR */}
-      <div className="mb-10 relative">
+      <div className="mb-6 relative">
         <input 
           type="text"
-          placeholder="Search by name or category..."
+          placeholder="Search by name..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full bg-white border border-gray-100 rounded-full px-6 py-4 text-sm font-bold shadow-sm outline-none focus:border-green-200 transition-colors"
         />
-        <div className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none">
+        <div className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-300">
           {searchQuery ? (
-            <button onClick={() => setSearchQuery("")} className="pointer-events-auto text-xs font-black uppercase text-gray-400">Clear</button>
+            <X size={16} onClick={() => setSearchQuery("")} className="cursor-pointer text-gray-400" />
           ) : (
-            "🔍"
+            <Search size={18} />
           )}
         </div>
       </div>
 
+      {/* COLLAPSIBLE IDENTIFIER TOOL */}
+      <div className="mb-10 transition-all duration-300">
+        <button 
+          onClick={() => setShowIdentifier(!showIdentifier)}
+          className={`w-full p-7 rounded-[2.5rem] text-left relative overflow-hidden shadow-lg transition-all duration-300 ${
+            showIdentifier ? 'bg-white border border-green-100 shadow-green-900/5' : 'bg-[#2d5a3f] text-white'
+          }`}
+        >
+          <div className="relative z-10">
+            <h3 className={`font-black text-xl mb-1 uppercase italic tracking-tight ${showIdentifier ? 'text-[#2d5a3f]' : 'text-white'}`}>
+              {showIdentifier ? 'Close Identifier' : 'Identify a Plant'}
+            </h3>
+            <p className={`text-[11px] font-medium leading-relaxed max-w-[200px] ${showIdentifier ? 'text-gray-400' : 'text-green-100/80'}`}>
+              {showIdentifier ? 'Use the AI Camera or adjust filters' : "Unsure what's growing? Use the AI camera or filter tool"}
+            </p>
+          </div>
+          <div className="absolute right-8 top-1/2 -translate-y-1/2 opacity-20">
+            {showIdentifier ? <ChevronUp className="text-[#2d5a3f]" size={32} /> : <ChevronDown className="text-white" size={32} />}
+          </div>
+        </button>
+
+        {showIdentifier && (
+          <div className="mt-4 space-y-4 animate-in slide-in-from-top-4 duration-300">
+            
+            {/* AI CAMERA SECTION */}
+            <div className="bg-white rounded-[2rem] border-2 border-dashed border-green-100 p-6 text-center shadow-sm">
+              {!isScanning && !aiResultName ? (
+                <label className="flex flex-col items-center gap-2 mx-auto group cursor-pointer">
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    capture="environment" 
+                    onChange={handleFileUpload}
+                    className="hidden" 
+                  />
+                  <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center text-green-700 group-hover:scale-110 transition-transform shadow-sm">
+                    <Camera size={24} />
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-green-800">Tap to Scan with Camera</span>
+                </label>
+              ) : isScanning ? (
+                <div className="py-2">
+                  <RefreshCw className="animate-spin mx-auto text-green-600 mb-2" size={20} />
+                  <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 italic">Analyzing Mystery Plant...</p>
+                </div>
+              ) : (
+                <div className="animate-in zoom-in-95 duration-300">
+                  {aiMatch ? (
+                    <div className="flex items-center justify-between bg-green-50 p-4 rounded-2xl border border-green-100">
+                      <div className="text-left">
+                        <div className="flex items-center gap-1 text-green-600 mb-1">
+                          <CheckCircle size={12} />
+                          <span className="text-[8px] font-black uppercase">Database Match Found</span>
+                        </div>
+                        <h4 className="font-black text-sm uppercase text-green-900 leading-none">{aiMatch.common_name}</h4>
+                      </div>
+                      <Link href={`/plants/${aiMatch.id}`} className="bg-green-600 text-white p-2 rounded-xl">
+                        <ArrowRight size={16} />
+                      </Link>
+                    </div>
+                  ) : aiResultName === "Unknown Plant" ? (
+                    <div className="bg-orange-50 p-4 rounded-2xl border border-orange-100 text-center">
+                       <HelpCircle className="mx-auto text-orange-400 mb-2" size={20} />
+                       <h4 className="font-black text-[10px] uppercase text-orange-800 mb-1">Could not Identify</h4>
+                       <p className="text-[9px] text-orange-600/70 font-bold mb-3">Try a clearer photo or contact us below</p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                      <div className="text-left">
+                        <span className="text-[8px] font-black uppercase text-gray-400">AI Result (Not in your library)</span>
+                        <h4 className="font-black text-sm uppercase text-slate-800 leading-tight">{aiResultName}</h4>
+                      </div>
+                      <a 
+                        href={`mailto:hello@yourdomain.com?subject=Library%20Addition%20Request:%20${aiResultName}`}
+                        className="w-full bg-slate-900 text-white py-3 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-transform"
+                      >
+                        <Mail size={12} /> Request Addition
+                      </a>
+                    </div>
+                  )}
+                  <button 
+                    onClick={() => {setAiResultName(null); setAiMatch(null);}}
+                    className="mt-3 text-[8px] font-black text-gray-300 uppercase tracking-widest hover:text-gray-500"
+                  >
+                    Clear Result & Rescan
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="relative py-1">
+              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-100"></div></div>
+              <div className="relative flex justify-center text-[8px] uppercase font-black text-gray-300 bg-[#f8fbf9] px-2 w-max mx-auto tracking-widest">Or Filter Manually</div>
+            </div>
+
+            {/* MANUAL FILTERS */}
+            <div className="bg-white rounded-[1.5rem] border border-gray-100 px-5 py-3 shadow-sm">
+              <label className="text-[8px] font-black text-gray-300 uppercase tracking-widest block mb-1">Plant Category</label>
+              <select 
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                className="w-full bg-transparent text-sm font-bold text-gray-700 outline-none h-8 appearance-none cursor-pointer"
+              >
+                <option value="">All Categories</option>
+                {['Hedge', 'Shrub', 'Tree', 'Flower', 'Palm', 'Flax', 'Groundcover', 'Climber', 'Fruit'].map(t => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-white rounded-[1.5rem] border border-gray-100 px-5 py-3 shadow-sm">
+                <label className="text-[8px] font-black text-gray-300 uppercase tracking-widest block mb-1">Native?</label>
+                <select 
+                  value={isNative}
+                  onChange={(e) => setIsNative(e.target.value)}
+                  className="w-full bg-transparent text-sm font-bold text-gray-700 outline-none h-8 appearance-none cursor-pointer"
+                >
+                  <option value="">Any Origin</option>
+                  <option value="Yes">NZ Native</option>
+                  <option value="No">Exotic</option>
+                </select>
+              </div>
+
+              <div className="bg-white rounded-[1.5rem] border border-gray-100 px-5 py-3 shadow-sm">
+                <label className="text-[8px] font-black text-gray-300 uppercase tracking-widest block mb-1">Flowers</label>
+                <select 
+                  value={flowerColor}
+                  onChange={(e) => setFlowerColor(e.target.value)}
+                  className="w-full bg-transparent text-sm font-bold text-gray-700 outline-none h-8 appearance-none cursor-pointer"
+                >
+                  <option value="">Any Color</option>
+                  {['White', 'Pink', 'Red', 'Blue', 'Yellow', 'Purple', 'Orange'].map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            
+            {(typeFilter || isNative || flowerColor) && (
+              <button 
+                onClick={() => {setTypeFilter(""); setIsNative(""); setFlowerColor("");}}
+                className="w-full py-2 text-[9px] font-black text-gray-400 uppercase tracking-widest"
+              >
+                Reset Filters
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* PLANT LIST SECTION */}
       <div className="space-y-10">
+        <h2 className="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] px-2 mb-[-2rem]">
+          {filteredPlants.length} Plants Available
+        </h2>
+
         {alphabet.length > 0 ? (
           alphabet.map((letter) => (
             <div key={letter}>
@@ -149,9 +354,14 @@ export default function LibraryPage() {
                         className="flex-grow flex items-center justify-between ml-4 active:scale-[0.98] transition-transform"
                       >
                         <div>
-                          <h3 className="font-black text-gray-800 text-sm uppercase tracking-tight leading-none mb-1">
-                            {plant.common_name}
-                          </h3>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-black text-gray-800 text-sm uppercase tracking-tight leading-none mb-1">
+                              {plant.common_name}
+                            </h3>
+                            {plant.is_native && (
+                              <span className="text-[8px] bg-green-50 text-green-700 px-1.5 py-0.5 rounded-full font-black uppercase">Native</span>
+                            )}
+                          </div>
                           <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest italic">
                             {plant.plant_type || 'General'}
                           </p>
@@ -171,27 +381,24 @@ export default function LibraryPage() {
             </div>
           ))
         ) : (
-          <div className="text-center py-10">
+          <div className="text-center py-20">
             <p className="text-[10px] font-black uppercase tracking-widest text-gray-300 italic">No plants match your search</p>
           </div>
         )}
       </div>
 
-      {/* --- CAN'T FIND PLANT --- */}
+      {/* --- FOOTER --- */}
       <footer className="mt-20 mb-10 px-4 text-center">
         <div className="inline-block p-8 border-2 border-dashed border-gray-200 rounded-[3rem]">
           <p className="text-[11px] font-black uppercase tracking-widest text-gray-400 mb-3">
             Can't find your plant?
           </p>
           <a 
-            href="mailto:hello@yourdomain.com?subject=Plant%20Library%20Request&body=Hi%20there,%20I%20couldn't%20find%20this%20plant%20in%20the%20library:%20" 
+            href="mailto:hello@yourdomain.com?subject=Plant%20Library%20Request" 
             className="text-xs font-black text-green-700 uppercase underline decoration-green-200 decoration-2 underline-offset-4 hover:text-green-900 transition-colors"
           >
             Contact us here
           </a>
-          <p className="text-[10px] font-bold text-gray-300 uppercase tracking-tighter mt-2">
-            and we'll see if we can add it to the library
-          </p>
         </div>
       </footer>
 

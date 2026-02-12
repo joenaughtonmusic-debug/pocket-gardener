@@ -35,16 +35,16 @@ export default function Navigation() {
           <span className={`text-[8px] font-black uppercase tracking-tighter transition-colors ${pathname === '/match' ? 'text-green-800' : 'text-gray-400'}`}>Match</span>
         </Link>
 
-        {/* IDENTIFY */}
-        <Link href="/identify" className="flex flex-col items-center group">
-          <span className={`text-lg transition-transform ${pathname === '/identify' ? 'scale-125 mb-1' : 'opacity-70'}`}>🔍</span>
-          <span className={`text-[8px] font-black uppercase tracking-tighter transition-colors ${pathname === '/identify' ? 'text-green-800' : 'text-gray-400'}`}>Identify</span>
-        </Link>
-
         {/* GUIDES */}
         <Link href="/guides" className="flex flex-col items-center group">
           <span className={`text-lg transition-transform ${pathname === '/guides' ? 'scale-125 mb-1' : 'opacity-70'}`}>📖</span>
           <span className={`text-[8px] font-black uppercase tracking-tighter transition-colors ${pathname === '/guides' ? 'text-green-800' : 'text-gray-400'}`}>Guides</span>
+        </Link>
+
+        {/* FEATURE (The New Star) */}
+        <Link href="/feature" className="flex flex-col items-center group">
+          <span className={`text-lg transition-transform ${pathname === '/feature' ? 'scale-125 mb-1' : 'opacity-70'}`}>🖼️</span>
+          <span className={`text-[8px] font-black uppercase tracking-tighter transition-colors ${pathname === '/feature' ? 'text-green-800' : 'text-gray-400'}`}>Feature</span>
         </Link>
         
       </div>

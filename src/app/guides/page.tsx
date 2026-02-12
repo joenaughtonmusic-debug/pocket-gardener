@@ -6,8 +6,9 @@ import PageHelp from "../../components/PageHelp";
 export default function GuidesPage() {
   const categories = [
     { name: "Pests and Diseases", icon: "🐜", href: "/guides/pests", desc: "Diagnosis & Cures" },
+    { name: "Garden Tools", icon: "🛠️", href: "/guides/tools", desc: "The Editor's Kit" },
     { name: "Feeding", icon: "🧪", href: "#", desc: "Nutrients & Fertilizers" },
-    { name: "Pruning/trimming", icon: "✂️", href: "#", desc: "Maintenance & Shaping" }
+    { name: "Pruning/trimming", icon: "🌳", href: "#", desc: "Maintenance & Shaping" }
   ];
 
   return (
@@ -21,14 +22,14 @@ export default function GuidesPage() {
             bullets={[
               "The Planting Masterclass for new additions",
               "Weed identification and removal strategies",
-              "Specific guides for pests, feeding, and pruning"
+              "Specific guides for pests, tools, and maintenance"
             ]}
           />
         </div>
         <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-2">Grow like a pro</p>
       </header>
 
-      {/* FEATURED: PLANTING MASTERCLASS - UPDATED LINK */}
+      {/* FEATURED: PLANTING MASTERCLASS */}
       <section className="mb-6">
         <Link href="/guides/planting" className="block no-underline">
           <div className="bg-[#2d5a3f] p-8 rounded-[2.5rem] text-white shadow-xl relative overflow-hidden active:scale-[0.98] transition-all group">
@@ -47,7 +48,7 @@ export default function GuidesPage() {
         </Link>
       </section>
 
-      {/* NEW: COMMON WEEDS BUTTON */}
+      {/* COMMON WEEDS BUTTON */}
       <section className="mb-4 relative z-10">
         <Link href="/guides/weeds" className="block no-underline">
           <div className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm flex items-center justify-between group active:scale-[0.98] transition-all">
@@ -63,7 +64,7 @@ export default function GuidesPage() {
         </Link>
       </section>
 
-      {/* CATEGORY LIST (Full Width) */}
+      {/* CATEGORY LIST */}
       <section className="flex flex-col gap-4 relative z-10">
         {categories.map((cat) => (
           <Link 

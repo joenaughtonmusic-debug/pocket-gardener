@@ -155,6 +155,23 @@ export default function MyGardenDashboard() {
     </div>
   )
 
+  // --- LOGIC FOR GROUPING SPECIFIC VS GENERAL CARE ---
+  const standardNote = "Standard watering and leaf check this month.";
+  
+  const processedPlants = ownedPlants.map(item => {
+    const plant = item.plants;
+    const noteObj = careNotes.find(n => n.plant_type === plant.common_name) || 
+                    careNotes.find(n => n.plant_type === plant.plant_type);
+    return { 
+      ...item, 
+      displayNote: noteObj ? noteObj.care_note : standardNote, 
+      isSpecific: !!noteObj 
+    };
+  });
+
+  const specificPlants = processedPlants.filter(p => p.isSpecific);
+  const generalPlants = processedPlants.filter(p => !p.isSpecific);
+
   return (
     <main className="min-h-screen bg-[#f0f4f1] p-6 pb-40 text-gray-900">
       <WelcomeOverlay />
@@ -272,34 +289,59 @@ export default function MyGardenDashboard() {
 
         {ownedPlants.length > 0 && (
           <section className="space-y-8">
-            <h2 className="text-[11px] font-black text-green-950 uppercase tracking-[0.2em] px-2 flex items-center justify-between">
-              <span>{currentMonthName} Checklist</span>
+            <h2 className="text-[15px] font-black text-green-950 uppercase tracking-[0.2em] px-2 flex items-center justify-between">
+              <span>{currentMonthName} Focus</span>
               <span className="h-px bg-green-200 flex-grow ml-4"></span>
             </h2>
-            {ownedPlants.map((item: UserPlant) => {
-              const plant = item.plants; 
-              const note = careNotes.find(n => n.plant_type === plant.common_name) || careNotes.find(n => n.plant_type === plant.plant_type) || {care_note: "Standard watering and leaf check this month."};
-              return (
-                <Link key={item.id} href={`/plants/${plant.id}?mode=my-garden`} className="block bg-white p-5 rounded-[2.5rem] border border-white shadow-md hover:shadow-lg transition-shadow active:scale-[0.98]">
+
+            {/* --- SPECIFIC ADVICE PLANTS (THE TOP SECTION) --- */}
+            <div className="space-y-6">
+              {specificPlants.map((item) => (
+                <Link key={item.id} href={`/plants/${item.plants.id}?mode=my-garden`} className="block bg-white p-5 rounded-[2.5rem] border-2 border-amber-200 shadow-md hover:shadow-lg transition-shadow active:scale-[0.98]">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-4">
-                      <PlantThumbnail plant={plant} size="sm" />
+                      <PlantThumbnail plant={item.plants} size="sm" />
                       <div>
-                        <h3 className="text-md font-black text-green-950 tracking-tighter uppercase leading-none">{item.nickname || plant.common_name}</h3>
-                        <p className="text-[8px] text-gray-400 font-black uppercase tracking-widest mt-1.5 italic">{plant.plant_type}</p>
+                        <h3 className="text-md font-black text-green-950 tracking-tighter uppercase leading-none">{item.nickname || item.plants.common_name}</h3>
+                        <p className="text-[8px] text-amber-600 font-black uppercase tracking-widest mt-1.5 italic">Special Care Month</p>
                       </div>
                     </div>
-                    <div className="w-10 h-10 rounded-full bg-green-700 flex items-center justify-center text-white shadow-lg">
+                    <div className="w-10 h-10 rounded-full bg-amber-400 flex items-center justify-center text-green-950 shadow-lg">
                        <ArrowRight size={16} strokeWidth={3} />
                     </div>
                   </div>
-                  <div className="bg-green-50/50 p-4 rounded-2xl border border-green-100 flex gap-3">
-                    <Sparkles className="text-amber-500 shrink-0" size={14} />
-                    <p className="text-[12px] text-green-900 leading-relaxed font-medium italic">"{note.care_note}"</p>
+                  <div className="bg-amber-50/50 p-4 rounded-2xl border border-amber-100 flex gap-3">
+                    <Sparkles className="text-amber-600 shrink-0" size={14} />
+                    <p className="text-[12px] text-green-900 leading-relaxed font-black italic">"{item.displayNote}"</p>
                   </div>
                 </Link>
-              );
-            })}
+              ))}
+            </div>
+
+            {/* --- GENERAL MAINTENANCE PLANTS (THE BOTTOM SECTION) --- */}
+            {generalPlants.length > 0 && (
+              <div className="space-y-4 pt-4">
+                <div className="bg-green-800/5 p-4 rounded-3xl border border-green-800/10">
+                  <h3 className="text-[14px] font-black text-green-800 uppercase tracking-widest mb-1">General Maintenance</h3>
+                  <p className="text-[14px] text-green-700/80 italic font-medium">For the following plants: {standardNote}</p>
+                </div>
+                
+                <div className="grid grid-cols-1 gap-3">
+                  {generalPlants.map((item) => (
+                    <Link key={item.id} href={`/plants/${item.plants.id}?mode=my-garden`} className="flex items-center justify-between bg-white/60 p-4 rounded-[2rem] border border-white shadow-sm hover:bg-white transition-colors">
+                      <div className="flex items-center gap-3">
+                        <PlantThumbnail plant={item.plants} size="sm" />
+                        <div>
+                          <h4 className="text-s font-black text-green-950 uppercase">{item.nickname || item.plants.common_name}</h4>
+                          <p className="text-[8px] text-gray-400 font-black uppercase tracking-tighter">{item.plants.plant_type}</p>
+                        </div>
+                      </div>
+                      <ArrowRight size={12} className="text-gray-300" />
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
           </section>
         )}
 
@@ -321,7 +363,7 @@ export default function MyGardenDashboard() {
                   <Link href={`/plants/${item.plants?.id}?mode=my-garden`} className="flex-grow bg-white p-4 rounded-[1.5rem] border border-white flex items-center gap-4 active:scale-95 shadow-sm">
                     <PlantThumbnail plant={item.plants} size="sm" />
                     <div className="flex-grow">
-                      <h3 className="text-xs font-black text-green-950 uppercase leading-none">{item.plants?.common_name}</h3>
+                      <h3 className="text-s font-black text-green-950 uppercase leading-none">{item.plants?.common_name}</h3>
                       <span className="text-[8px] font-black uppercase text-amber-500 bg-amber-50 px-2 py-0.5 rounded-full inline-block mt-2">Planned</span>
                     </div>
                     <ArrowRight size={14} className="text-green-950 ml-auto" strokeWidth={3} />

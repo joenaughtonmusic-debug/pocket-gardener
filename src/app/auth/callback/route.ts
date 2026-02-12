@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'; // This tells Next.js NOT to try and make this static
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
