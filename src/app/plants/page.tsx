@@ -9,7 +9,7 @@ import PlantThumbnail from "../../components/PlantThumbnail";
 import QuickAddButton from "../../components/QuickAddButton";
 import PageHelp from "../../components/PageHelp";
 
-// Full Weed Registry for AI Recognition
+// Full Weed Registry for AI Recognition (Auckland/NZ Focus)
 const COMMON_WEEDS = [
   { scientific: "Ligustrum", common: "Privet (Tree/Chinese)" },
   { scientific: "Ulex europaeus", common: "Gorse" },
@@ -75,6 +75,7 @@ export default function LibraryPage() {
         .order('common_name', { ascending: true });
 
       if (rawPlants) {
+        // Prevent duplicates in view
         const uniquePlantsMap = new Map();
         rawPlants.forEach((plant) => {
           const name = plant.common_name.trim();
@@ -89,6 +90,48 @@ export default function LibraryPage() {
     fetchPlants();
   }, [supabase]);
 
+  // STABLE CLIENT DOWNSCALE APPROACH
+  async function downscaleOnClient(file: File): Promise<Blob> {
+    const MAX = 1200; // Optimal for AI recognition
+    const url = URL.createObjectURL(file);
+    try {
+      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const el = new Image();
+        el.onload = () => resolve(el);
+        el.onerror = reject;
+        el.src = url;
+      });
+
+      const w = img.naturalWidth;
+      const h = img.naturalHeight;
+
+      const scale = Math.min(1, MAX / Math.max(w, h));
+      const targetW = Math.max(1, Math.round(w * scale));
+      const targetH = Math.max(1, Math.round(h * scale));
+
+      const canvas = document.createElement("canvas");
+      canvas.width = targetW;
+      canvas.height = targetH;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Canvas not supported");
+
+      ctx.drawImage(img, 0, 0, targetW, targetH);
+
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob(
+          (b) => (b ? resolve(b) : reject(new Error("toBlob failed"))),
+          "image/jpeg",
+          0.7 // High enough for AI, low enough for RAM
+        );
+      });
+
+      return blob;
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  }
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -98,91 +141,65 @@ export default function LibraryPage() {
     setAiResultName(null);
     setDetectedWeed(null);
 
-    // MEMORY FIX: Use createObjectURL instead of FileReader
-    const objectUrl = URL.createObjectURL(file);
-    const img = new Image();
-    img.src = objectUrl;
-    
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const MAX_WIDTH = 600; // Lowered slightly to save more memory
-      const scaleSize = MAX_WIDTH / img.width;
-      canvas.width = MAX_WIDTH;
-      canvas.height = img.height * scaleSize;
+    try {
+      // Step 1: Shrink the image before doing anything else
+      const blob = await downscaleOnClient(file);
+      
+      // Step 2: Clear the input immediately to free up original file reference
+      e.target.value = "";
 
-      const ctx = canvas.getContext('2d');
-      ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+      // Step 3: Upload and Identify
+      const formData = new FormData();
+      formData.append("image", blob, "plant.jpg");
 
-      // Clean up the object URL from memory immediately
-      URL.revokeObjectURL(objectUrl);
+      const response = await fetch('/api/identify', {
+        method: 'POST',
+        body: formData,
+      });
 
-      canvas.toBlob(async (blob) => {
-        if (!blob) {
+      if (!response.ok) throw new Error("Scan failed on server");
+
+      const data = await response.json();
+      const scientificName = data.result?.classification?.suggestions?.[0]?.name 
+                             || data.suggestions?.[0]?.scientific_name;
+      
+      if (scientificName) {
+        setAiResultName(scientificName);
+
+        // Check for weeds (Auckland focus)
+        const weedMatch = COMMON_WEEDS.find(w => 
+          scientificName.toLowerCase().includes(w.scientific.toLowerCase())
+        );
+
+        if (weedMatch) {
+          setDetectedWeed(weedMatch);
           setIsScanning(false);
           return;
         }
-        
-        const formData = new FormData();
-        formData.append("image", blob, "plant.jpg");
 
-        try {
-          const response = await fetch('/api/identify', {
-            method: 'POST',
-            body: formData,
-          });
+        const genus = scientificName.split(' ')[0];
 
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || "Server error");
-          }
+        // Search your database (matches Lavender ID 2 or 54)
+        const { data: dbMatch } = await supabase
+          .from("plants")
+          .select("*")
+          .or(`scientific_name.ilike.%${scientificName}%,common_name.ilike.%${scientificName}%,scientific_name.ilike.%${genus}%,common_name.ilike.%${genus}%`)
+          .order('is_native', { ascending: false })
+          .limit(1)
+          .maybeSingle();
 
-          const data = await response.json();
-          const scientificName = data.result?.classification?.suggestions?.[0]?.name 
-                                 || data.suggestions?.[0]?.scientific_name;
-          
-          if (scientificName) {
-            setAiResultName(scientificName);
-
-            const weedMatch = COMMON_WEEDS.find(w => 
-              scientificName.toLowerCase().includes(w.scientific.toLowerCase())
-            );
-
-            if (weedMatch) {
-              setDetectedWeed(weedMatch);
-              setIsScanning(false);
-              return;
-            }
-
-            const genus = scientificName.split(' ')[0];
-
-            const { data: dbMatch } = await supabase
-              .from("plants")
-              .select("*")
-              .or(`scientific_name.ilike.%${scientificName}%,common_name.ilike.%${scientificName}%,scientific_name.ilike.%${genus}%,common_name.ilike.%${genus}%`)
-              .order('is_native', { ascending: false })
-              .limit(1)
-              .maybeSingle();
-
-            if (dbMatch) {
-              setAiMatch(dbMatch);
-            }
-          } else {
-            setAiResultName("Unknown Plant");
-          }
-        } catch (err: any) {
-          console.error("Scan error:", err);
-          alert(`Error: ${err.message}. Try again.`);
-        } finally {
-          setIsScanning(false);
+        if (dbMatch) {
+          setAiMatch(dbMatch);
         }
-      }, 'image/jpeg', 0.5); // Quality lowered slightly to 0.5 to keep file size tiny
-    };
-
-    img.onerror = () => {
-      URL.revokeObjectURL(objectUrl);
+      } else {
+        setAiResultName("Unknown Plant");
+      }
+    } catch (err: any) {
+      console.error("Scan error:", err);
+      alert("Something went wrong with the scan. Try a smaller photo or check your connection.");
+    } finally {
       setIsScanning(false);
-      alert("Error loading image. Please try again.");
-    };
+    }
   };
 
   const filteredPlants = plants.filter(plant => {
@@ -230,6 +247,7 @@ export default function LibraryPage() {
         </p>
       </header>
 
+      {/* Search Bar */}
       <div className="mb-6 relative">
         <input 
           type="text"
@@ -247,6 +265,7 @@ export default function LibraryPage() {
         </div>
       </div>
 
+      {/* Identifier Tool */}
       <div className="mb-10 transition-all duration-300">
         <button 
           onClick={() => setShowIdentifier(!showIdentifier)}
@@ -351,6 +370,7 @@ export default function LibraryPage() {
               )}
             </div>
 
+            {/* Filter Section */}
             <div className="relative py-1">
               <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-100"></div></div>
               <div className="relative flex justify-center text-[8px] uppercase font-black text-gray-300 bg-[#f8fbf9] px-2 w-max mx-auto tracking-widest">Or Filter Manually</div>
@@ -402,6 +422,7 @@ export default function LibraryPage() {
         )}
       </div>
 
+      {/* A-Z List */}
       <div className="space-y-10">
         <h2 className="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] px-2 mb-[-2rem]">
           {filteredPlants.length} Plants Available
