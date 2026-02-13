@@ -138,7 +138,7 @@ export default function LibraryPage() {
 
     try {
       const blob = await downscaleOnClient(file);
-      e.target.value = ""; // Crucial: release original file memory immediately
+      e.target.value = ""; 
 
       const formData = new FormData();
       formData.append("image", blob, "plant.jpg");
@@ -189,7 +189,8 @@ export default function LibraryPage() {
 
   const filteredPlants = plants.filter(plant => {
     const matchesSearch = plant.common_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         plant.scientific_name?.toLowerCase().includes(searchQuery.toLowerCase());
+                         plant.scientific_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         plant.plant_type?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesNative = isNative === "" ? true : (isNative === "Yes" ? plant.is_native === true : plant.is_native === false);
     const matchesColor = flowerColor === "" ? true : plant.flower_color === flowerColor;
     const matchesType = typeFilter === "" ? true : plant.plant_type === typeFilter;
@@ -215,9 +216,12 @@ export default function LibraryPage() {
           <PageHelp 
             title="Plant Library"
             description="Browse database or use AI identification."
-            bullets={["Search by name", "Identify via camera/gallery", "Add to garden"]}
+            bullets={["Search by name", "Identify via photo upload", "Add to garden"]}
           />
         </div>
+        <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] mt-2">
+          A-Z Plant Index
+        </p>
       </header>
 
       {/* Search Bar */}
@@ -230,7 +234,11 @@ export default function LibraryPage() {
           className="w-full bg-white border border-gray-100 rounded-full px-6 py-4 text-sm font-bold shadow-sm outline-none focus:border-green-200 transition-colors"
         />
         <div className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-300">
-          <Search size={18} />
+          {searchQuery ? (
+            <X size={16} onClick={() => setSearchQuery("")} className="cursor-pointer text-gray-400" />
+          ) : (
+            <Search size={18} />
+          )}
         </div>
       </div>
 
@@ -239,7 +247,7 @@ export default function LibraryPage() {
         <button 
           onClick={() => setShowIdentifier(!showIdentifier)}
           className={`w-full p-7 rounded-[2.5rem] text-left relative overflow-hidden shadow-lg transition-all duration-300 ${
-            showIdentifier ? 'bg-white border border-green-100' : 'bg-[#2d5a3f] text-white'
+            showIdentifier ? 'bg-white border border-green-100 shadow-green-900/5' : 'bg-[#2d5a3f] text-white'
           }`}
         >
           <div className="relative z-10">
@@ -247,7 +255,7 @@ export default function LibraryPage() {
               {showIdentifier ? 'Close Identifier' : 'Identify a Plant'}
             </h3>
             <p className={`text-[11px] font-medium leading-relaxed max-w-[200px] ${showIdentifier ? 'text-gray-400' : 'text-green-100/80'}`}>
-              {showIdentifier ? 'Choose a method below' : "Take a photo or upload from gallery"}
+              {showIdentifier ? 'Upload your photo below' : "Take a photo of your plant, then select it from your gallery"}
             </p>
           </div>
           <div className="absolute right-8 top-1/2 -translate-y-1/2 opacity-20">
@@ -259,28 +267,14 @@ export default function LibraryPage() {
           <div className="mt-4 space-y-4 animate-in slide-in-from-top-4 duration-300">
             <div className="bg-white rounded-[2rem] border-2 border-dashed border-green-100 p-8 text-center shadow-sm">
               {!isScanning && !aiResultName ? (
-                <div className="flex justify-center gap-10">
-                  {/* Option 1: Live Camera */}
-                  <div className="flex flex-col items-center gap-2">
-                    <input type="file" accept="image/*" capture="environment" onChange={handleFileUpload} id="camera-input" className="hidden" />
-                    <label htmlFor="camera-input" className="cursor-pointer group flex flex-col items-center">
-                      <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center text-white shadow-md group-hover:scale-105 active:scale-95 transition-all">
-                        <Camera size={28} />
-                      </div>
-                      <span className="text-[10px] font-black uppercase mt-3 tracking-widest text-green-900">Take Photo</span>
-                    </label>
-                  </div>
-
-                  {/* Option 2: Gallery Picker (Safe Mode) */}
-                  <div className="flex flex-col items-center gap-2">
-                    <input type="file" accept="image/*" onChange={handleFileUpload} id="gallery-input" className="hidden" />
-                    <label htmlFor="gallery-input" className="cursor-pointer group flex flex-col items-center">
-                      <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center text-white shadow-md group-hover:scale-105 active:scale-95 transition-all">
-                        <ImageIcon size={28} />
-                      </div>
-                      <span className="text-[10px] font-black uppercase mt-3 tracking-widest text-slate-800">Gallery</span>
-                    </label>
-                  </div>
+                <div className="flex flex-col items-center gap-2">
+                  <input type="file" accept="image/*" onChange={handleFileUpload} id="gallery-input" className="hidden" />
+                  <label htmlFor="gallery-input" className="cursor-pointer group flex flex-col items-center">
+                    <div className="w-16 h-16 bg-[#2d5a3f] rounded-full flex items-center justify-center text-white shadow-md group-hover:scale-105 active:scale-95 transition-all">
+                      <ImageIcon size={28} />
+                    </div>
+                    <span className="text-[10px] font-black uppercase mt-3 tracking-widest text-green-900">Select From Gallery</span>
+                  </label>
                 </div>
               ) : isScanning ? (
                 <div className="py-2">
@@ -292,47 +286,80 @@ export default function LibraryPage() {
                   {aiMatch ? (
                     <div className="flex items-center justify-between bg-green-50 p-4 rounded-2xl border border-green-100">
                       <div className="text-left">
-                        <span className="text-[8px] font-black uppercase text-green-600">Database Match</span>
-                        <h4 className="font-black text-sm uppercase text-green-900">{aiMatch.common_name}</h4>
+                        <span className="text-[8px] font-black uppercase text-green-600">Database Match Found</span>
+                        <h4 className="font-black text-sm uppercase text-green-900 leading-none">{aiMatch.common_name}</h4>
                       </div>
-                      <Link href={`/plants/${aiMatch.id}`} className="bg-green-600 text-white p-2 rounded-xl"><ArrowRight size={16} /></Link>
+                      <Link href={`/plants/${aiMatch.id}`} className="bg-green-600 text-white p-2 rounded-xl">
+                        <ArrowRight size={16} />
+                      </Link>
                     </div>
                   ) : detectedWeed ? (
-                    <div className="bg-red-50 p-5 rounded-2xl border border-red-100">
+                    <div className="bg-red-50 p-5 rounded-2xl border border-red-100 text-center">
                       <div className="flex items-center justify-center gap-2 text-red-600 mb-2">
                         <AlertTriangle size={16} />
-                        <span className="text-[10px] font-black uppercase">Invasive Species</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest">Invasive Species</span>
                       </div>
-                      <h4 className="font-black text-sm uppercase text-red-900 mb-3">{detectedWeed.common}</h4>
-                      <Link href="/guides/weeds" className="w-full bg-red-600 text-white py-3 rounded-xl text-[9px] font-black uppercase flex items-center justify-center gap-2">How to Kill It →</Link>
+                      <h4 className="font-black text-sm uppercase text-red-900 leading-tight mb-3">{detectedWeed.common}</h4>
+                      <Link 
+                        href="/guides/weeds" 
+                        className="w-full bg-red-600 text-white py-3 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-transform"
+                      >
+                        How to Kill It →
+                      </Link>
                     </div>
                   ) : (
                     <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                      <span className="text-[8px] font-black uppercase text-gray-400">AI Identification</span>
-                      <h4 className="font-black text-sm uppercase text-slate-800">{aiResultName}</h4>
-                      <a href={`mailto:hello@gardenapp.com?subject=Add%20Plant:%20${aiResultName}`} className="mt-3 block text-[9px] font-black uppercase text-blue-600 underline">Request to add to library</a>
+                      <div className="text-left">
+                        <span className="text-[8px] font-black uppercase text-gray-400">AI Result (Not in library)</span>
+                        <h4 className="font-black text-sm uppercase text-slate-800 leading-tight">{aiResultName}</h4>
+                      </div>
+                      <a 
+                        href={`mailto:hello@yourdomain.com?subject=Library%20Addition%20Request:%20${aiResultName}`}
+                        className="w-full bg-slate-900 text-white py-3 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-transform mt-3"
+                      >
+                        <Mail size={12} /> Request Addition
+                      </a>
                     </div>
                   )}
-                  <button onClick={() => {setAiResultName(null); setAiMatch(null); setDetectedWeed(null);}} className="mt-4 text-[9px] font-black text-gray-300 uppercase hover:text-gray-500">Reset Scanner</button>
+                  <button onClick={() => {setAiResultName(null); setAiMatch(null); setDetectedWeed(null);}} className="mt-4 text-[9px] font-black text-gray-300 uppercase hover:text-gray-500 tracking-widest">Reset Scanner</button>
                 </div>
               )}
             </div>
 
             {/* Manual Filters */}
+            <div className="relative py-1">
+              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-100"></div></div>
+              <div className="relative flex justify-center text-[8px] uppercase font-black text-gray-300 bg-[#f8fbf9] px-2 w-max mx-auto tracking-widest">Or Filter Manually</div>
+            </div>
+
+            <div className="bg-white rounded-[1.5rem] border border-gray-100 px-5 py-3 shadow-sm">
+              <label className="text-[8px] font-black text-gray-300 uppercase tracking-widest block mb-1">Plant Category</label>
+              <select 
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                className="w-full bg-transparent text-sm font-bold text-gray-700 outline-none h-8 appearance-none cursor-pointer"
+              >
+                <option value="">All Categories</option>
+                {['Hedge', 'Shrub', 'Tree', 'Flower', 'Palm', 'Flax', 'Groundcover', 'Climber', 'Fruit'].map(t => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </div>
+
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-white rounded-[1.5rem] border border-gray-100 px-5 py-3 shadow-sm">
-                <label className="text-[8px] font-black text-gray-300 uppercase mb-1 block">Native?</label>
-                <select value={isNative} onChange={(e) => setIsNative(e.target.value)} className="w-full bg-transparent text-sm font-bold text-gray-700 outline-none">
-                  <option value="">Any</option>
+                <label className="text-[8px] font-black text-gray-300 uppercase tracking-widest mb-1 block">Native?</label>
+                <select value={isNative} onChange={(e) => setIsNative(e.target.value)} className="w-full bg-transparent text-sm font-bold text-gray-700 outline-none h-8 appearance-none cursor-pointer">
+                  <option value="">Any Origin</option>
                   <option value="Yes">NZ Native</option>
                   <option value="No">Exotic</option>
                 </select>
               </div>
               <div className="bg-white rounded-[1.5rem] border border-gray-100 px-5 py-3 shadow-sm">
-                <label className="text-[8px] font-black text-gray-300 uppercase mb-1 block">Type</label>
-                <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="w-full bg-transparent text-sm font-bold text-gray-700 outline-none">
-                  <option value="">All</option>
-                  {['Hedge', 'Shrub', 'Tree', 'Flower', 'Climber'].map(t => <option key={t} value={t}>{t}</option>)}
+                <label className="text-[8px] font-black text-gray-300 uppercase tracking-widest mb-1 block">Flowers</label>
+                <select value={flowerColor} onChange={(e) => setFlowerColor(e.target.value)} className="w-full bg-transparent text-sm font-bold text-gray-700 outline-none h-8 appearance-none cursor-pointer">
+                  <option value="">Any Color</option>
+                  {['White', 'Pink', 'Red', 'Blue', 'Yellow', 'Purple', 'Orange'].map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
             </div>
@@ -342,32 +369,47 @@ export default function LibraryPage() {
 
       {/* A-Z Index */}
       <div className="space-y-10">
-        {alphabet.map((letter) => (
-          <div key={letter}>
-            <h2 className="text-xs font-black text-green-800 uppercase tracking-[0.3em] mb-4 px-2">{letter}</h2>
-            <div className="grid grid-cols-1 gap-4">
-              {groupedPlants[letter].map((plant: Plant) => (
-                <div key={plant.id} className="relative group">
-                  <div className="flex items-center p-5 bg-white rounded-[2.5rem] border border-gray-100 shadow-sm hover:border-green-100 transition-all">
-                    <button onClick={() => setSelectedPlantImage(plant)} className="w-14 h-14 flex-shrink-0 transition-transform active:scale-90">
-                      <PlantThumbnail plant={plant} size="sm" />
-                    </button>
-                    <Link href={`/plants/${plant.id}`} className="flex-grow flex items-center justify-between ml-4">
-                      <div>
-                        <h3 className="font-black text-gray-800 text-sm uppercase leading-none mb-1">{plant.common_name}</h3>
-                        <p className="text-[9px] text-gray-400 font-bold uppercase italic">{plant.plant_type || 'General'}</p>
+        <h2 className="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] px-2 mb-[-2rem]">
+          {filteredPlants.length} Plants Available
+        </h2>
+
+        {alphabet.length > 0 ? (
+          alphabet.map((letter) => (
+            <div key={letter}>
+              <h2 className="text-xs font-black text-green-800 uppercase tracking-[0.3em] mb-4 px-2">{letter}</h2>
+              <div className="grid grid-cols-1 gap-4">
+                {groupedPlants[letter].map((plant: Plant) => (
+                  <div key={plant.id} className="relative group">
+                    <div className="flex items-center p-5 bg-white rounded-[2.5rem] border border-gray-100 shadow-sm hover:border-green-100 transition-all duration-200">
+                      <button onClick={() => setSelectedPlantImage(plant)} className="w-14 h-14 flex-shrink-0 transition-transform active:scale-90">
+                        <PlantThumbnail plant={plant} size="sm" />
+                      </button>
+                      <Link href={`/plants/${plant.id}`} className="flex-grow flex items-center justify-between ml-4 active:scale-[0.98] transition-transform">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-black text-gray-800 text-sm uppercase leading-none mb-1">{plant.common_name}</h3>
+                            {plant.is_native && (
+                              <span className="text-[8px] bg-green-50 text-green-700 px-1.5 py-0.5 rounded-full font-black uppercase">Native</span>
+                            )}
+                          </div>
+                          <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest italic">{plant.plant_type || 'General'}</p>
+                        </div>
+                        <div className="text-gray-200 group-hover:text-green-600 group-hover:translate-x-1 transition-all text-lg mr-12">→</div>
+                      </Link>
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 z-30">
+                        <QuickAddButton plantId={plant.id} plantName={plant.common_name} />
                       </div>
-                      <div className="text-gray-200 text-lg mr-12">→</div>
-                    </Link>
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 z-30">
-                      <QuickAddButton plantId={plant.id} plantName={plant.common_name} />
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
+          ))
+        ) : (
+          <div className="text-center py-20">
+            <p className="text-[10px] font-black uppercase tracking-widest text-gray-300 italic">No plants match your search</p>
           </div>
-        ))}
+        )}
       </div>
 
       <Navigation />
