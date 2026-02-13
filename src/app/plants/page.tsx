@@ -77,7 +77,7 @@ export default function LibraryPage() {
       img.src = event.target?.result as string;
       
       img.onload = () => {
-        // 1. Create a canvas - Android's GPU handles this much better than JS libraries
+        // 1. Create a canvas - Android's GPU handles this natively
         const canvas = document.createElement('canvas');
         const MAX_WIDTH = 800; 
         const scaleSize = MAX_WIDTH / img.width;
@@ -226,7 +226,6 @@ export default function LibraryPage() {
                   <input 
                     type="file" 
                     accept="image/*" 
-                    capture="environment" 
                     onChange={handleFileUpload}
                     className="hidden" 
                   />
@@ -285,7 +284,6 @@ export default function LibraryPage() {
               )}
             </div>
 
-            {/* Rest of the Manual Filters and List UI remain identical */}
             <div className="relative py-1">
               <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-100"></div></div>
               <div className="relative flex justify-center text-[8px] uppercase font-black text-gray-300 bg-[#f8fbf9] px-2 w-max mx-auto tracking-widest">Or Filter Manually</div>
@@ -337,7 +335,6 @@ export default function LibraryPage() {
         )}
       </div>
 
-      {/* PLANT LIST SECTION */}
       <div className="space-y-10">
         <h2 className="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] px-2 mb-[-2rem]">
           {filteredPlants.length} Plants Available
