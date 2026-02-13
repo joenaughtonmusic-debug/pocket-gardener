@@ -98,84 +98,91 @@ export default function LibraryPage() {
     setAiResultName(null);
     setDetectedWeed(null);
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target?.result as string;
-      
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 800; 
-        const scaleSize = MAX_WIDTH / img.width;
-        canvas.width = MAX_WIDTH;
-        canvas.height = img.height * scaleSize;
+    // MEMORY FIX: Use createObjectURL instead of FileReader
+    const objectUrl = URL.createObjectURL(file);
+    const img = new Image();
+    img.src = objectUrl;
+    
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const MAX_WIDTH = 600; // Lowered slightly to save more memory
+      const scaleSize = MAX_WIDTH / img.width;
+      canvas.width = MAX_WIDTH;
+      canvas.height = img.height * scaleSize;
 
-        const ctx = canvas.getContext('2d');
-        ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const ctx = canvas.getContext('2d');
+      ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-        canvas.toBlob(async (blob) => {
-          if (!blob) {
-            setIsScanning(false);
-            return;
+      // Clean up the object URL from memory immediately
+      URL.revokeObjectURL(objectUrl);
+
+      canvas.toBlob(async (blob) => {
+        if (!blob) {
+          setIsScanning(false);
+          return;
+        }
+        
+        const formData = new FormData();
+        formData.append("image", blob, "plant.jpg");
+
+        try {
+          const response = await fetch('/api/identify', {
+            method: 'POST',
+            body: formData,
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || "Server error");
           }
+
+          const data = await response.json();
+          const scientificName = data.result?.classification?.suggestions?.[0]?.name 
+                                 || data.suggestions?.[0]?.scientific_name;
           
-          const formData = new FormData();
-          formData.append("image", blob, "plant.jpg");
+          if (scientificName) {
+            setAiResultName(scientificName);
 
-          try {
-            const response = await fetch('/api/identify', {
-              method: 'POST',
-              body: formData,
-            });
+            const weedMatch = COMMON_WEEDS.find(w => 
+              scientificName.toLowerCase().includes(w.scientific.toLowerCase())
+            );
 
-            if (!response.ok) {
-              const errorData = await response.json();
-              throw new Error(errorData.error || "Server error");
+            if (weedMatch) {
+              setDetectedWeed(weedMatch);
+              setIsScanning(false);
+              return;
             }
 
-            const data = await response.json();
-            const scientificName = data.result?.classification?.suggestions?.[0]?.name 
-                                   || data.suggestions?.[0]?.scientific_name;
-            
-            if (scientificName) {
-              setAiResultName(scientificName);
+            const genus = scientificName.split(' ')[0];
 
-              const weedMatch = COMMON_WEEDS.find(w => 
-                scientificName.toLowerCase().includes(w.scientific.toLowerCase())
-              );
+            const { data: dbMatch } = await supabase
+              .from("plants")
+              .select("*")
+              .or(`scientific_name.ilike.%${scientificName}%,common_name.ilike.%${scientificName}%,scientific_name.ilike.%${genus}%,common_name.ilike.%${genus}%`)
+              .order('is_native', { ascending: false })
+              .limit(1)
+              .maybeSingle();
 
-              if (weedMatch) {
-                setDetectedWeed(weedMatch);
-                setIsScanning(false);
-                return;
-              }
-
-              const genus = scientificName.split(' ')[0];
-
-              const { data: dbMatch } = await supabase
-                .from("plants")
-                .select("*")
-                .or(`scientific_name.ilike.%${scientificName}%,common_name.ilike.%${scientificName}%,scientific_name.ilike.%${genus}%,common_name.ilike.%${genus}%`)
-                .order('is_native', { ascending: false })
-                .limit(1)
-                .maybeSingle();
-
-              if (dbMatch) {
-                setAiMatch(dbMatch);
-              }
-            } else {
-              setAiResultName("Unknown Plant");
+            if (dbMatch) {
+              setAiMatch(dbMatch);
             }
-          } catch (err: any) {
-            console.error("Scan error:", err);
-            alert(`Error: ${err.message}. Try again.`);
-          } finally {
-            setIsScanning(false);
+          } else {
+            setAiResultName("Unknown Plant");
           }
-        }, 'image/jpeg', 0.6); 
-      };
+        } catch (err: any) {
+          console.error("Scan error:", err);
+          alert(`Error: ${err.message}. Try again.`);
+        } finally {
+          setIsScanning(false);
+        }
+      }, 'image/jpeg', 0.5); // Quality lowered slightly to 0.5 to keep file size tiny
     };
-    reader.readAsDataURL(file);
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      setIsScanning(false);
+      alert("Error loading image. Please try again.");
+    };
   };
 
   const filteredPlants = plants.filter(plant => {
