@@ -3,11 +3,36 @@
 import { useEffect, useState } from "react"; 
 import { createBrowserClient } from "@supabase/ssr";
 import Link from "next/link";
-import { ChevronDown, ChevronUp, Search, X, Camera, RefreshCw, Plus, CheckCircle, ArrowRight, HelpCircle, Mail } from "lucide-react"; 
+import { ChevronDown, ChevronUp, Search, X, Camera, RefreshCw, Plus, CheckCircle, ArrowRight, HelpCircle, Mail, AlertTriangle } from "lucide-react"; 
 import Navigation from "../../components/Navigation";
 import PlantThumbnail from "../../components/PlantThumbnail";
 import QuickAddButton from "../../components/QuickAddButton";
 import PageHelp from "../../components/PageHelp";
+
+// Full Weed Registry for AI Recognition
+const COMMON_WEEDS = [
+  { scientific: "Ligustrum", common: "Privet (Tree/Chinese)" },
+  { scientific: "Ulex europaeus", common: "Gorse" },
+  { scientific: "Tradescantia fluminensis", common: "Tradescantia (Wandering Will)" },
+  { scientific: "Asparagus aethiopicus", common: "Asparagus Fern" },
+  { scientific: "Asparagus asparagoides", common: "Climbing Asparagus" },
+  { scientific: "Acanthus mollis", common: "Acanthus (Bear’s Breeches)" },
+  { scientific: "Zantedeschia aethiopica", common: "Arum Lily" },
+  { scientific: "Convolvulus", common: "Bindweed" },
+  { scientific: "Calystegia", common: "Convolvulus" },
+  { scientific: "Solanum dulcamara", common: "Deadly Nightshade" },
+  { scientific: "Solanum nigrum", common: "Black Nightshade" },
+  { scientific: "Rumex obtusifolius", common: "Dock" },
+  { scientific: "Lonicera japonica", common: "Honeysuckle" },
+  { scientific: "Cymbalaria muralis", common: "Ivy Leaved Toadflax" },
+  { scientific: "Nephrolepis cordifolia", common: "Ladder Fern" },
+  { scientific: "Allium triquetrum", common: "Onion Weed" },
+  { scientific: "Oxalis", common: "Oxalis" },
+  { scientific: "Solanum mauritianum", common: "Tobacco Tree (Wooly Nightshade)" },
+  { scientific: "Foeniculum vulgare", common: "Wild Fennel" },
+  { scientific: "Hedychium", common: "Wild Ginger" },
+  { scientific: "Jasminum polyanthum", common: "Wild Jasmine" }
+];
 
 interface Plant {
   id: number;
@@ -30,6 +55,7 @@ export default function LibraryPage() {
   const [isScanning, setIsScanning] = useState(false);
   const [aiMatch, setAiMatch] = useState<Plant | null>(null);
   const [aiResultName, setAiResultName] = useState<string | null>(null);
+  const [detectedWeed, setDetectedWeed] = useState<{scientific: string, common: string} | null>(null);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isNative, setIsNative] = useState("");
@@ -70,6 +96,7 @@ export default function LibraryPage() {
     setIsScanning(true);
     setAiMatch(null);
     setAiResultName(null);
+    setDetectedWeed(null);
 
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -77,7 +104,6 @@ export default function LibraryPage() {
       img.src = event.target?.result as string;
       
       img.onload = () => {
-        // 1. Create a canvas - Android's GPU handles this natively
         const canvas = document.createElement('canvas');
         const MAX_WIDTH = 800; 
         const scaleSize = MAX_WIDTH / img.width;
@@ -87,7 +113,6 @@ export default function LibraryPage() {
         const ctx = canvas.getContext('2d');
         ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-        // 2. Convert to Blob directly (Lowest memory footprint)
         canvas.toBlob(async (blob) => {
           if (!blob) {
             setIsScanning(false);
@@ -114,13 +139,30 @@ export default function LibraryPage() {
             
             if (scientificName) {
               setAiResultName(scientificName);
+
+              const weedMatch = COMMON_WEEDS.find(w => 
+                scientificName.toLowerCase().includes(w.scientific.toLowerCase())
+              );
+
+              if (weedMatch) {
+                setDetectedWeed(weedMatch);
+                setIsScanning(false);
+                return;
+              }
+
+              const genus = scientificName.split(' ')[0];
+
               const { data: dbMatch } = await supabase
                 .from("plants")
                 .select("*")
-                .ilike('scientific_name', `%${scientificName}%`)
-                .single();
+                .or(`scientific_name.ilike.%${scientificName}%,common_name.ilike.%${scientificName}%,scientific_name.ilike.%${genus}%,common_name.ilike.%${genus}%`)
+                .order('is_native', { ascending: false })
+                .limit(1)
+                .maybeSingle();
 
-              if (dbMatch) setAiMatch(dbMatch);
+              if (dbMatch) {
+                setAiMatch(dbMatch);
+              }
             } else {
               setAiResultName("Unknown Plant");
             }
@@ -222,18 +264,22 @@ export default function LibraryPage() {
           <div className="mt-4 space-y-4 animate-in slide-in-from-top-4 duration-300">
             <div className="bg-white rounded-[2rem] border-2 border-dashed border-green-100 p-6 text-center shadow-sm">
               {!isScanning && !aiResultName ? (
-                <label className="flex flex-col items-center gap-2 mx-auto group cursor-pointer">
+                <div className="flex flex-col items-center gap-2 mx-auto">
                   <input 
                     type="file" 
                     accept="image/*" 
+                    capture="environment"
                     onChange={handleFileUpload}
+                    id="camera-input"
                     className="hidden" 
                   />
-                  <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center text-green-700 group-hover:scale-110 transition-transform shadow-sm">
-                    <Camera size={24} />
-                  </div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-green-800">Tap to Scan with Camera</span>
-                </label>
+                  <label htmlFor="camera-input" className="flex flex-col items-center gap-2 cursor-pointer group">
+                    <div className="w-14 h-14 bg-green-50 rounded-full flex items-center justify-center text-green-700 group-hover:scale-110 active:scale-95 transition-all shadow-sm border border-green-100">
+                      <Camera size={28} />
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-green-800">Tap to Scan with Camera</span>
+                  </label>
+                </div>
               ) : isScanning ? (
                 <div className="py-2">
                   <RefreshCw className="animate-spin mx-auto text-green-600 mb-2" size={20} />
@@ -252,6 +298,20 @@ export default function LibraryPage() {
                       </div>
                       <Link href={`/plants/${aiMatch.id}`} className="bg-green-600 text-white p-2 rounded-xl">
                         <ArrowRight size={16} />
+                      </Link>
+                    </div>
+                  ) : detectedWeed ? (
+                    <div className="bg-red-50 p-5 rounded-2xl border border-red-100 text-center">
+                      <div className="flex items-center justify-center gap-2 text-red-600 mb-2">
+                        <AlertTriangle size={16} />
+                        <span className="text-[10px] font-black uppercase tracking-widest">Invasive Species</span>
+                      </div>
+                      <h4 className="font-black text-sm uppercase text-red-900 leading-tight mb-3">{detectedWeed.common}</h4>
+                      <Link 
+                        href="/guides/weeds" 
+                        className="w-full bg-red-600 text-white py-3 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-transform"
+                      >
+                        How to Kill It →
                       </Link>
                     </div>
                   ) : aiResultName === "Unknown Plant" ? (
@@ -275,7 +335,7 @@ export default function LibraryPage() {
                     </div>
                   )}
                   <button 
-                    onClick={() => {setAiResultName(null); setAiMatch(null);}}
+                    onClick={() => {setAiResultName(null); setAiMatch(null); setDetectedWeed(null);}}
                     className="mt-3 text-[8px] font-black text-gray-300 uppercase tracking-widest hover:text-gray-500"
                   >
                     Clear Result & Rescan
