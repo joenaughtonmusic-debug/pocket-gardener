@@ -6,7 +6,7 @@ import { createBrowserClient } from '@supabase/ssr'
 import Navigation from "../../../components/Navigation"
 import AddPlantButton from "../../../components/AddPlantButton"
 import PlantThumbnail from "../../../components/PlantThumbnail"
-import { Check } from 'lucide-react'
+import { Check, Search, Sparkles, Quote } from 'lucide-react'
 
 export default function PlantDetailPage() {
   const params = useParams()
@@ -29,8 +29,11 @@ export default function PlantDetailPage() {
   const [nickname, setNickname] = useState<string | null>(null)
   const [plantPhotos, setPlantPhotos] = useState<any[]>([]) 
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
-  
   const [issueHistory, setIssueHistory] = useState<any[]>([])
+
+  // --- SEARCH STATE ---
+  const [searchQuery, setSearchQuery] = useState("")
+  const [isSearching, setIsSearching] = useState(false)
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -104,8 +107,14 @@ export default function PlantDetailPage() {
       if (!id) return
       const { data: plantData } = await supabase.from("plants").select("*").eq('id', id).single()
       if (plantData) setPlant(plantData)
-      const { data: remedyData } = await supabase.from('plant_remedies').select('*').or(`specific_plant_id.eq.${id},plant_type_fallback.eq.General`)
+      
+      const { data: remedyData } = await supabase
+        .from('plant_remedies')
+        .select('*')
+        .or(`specific_plant_id.eq.${id},is_universal.eq.true`)
+      
       if (remedyData) setRemedies(remedyData)
+
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         const { data: userPlantRecord } = await supabase.from('user_plants').select('id, personal_notes, nickname').eq('user_id', user.id).eq('plant_id', Number(id)).single()
@@ -159,6 +168,16 @@ export default function PlantDetailPage() {
     if (!error) router.push('/dashboard')
     setIsProcessing(false)
   }
+
+  // SEARCH & FILTER LOGIC
+  const filteredRemedies = remedies.filter(r => {
+    if (!isSearching) return r.specific_plant_id === Number(id);
+    const searchString = (r.issue_type + (r.search_keywords || "") + r.remedy_title).toLowerCase();
+    return searchString.includes(searchQuery.toLowerCase());
+  });
+
+  const specificMatches = filteredRemedies.filter(r => r.specific_plant_id === Number(id));
+  const universalMatches = filteredRemedies.filter(r => r.is_universal === true && r.specific_plant_id !== Number(id));
 
   if (loading) return <div className="min-h-screen bg-white flex items-center justify-center font-bold text-gray-400 uppercase tracking-widest text-xs">Loading...</div>
   if (!plant) return <div className="p-20 text-center">Plant not found.</div>
@@ -224,37 +243,22 @@ export default function PlantDetailPage() {
           </div>
         </header>
 
-        {userPlantRecordId && (
-          <section className="mb-10 px-2">
-            <div className="flex justify-between items-center mb-6">
-               <h3 className="text-xs font-black text-gray-300 uppercase tracking-widest underline decoration-green-200 decoration-4 underline-offset-4">Growth Journey</h3>
-               <button 
-                onClick={() => fileInputRef.current?.click()}
-                className="bg-green-50 text-green-700 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-green-100 active:scale-95"
-               >
-                 {uploadingPhoto ? 'Uploading...' : 'Add Progress Photo'}
-               </button>
-               <input type="file" ref={fileInputRef} onChange={handleAddPhoto} className="hidden" accept="image/*" />
+        {/* --- THE GARDENER'S VIEW / DESCRIPTION BOX --- */}
+        <section className="mb-10 relative">
+          <div className="bg-green-900 rounded-[2.5rem] p-8 shadow-xl relative overflow-hidden">
+            <Quote className="absolute -top-2 -left-2 text-white/5 w-24 h-24 rotate-12" />
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 mb-4">
+                <Sparkles size={14} className="text-amber-400" />
+                <span className="text-[10px] font-black text-white/60 uppercase tracking-[0.2em]">The Gardener's View</span>
+              </div>
+              <p className="text-white text-[15px] font-medium italic leading-relaxed">
+                {plant.description || plant.overview || "This plant is a hardy addition to the New Zealand landscape, known for its resilience and unique aesthetic."}
+              </p>
             </div>
-            
-            <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
-              {plantPhotos.length === 0 ? (
-                <div className="w-full py-8 border-2 border-dashed border-gray-100 rounded-[2.5rem] flex items-center justify-center text-[10px] text-gray-300 font-bold uppercase tracking-widest">
-                  Start your visual timeline
-                </div>
-              ) : (
-                plantPhotos.map((photo) => (
-                  <div key={photo.id} className="flex-shrink-0 w-32 h-32 rounded-3xl overflow-hidden border border-gray-100 relative shadow-sm">
-                    <img src={photo.photo_url} className="w-full h-full object-cover" alt="Progress" />
-                    <div className="absolute bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm py-1 text-[8px] text-gray-500 text-center font-black uppercase">
-                      {new Date(photo.created_at).toLocaleDateString()}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </section>
-        )}
+          </div>
+          <input type="file" ref={fileInputRef} onChange={handleAddPhoto} className="hidden" accept="image/*" />
+        </section>
 
         <div className="mb-10 flex flex-col items-center gap-4">
           {!mode && !userPlantRecordId && <AddPlantButton plantId={Number(id)} />}
@@ -307,28 +311,97 @@ export default function PlantDetailPage() {
           </div>
         )}
 
+        {/* --- COMMON ISSUES & SEARCH SECTION --- */}
         {userPlantRecordId && (
           <div className="mb-10 px-2">
-            <h4 className="text-[14px] font-black text-black-800 uppercase tracking-[0.2em] mb-4">⚠️ Common Issues</h4>
+            <div className="flex justify-between items-center mb-4">
+              <h4 className="text-[14px] font-black text-black-800 uppercase tracking-[0.2em]">⚠️ Common Issues</h4>
+              {isSearching && (
+                <button onClick={() => {setIsSearching(false); setSearchQuery("")}} className="text-[10px] font-bold text-orange-500 uppercase">Clear</button>
+              )}
+            </div>
+
+            {/* The Search Input */}
+            {isSearching && (
+              <div className="mb-4 relative">
+                <input 
+                  autoFocus
+                  type="text"
+                  placeholder="Search symptoms (e.g. brown leaf, bugs)..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full p-4 bg-orange-50 border border-orange-200 rounded-2xl text-xs font-medium focus:outline-none focus:ring-2 ring-orange-400"
+                />
+              </div>
+            )}
+
             <div className="space-y-3">
-              {remedies.length > 0 ? (
-                remedies.map((r) => (
+              {/* 1. PLANT SPECIFIC REMEDIES - Limited to top 3 */}
+              {!isSearching && specificMatches.length > 0 ? (
+                specificMatches.slice(0, 3).map((r) => (
                   <div key={r.id} className="overflow-hidden">
                     <button onClick={() => setActiveRemedyId(activeRemedyId === r.id ? null : r.id)} className={`w-full py-4 px-6 rounded-2xl border flex items-center justify-between transition-all ${activeRemedyId === r.id ? 'bg-white border-orange-400 shadow-sm' : 'bg-gray-50 border-gray-100'}`}>
-                      <span className="text-[11px] font-black text-gray-700 uppercase tracking-tight">{r.issue_type}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-black text-gray-700 uppercase tracking-tight">{r.issue_type}</span>
+                        <span className="text-[7px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-black tracking-widest uppercase">Plant Specific</span>
+                      </div>
                       <span className={`text-orange-400 font-bold transition-transform ${activeRemedyId === r.id ? 'rotate-45' : ''}`}>+</span>
                     </button>
                     {activeRemedyId === r.id && (
-                      <div className="p-4 mt-1 bg-white rounded-2xl border border-orange-100 animate-in fade-in slide-in-from-top-1">
+                      <div className="p-4 mt-1 bg-white rounded-2xl border border-orange-100 animate-in fade-in">
                         <p className="text-[10px] font-black text-orange-800 uppercase mb-1">{r.remedy_title}</p>
                         <p className="text-xs text-gray-600 italic leading-relaxed mb-4">"{r.remedy_description}"</p>
-                        <button onClick={() => handleLogIssue(r.issue_type)} disabled={isProcessing} className="w-full py-2 bg-orange-50 text-orange-700 rounded-xl text-[10px] font-black uppercase tracking-widest border border-orange-100 active:scale-95 transition-all">Log this issue for my plant</button>
+                        <button onClick={() => handleLogIssue(r.issue_type)} disabled={isProcessing} className="w-full py-2 bg-orange-50 text-orange-700 rounded-xl text-[10px] font-black uppercase tracking-widest border border-orange-100 active:scale-95 transition-all">Log this issue</button>
                       </div>
                     )}
                   </div>
                 ))
-              ) : (
-                <div className="text-center py-4 opacity-40 italic text-[11px] text-orange-800 font-bold uppercase tracking-widest">No issues reported for this plant</div>
+              ) : !isSearching && (
+                <div className="text-center py-4 opacity-40 italic text-[11px] text-orange-800 font-bold uppercase tracking-widest">No specific issues listed</div>
+              )}
+
+              {/* 2. GLOBAL RESULTS - UNIQUE FILTER APPLIED */}
+              {isSearching && universalMatches.length > 0 && (
+                <>
+                  <div className="pt-4 pb-2 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Global Database Results</div>
+                  {/* Filtering by issue_type to prevent duplicates in search results */}
+                  {Array.from(new Map(universalMatches.map(item => [item.issue_type, item])).values()).map((r: any) => (
+                    <div key={r.id} className="overflow-hidden">
+                        <button onClick={() => setActiveRemedyId(activeRemedyId === r.id ? null : r.id)} className={`w-full py-4 px-6 rounded-2xl border flex items-center justify-between transition-all ${activeRemedyId === r.id ? 'bg-white border-orange-400 shadow-sm' : 'bg-gray-50 border-gray-100'}`}>
+                          <div className="flex flex-col items-start">
+                            <span className="text-[11px] font-black text-gray-700 uppercase tracking-tight">{r.issue_type}</span>
+                            <span className="text-[8px] text-gray-400 font-bold uppercase tracking-widest">{r.category || 'General'}</span>
+                          </div>
+                          <span className={`text-orange-400 font-bold transition-transform ${activeRemedyId === r.id ? 'rotate-45' : ''}`}>+</span>
+                        </button>
+                        {activeRemedyId === r.id && (
+                          <div className="p-4 mt-1 bg-white rounded-2xl border border-orange-100">
+                            <p className="text-[10px] font-black text-orange-800 uppercase mb-1">{r.remedy_title}</p>
+                            <p className="text-xs text-gray-600 italic leading-relaxed mb-4">"{r.remedy_description}"</p>
+                            <button onClick={() => handleLogIssue(r.issue_type)} disabled={isProcessing} className="w-full py-2 bg-orange-50 text-orange-700 rounded-xl text-[10px] font-black uppercase tracking-widest border border-orange-100 active:scale-95 transition-all">Log this issue</button>
+                          </div>
+                        )}
+                    </div>
+                  ))}
+                </>
+              )}
+
+              {/* 3. THE SEARCH TRIGGER BUTTON */}
+              {!isSearching && (
+                <div className="mt-6 p-6 bg-gray-50 rounded-[2rem] border border-dashed border-gray-200 text-center">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 italic">Can't see the issue here?</p>
+                  <button 
+                    onClick={() => setIsSearching(true)}
+                    className="flex items-center gap-2 mx-auto px-6 py-3 bg-white border border-gray-100 rounded-full shadow-sm text-[10px] font-black text-green-800 uppercase tracking-widest active:scale-95 transition-all"
+                  >
+                    <Search size={12} />
+                    Search Global Database
+                  </button>
+                </div>
+              )}
+
+              {isSearching && filteredRemedies.length === 0 && (
+                <div className="text-center py-10 text-[11px] text-gray-400 font-bold uppercase italic">No matches found for "{searchQuery}"</div>
               )}
             </div>
           </div>

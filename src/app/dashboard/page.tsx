@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import Link from 'next/link'
-import { Pencil, Camera, ArrowRight, Check, Sparkles, AlertCircle } from 'lucide-react' 
+import { Pencil, Camera, ArrowRight, Check, Sparkles, AlertCircle, Quote } from 'lucide-react' 
 import Navigation from '../../components/Navigation'
 import PlantThumbnail from '../../components/PlantThumbnail'
 import PageHelp from '../../components/PageHelp'
@@ -155,17 +155,29 @@ export default function MyGardenDashboard() {
     </div>
   )
 
-  // --- LOGIC FOR GROUPING SPECIFIC VS GENERAL CARE ---
-  const standardNote = "Standard watering and leaf check this month.";
+  const getGeneralNote = () => {
+    const defaultText = "Standard watering and leaf check this month.";
+    if (!careNotes || careNotes.length === 0) return defaultText;
+    const generalRow = careNotes.find(n => !n.plant_type || n.plant_type.toLowerCase() === 'general');
+    if (!generalRow) return defaultText;
+    return generalRow.care_notes || generalRow.care_note || defaultText;
+  };
+
+  const generalMonthlyAdvice = getGeneralNote();
   
   const processedPlants = ownedPlants.map(item => {
     const plant = item.plants;
-    const noteObj = careNotes.find(n => n.plant_type === plant.common_name) || 
-                    careNotes.find(n => n.plant_type === plant.plant_type);
+    const noteObj = careNotes.find(n => 
+      n.plant_type && 
+      (n.plant_type.toLowerCase() === plant.common_name?.toLowerCase() || 
+       n.plant_type.toLowerCase() === plant.plant_type?.toLowerCase())
+    );
+    const specificNoteText = noteObj ? (noteObj.care_notes || noteObj.care_note) : null;
+
     return { 
       ...item, 
-      displayNote: noteObj ? noteObj.care_note : standardNote, 
-      isSpecific: !!noteObj 
+      displayNote: specificNoteText || generalMonthlyAdvice, 
+      isSpecific: !!specificNoteText && noteObj.plant_type?.toLowerCase() !== 'general'
     };
   });
 
@@ -294,7 +306,6 @@ export default function MyGardenDashboard() {
               <span className="h-px bg-green-200 flex-grow ml-4"></span>
             </h2>
 
-            {/* --- SPECIFIC ADVICE PLANTS (THE TOP SECTION) --- */}
             <div className="space-y-6">
               {specificPlants.map((item) => (
                 <Link key={item.id} href={`/plants/${item.plants.id}?mode=my-garden`} className="block bg-white p-5 rounded-[2.5rem] border-2 border-amber-200 shadow-md hover:shadow-lg transition-shadow active:scale-[0.98]">
@@ -312,33 +323,49 @@ export default function MyGardenDashboard() {
                   </div>
                   <div className="bg-amber-50/50 p-4 rounded-2xl border border-amber-100 flex gap-3">
                     <Sparkles className="text-amber-600 shrink-0" size={14} />
-                    <p className="text-[12px] text-green-900 leading-relaxed font-black italic">"{item.displayNote}"</p>
+                    <p className="text-[14px] text-green-900 leading-relaxed font-black italic">"{item.displayNote}"</p>
                   </div>
                 </Link>
               ))}
             </div>
 
-            {/* --- GENERAL MAINTENANCE PLANTS (THE BOTTOM SECTION) --- */}
             {generalPlants.length > 0 && (
               <div className="space-y-4 pt-4">
-                <div className="bg-green-800/5 p-4 rounded-3xl border border-green-800/10">
-                  <h3 className="text-[14px] font-black text-green-800 uppercase tracking-widest mb-1">General Maintenance</h3>
-                  <p className="text-[14px] text-green-700/80 italic font-medium">For the following plants: {standardNote}</p>
+                {/* --- NEW CONDITIONAL GENERAL NOTES BOX --- */}
+                <div className="bg-white p-6 rounded-[2.5rem] border-2 border-green-100 shadow-xl relative overflow-hidden">
+                  <p className="absolute -top-2 -left-2 text-green-800/5 w-24 h-24 rotate-12" />
+                  <div className="relative z-10">
+                    <div className="flex items-center gap-2 mb-4">
+                      <p className="text-green-700 text-[14px]"/>
+                      <span className="text-[14px] font-black text-green-800/60 uppercase tracking-[0.2em]">{currentMonthName} - General Garden Notes</span>
+                    </div>
+                    <p className="text-green-900 text-[14px] font-black italic leading-relaxed">
+                      "{generalMonthlyAdvice}"
+                    </p>
+                  </div>
                 </div>
-                
-                <div className="grid grid-cols-1 gap-3">
-                  {generalPlants.map((item) => (
-                    <Link key={item.id} href={`/plants/${item.plants.id}?mode=my-garden`} className="flex items-center justify-between bg-white/60 p-4 rounded-[2rem] border border-white shadow-sm hover:bg-white transition-colors">
-                      <div className="flex items-center gap-3">
-                        <PlantThumbnail plant={item.plants} size="sm" />
-                        <div>
-                          <h4 className="text-s font-black text-green-950 uppercase">{item.nickname || item.plants.common_name}</h4>
-                          <p className="text-[8px] text-gray-400 font-black uppercase tracking-tighter">{item.plants.plant_type}</p>
+
+                {/* --- PLANTS LIST WITH NEW TITLE --- */}
+                <div className="pt-6">
+                  <h2 className="text-[15px] font-black text-green-950 uppercase tracking-[0.2em] px-2 mb-6 flex items-center justify-between">
+                    <span>Plants in your garden</span>
+                    <span className="h-px bg-green-200 flex-grow ml-4"></span>
+                  </h2>
+                  
+                  <div className="grid grid-cols-1 gap-3">
+                    {generalPlants.map((item) => (
+                      <Link key={item.id} href={`/plants/${item.plants.id}?mode=my-garden`} className="flex items-center justify-between bg-white/60 p-4 rounded-[2rem] border border-white shadow-sm hover:bg-white transition-colors">
+                        <div className="flex items-center gap-3">
+                          <PlantThumbnail plant={item.plants} size="sm" />
+                          <div>
+                            <h4 className="text-s font-black text-green-950 uppercase">{item.nickname || item.plants.common_name}</h4>
+                            <p className="text-[8px] text-gray-400 font-black uppercase tracking-tighter">{item.plants.plant_type}</p>
+                          </div>
                         </div>
-                      </div>
-                      <ArrowRight size={12} className="text-gray-300" />
-                    </Link>
-                  ))}
+                        <ArrowRight size={12} className="text-gray-300" />
+                      </Link>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
