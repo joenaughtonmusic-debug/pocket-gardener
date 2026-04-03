@@ -35,20 +35,11 @@ export async function POST(req: Request) {
         user_id: user.id,
       },
       line_items: [
-        {
-          price_data: {
-            currency: "nzd",
-            product_data: {
-              name: "Auckland Pro Garden Plan",
-              description: "Unlimited plants, Identifier, and Garden Builder access.",
-            },
-            unit_amount: 1000,
-            // CRITICAL: Subscriptions require a recurring interval
-            recurring: { interval: "month" }, 
-          },
-          quantity: 1,
-        },
-      ],
+  {
+    price: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID, 
+    quantity: 1,
+  },
+],
       success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/dashboard`,
     });
