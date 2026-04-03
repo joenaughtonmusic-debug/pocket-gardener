@@ -9,6 +9,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
 
+  // This client handles the "Send" part of the Magic Link
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -19,35 +20,43 @@ export default function LoginPage() {
     setLoading(true)
     setMessage('')
 
+    // CLEAN REDIRECT: We send them to /auth/callback and let the 
+    // route handler deal with the final destination to avoid loops.
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     })
 
-    if (error) setMessage(`Error: ${error.message}`)
-    else setMessage('Check your email for the magic link!')
+    if (error) {
+      console.error("❌ Login Error:", error.message)
+      setMessage(`Error: ${error.message}`)
+    } else {
+      setMessage('Check your email! Your Magic Link is on the way.')
+    }
     setLoading(false)
   }
 
-  // --- NEW: GOOGLE LOGIN HANDLER ---
   const handleGoogleLogin = async () => {
-    await supabase.auth.signInWithOAuth({
+    const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+        redirectTo: `${window.location.origin}/auth/callback`,
       },
     })
+    if (error) console.error("❌ Google Error:", error.message)
   }
 
   return (
     <main className="min-h-screen bg-[#f8fbf9] flex flex-col items-center justify-center px-8">
       <div className="w-full max-w-md bg-white p-12 rounded-[3.5rem] shadow-xl shadow-green-900/5 text-center">
+        {/* Branding */}
         <div className="text-5xl mb-8">🌿</div>
         <h1 className="text-3xl font-black text-green-900 mb-2 tracking-tight">Pocket Gardener</h1>
-        <p className="text-gray-400 text-sm mb-10 font-medium">Sign in to save your Auckland garden</p>
+        <p className="text-gray-400 text-sm mb-10 font-medium italic">Save your Auckland garden</p>
         
+        {/* Magic Link Form */}
         <form onSubmit={handleLogin} className="space-y-4">
           <input
             className="w-full px-6 py-5 rounded-[1.5rem] border border-gray-100 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500/10 transition-all text-sm font-medium text-gray-700"
@@ -66,7 +75,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* --- NEW: DIVIDER AND GOOGLE BUTTON --- */}
+        {/* Divider */}
         <div className="relative my-10">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-gray-100"></div>
@@ -76,6 +85,7 @@ export default function LoginPage() {
           </div>
         </div>
 
+        {/* Social Login */}
         <button
           onClick={handleGoogleLogin}
           type="button"
@@ -88,15 +98,23 @@ export default function LoginPage() {
           />
           Continue with Google
         </button>
-        {/* --- END NEW SECTION --- */}
 
+        {/* Feedback Message */}
         {message && (
-          <p className={`mt-6 text-xs font-bold p-4 rounded-2xl ${message.includes('Error') ? 'text-red-500 bg-red-50' : 'text-green-700 bg-green-50'}`}>
+          <p className={`mt-6 text-xs font-bold p-4 rounded-2xl animate-pulse ${
+            message.includes('Error') ? 'text-red-500 bg-red-50' : 'text-green-700 bg-green-50'
+          }`}>
             {message}
           </p>
         )}
       </div>
+
+      {/* App Navigation */}
       <Navigation />
+      
+      <p className="mt-8 text-[9px] font-black text-gray-300 uppercase tracking-[0.3em]">
+        Designed for Auckland Gardeners
+      </p>
     </main>
   )
 }
