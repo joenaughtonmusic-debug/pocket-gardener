@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Heart, ChevronRight, Camera, User, Plus } from 'lucide-react'
 import Navigation from '../../components/Navigation'
-// Adjust this path to match your actual file location from the screenshot
 import { createSupabaseBrowserClient } from '../lib/supabaseClient'
 
 const GARDEN_ARCHIVE = [
@@ -31,7 +30,6 @@ const GARDEN_ARCHIVE = [
 
 export default function GardenFeatures() {
   const router = useRouter()
-  // Uses the shared browser client to ensure the login "sticks" via cookies
   const supabase = useMemo(() => createSupabaseBrowserClient(), [])
 
   const [favorites, setFavorites] = useState<string[]>([])
@@ -41,7 +39,7 @@ export default function GardenFeatures() {
 
   const current = GARDEN_ARCHIVE[featuredIndex]
 
-  // 1. Fetch Featured Plants (UI)
+  // 1. Fetch Featured Plants (UI Display)
   useEffect(() => {
     async function fetchPlantDetails() {
       if (!current?.plantNames?.length) return
@@ -54,7 +52,7 @@ export default function GardenFeatures() {
 
       if (error) {
         console.error('Error fetching featured plants:', error)
-        setCurrentPlants([]) // Clear stale data on error
+        setCurrentPlants([])
       } else if (data) {
         const uniqueMap = new Map();
         data.forEach((p) => { if (!uniqueMap.has(p.common_name)) uniqueMap.set(p.common_name, p); });
@@ -64,7 +62,7 @@ export default function GardenFeatures() {
       setLoading(false)
     }
     fetchPlantDetails()
-  }, [featuredIndex, supabase]) // Simplified dependencies for stability
+  }, [featuredIndex, supabase])
 
   // 2. Load Favorites
   useEffect(() => {
@@ -82,18 +80,20 @@ export default function GardenFeatures() {
     router.push(`/plants/${plantId}`)
   }
 
-  // 3. The Hardened Email Logic
+  // 3. The Professional Formatted Email Logic
   const handleEmailSubmit = async () => {
-    // A. Verify Auth
+    setLoading(true)
+    
+    // Check Auth
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     
-    console.log('DEBUG - Auth User:', user);
     if (userError || !user) {
       alert("Please log in to submit your garden!");
+      setLoading(false)
       return;
     }
 
-    // B. Fetch User's Plants (Using explicit join syntax)
+    // Fetch User's Plants
     const { data: userPlants, error: plantsError } = await supabase
       .from('user_plants')
       .select(`
@@ -104,15 +104,14 @@ export default function GardenFeatures() {
       `)
       .eq('user_id', user.id);
 
-    console.log('DEBUG - Raw userPlants data:', JSON.stringify(userPlants, null, 2));
-
     if (plantsError) {
       console.error('DEBUG - Query Error:', plantsError);
       alert(`Database Error: ${plantsError.message}`);
+      setLoading(false)
       return;
     }
 
-    // C. Format Plant List
+    // Format Plant List with fallback
     const plantListText = (userPlants && userPlants.length > 0)
       ? userPlants
           .map((item: any) => {
@@ -123,18 +122,25 @@ export default function GardenFeatures() {
           .join(', ')
       : "No plants in my garden yet";
 
+    // --- EMAIL FORMATTING FIX START ---
     const recipient = "pocketgardeneruploads@gmail.com";
     const subject = "Pocket Gardener Feature Submission";
     
-    const body = 
-      `Hi Pocket Gardener,\n\n` +
-      `I'd love to feature my garden in the app!\n\n` +
-      `My garden style: [type here]\n` +
-      `My location: [type here]\n` +
-      `My current app plants: ${plantListText}\n\n` +
+    // Using \r\n for universal line breaks in email clients
+    const bodyText = 
+      `Hi Pocket Gardener,\r\n\r\n` +
+      `I'd love to feature my garden in the app!\r\n\r\n` +
+      `MY GARDEN STYLE: [Type here]\r\n` +
+      `MY LOCATION: [Type here]\r\n` +
+      `MY PLANTS: ${plantListText}\r\n\r\n` +
       `Please attach photos of your garden to this email before sending.`;
 
-    window.location.href = `mailto:${recipient}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    // Final Encoding to ensure spaces and lines work on mobile
+    const mailtoUrl = `mailto:${recipient}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
+
+    setLoading(false);
+    window.location.href = mailtoUrl;
+    // --- EMAIL FORMATTING FIX END ---
   }
 
   return (
