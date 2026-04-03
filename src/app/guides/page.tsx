@@ -7,8 +7,7 @@ export default function GuidesPage() {
   const categories = [
     { name: "Pests and Diseases", icon: "🐜", href: "/guides/pests", desc: "Diagnosis & Cures" },
     { name: "Garden Tools", icon: "🛠️", href: "/guides/tools", desc: "The Editor's Kit" },
-    { name: "Feeding", icon: "🧪", href: "#", desc: "Nutrients & Fertilizers" },
-    { name: "Pruning/trimming", icon: "🌳", href: "#", desc: "Maintenance & Shaping" }
+    { name: "Feeding", icon: "🧪", href: "/guides/feeding", desc: "Nutrients & Fertilizers" },
   ];
 
   return (

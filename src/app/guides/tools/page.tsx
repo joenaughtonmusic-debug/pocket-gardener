@@ -10,8 +10,11 @@ const toolCategories = [
     tools: [
       { 
         name: "Japanese Niwashi", 
+        image: "https://sonxnuxhrivzgcevtdtc.supabase.co/storage/v1/object/public/guides/niwashi-traditional-right.jpeg",
         description: "The ultimate tool for Auckland clay. The angled blade cuts through weeds at the root and breaks up hard ground with ease.",
-        proTip: "Keep the inner edge sharp with a whetstone for effortless weeding."
+        proTip: "Keep the inner edge sharp with a whetstone for effortless weeding.",
+        // Default centering is fine here
+        objectPosition: "center center"
       }
     ]
   },
@@ -21,8 +24,11 @@ const toolCategories = [
     tools: [
       { 
         name: "Pole Hedge Trimmers", 
+        image: "https://sonxnuxhrivzgcevtdtc.supabase.co/storage/v1/object/public/guides/Pole%20hedge%20trimmer.png",
         description: "Essential for keeping hedges like Griselinia or Pittosporum square without needing a ladder.",
-        proTip: "Long-reach poles save your back and ensure a straighter line on tall boundary hedges."
+        proTip: "Long-reach poles save your back and ensure a straighter line on tall boundary hedges.",
+        // Shift view down to show the head/mechanism
+        objectPosition: "top center" 
       }
     ]
   },
@@ -32,8 +38,11 @@ const toolCategories = [
     tools: [
       { 
         name: "Trench Spade", 
+        image: "https://sonxnuxhrivzgcevtdtc.supabase.co/storage/v1/object/public/guides/trench%20spade.jpg",
         description: "A narrow, heavy-duty spade. Perfect for digging precise holes in tight spots or transplanting established plants.",
-        proTip: "The slim profile makes it much easier to slice through thick roots than a standard square spade."
+        proTip: "The slim profile makes it much easier to slice through thick roots than a standard square spade.",
+        // Lift view up to show the spade head
+        objectPosition: "bottom center" 
       }
     ]
   },
@@ -43,8 +52,11 @@ const toolCategories = [
     tools: [
       { 
         name: "Bypass Secateurs", 
+        image: "https://sonxnuxhrivzgcevtdtc.supabase.co/storage/v1/object/public/guides/GTO-SCLH-burgon-and-ball-left-handed-bypass-secateurs-02.jpeg",
         description: "Your everyday companion for clean cuts on living stems.",
-        proTip: "Always choose bypass (scissor-action) over anvil style to avoid crushing the plant's 'veins'."
+        proTip: "Always choose bypass (scissor-action) over anvil style to avoid crushing the plant's 'veins'.",
+        // Default centering is fine here
+        objectPosition: "center center"
       }
     ]
   }
@@ -64,23 +76,45 @@ export default function ToolsGuide() {
           <section key={category.title}>
             <div className="flex items-center gap-2 mb-4">
               <span className="text-xl">{category.icon}</span>
-              <h2 className="text-xs font-black text-green-800 uppercase tracking-[0.3em]">{category.title}</h2>
+              <h2 className="text-[10px] font-black text-green-800 uppercase tracking-[0.3em]">{category.title}</h2>
             </div>
             
-            <div className="space-y-4">
+            <div className="space-y-6">
               {category.tools.map((tool) => (
-                <div key={tool.name} className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-black text-gray-800 uppercase italic tracking-tight">{tool.name}</h3>
-                    <span className="bg-orange-50 text-orange-600 text-[8px] font-black px-2 py-1 rounded-full uppercase">Recommended</span>
+                <div key={tool.name} className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden group">
+                  {/* TOOL IMAGE CONTAINER */}
+                  <div className="h-60 w-full bg-gray-50 border-b border-gray-100 overflow-hidden relative">
+                    <img 
+                      src={tool.image} 
+                      alt={tool.name} 
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      style={{ 
+                        // Apply the custom object position from the tool data
+                        objectPosition: tool.objectPosition || 'center' 
+                      }}
+                      onError={(e) => { 
+                        // Using Privet as the ultimate fallback
+                        e.currentTarget.src = "https://sonxnuxhrivzgcevtdtc.supabase.co/storage/v1/object/public/weed-images/privet.jpeg"; 
+                      }}
+                    />
                   </div>
-                  <p className="text-xs text-gray-600 leading-relaxed mb-4">
-                    {tool.description}
-                  </p>
-                  <div className="bg-green-50 p-3 rounded-xl">
-                    <p className="text-[9px] font-bold text-green-800 leading-tight">
-                      <span className="uppercase mr-1">Pro Tip:</span> {tool.proTip}
+
+                  <div className="p-6">
+                    <div className="flex justify-between items-start mb-3">
+                      <h3 className="font-black text-gray-800 uppercase italic tracking-tight text-xl leading-none">{tool.name}</h3>
+                      <span className="bg-orange-50 text-orange-600 text-[8px] font-black px-2 py-1 rounded-full uppercase tracking-tighter">Essential</span>
+                    </div>
+                    
+                    <p className="text-[13px] text-gray-600 leading-relaxed mb-5 font-medium">
+                      {tool.description}
                     </p>
+                    
+                    <div className="bg-green-50/50 p-4 rounded-2xl border border-green-100/50">
+                      <p className="text-[11px] font-bold text-green-800 leading-snug">
+                        <span className="uppercase mr-2 font-black text-[9px] text-green-900/40">Pro Tip</span> 
+                        {tool.proTip}
+                      </p>
+                    </div>
                   </div>
                 </div>
               ))}

@@ -46,7 +46,7 @@ export default function UpgradeButton() {
       ) : (
         <>
           <span>🌿</span>
-          <span>Upgrade to Pro ($7.99 per month)</span>
+          <span>Upgrade to Pro ($12.99 per month)</span>
         </>
       )}
     </button>

@@ -254,9 +254,16 @@ export default function LibraryPage() {
             <h3 className={`font-black text-xl mb-1 uppercase italic tracking-tight ${showIdentifier ? 'text-[#2d5a3f]' : 'text-white'}`}>
               {showIdentifier ? 'Close Identifier' : 'Identify a Plant'}
             </h3>
-            <p className={`text-[11px] font-medium leading-relaxed max-w-[200px] ${showIdentifier ? 'text-gray-400' : 'text-green-100/80'}`}>
-              {showIdentifier ? 'Upload your photo below' : "Take a photo of your plant, then select it from your gallery"}
-            </p>
+            <div className={`text-[11px] font-medium leading-relaxed ${showIdentifier ? 'text-gray-400' : 'text-green-100/80'}`}>
+              {showIdentifier ? (
+                'Upload your photo below'
+              ) : (
+                <>
+                  <div>Not sure what plant you have?</div>
+                  <div className="text-green-200 mt-1">Upload a photo here</div>
+                </>
+              )}
+            </div>
           </div>
           <div className="absolute right-8 top-1/2 -translate-y-1/2 opacity-20">
             {showIdentifier ? <ChevronUp className="text-[#2d5a3f]" size={32} /> : <ChevronDown className="text-white" size={32} />}

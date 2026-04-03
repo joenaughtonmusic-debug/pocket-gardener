@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import Link from 'next/link'
-import { Pencil, Camera, ArrowRight, Check, Sparkles, AlertCircle, Quote } from 'lucide-react' 
+import { Pencil, Camera, ArrowRight, Check, Sparkles, AlertCircle } from 'lucide-react' 
 import Navigation from '../../components/Navigation'
 import PlantThumbnail from '../../components/PlantThumbnail'
 import PageHelp from '../../components/PageHelp'
@@ -184,6 +184,16 @@ export default function MyGardenDashboard() {
   const specificPlants = processedPlants.filter(p => p.isSpecific);
   const generalPlants = processedPlants.filter(p => !p.isSpecific);
 
+  // GROUPING LOGIC FOR GENERAL PLANTS
+  const groupedByType = generalPlants.reduce((acc, item) => {
+    const type = item.plants.plant_type || 'Other';
+    if (!acc[type]) acc[type] = [];
+    acc[type].push(item);
+    return acc;
+  }, {} as Record<string, typeof generalPlants>);
+
+  const sortedCategories = Object.keys(groupedByType).sort();
+
   return (
     <main className="min-h-screen bg-[#f0f4f1] p-6 pb-40 text-gray-900">
       <WelcomeOverlay />
@@ -331,12 +341,10 @@ export default function MyGardenDashboard() {
 
             {generalPlants.length > 0 && (
               <div className="space-y-4 pt-4">
-                {/* --- NEW CONDITIONAL GENERAL NOTES BOX --- */}
                 <div className="bg-white p-6 rounded-[2.5rem] border-2 border-green-100 shadow-xl relative overflow-hidden">
                   <p className="absolute -top-2 -left-2 text-green-800/5 w-24 h-24 rotate-12" />
                   <div className="relative z-10">
                     <div className="flex items-center gap-2 mb-4">
-                      <p className="text-green-700 text-[14px]"/>
                       <span className="text-[14px] font-black text-green-800/60 uppercase tracking-[0.2em]">{currentMonthName} - General Garden Notes</span>
                     </div>
                     <p className="text-green-900 text-[14px] font-black italic leading-relaxed">
@@ -345,27 +353,38 @@ export default function MyGardenDashboard() {
                   </div>
                 </div>
 
-                {/* --- PLANTS LIST WITH NEW TITLE --- */}
-                <div className="pt-6">
-                  <h2 className="text-[15px] font-black text-green-950 uppercase tracking-[0.2em] px-2 mb-6 flex items-center justify-between">
-                    <span>Plants in your garden</span>
-                    <span className="h-px bg-green-200 flex-grow ml-4"></span>
-                  </h2>
-                  
-                  <div className="grid grid-cols-1 gap-3">
-                    {generalPlants.map((item) => (
-                      <Link key={item.id} href={`/plants/${item.plants.id}?mode=my-garden`} className="flex items-center justify-between bg-white/60 p-4 rounded-[2rem] border border-white shadow-sm hover:bg-white transition-colors">
-                        <div className="flex items-center gap-3">
-                          <PlantThumbnail plant={item.plants} size="sm" />
-                          <div>
-                            <h4 className="text-s font-black text-green-950 uppercase">{item.nickname || item.plants.common_name}</h4>
-                            <p className="text-[8px] text-gray-400 font-black uppercase tracking-tighter">{item.plants.plant_type}</p>
-                          </div>
-                        </div>
-                        <ArrowRight size={12} className="text-gray-300" />
-                      </Link>
-                    ))}
-                  </div>
+                <div className="pt-6 space-y-10">
+                  {sortedCategories.map((category) => (
+                    <div key={category} className="space-y-4">
+                      <h3 className="text-[12px] font-black text-green-800/40 uppercase tracking-[0.3em] px-2 flex items-center gap-3">
+                        <span>{category}s</span>
+                        <span className="h-[1px] bg-green-200 flex-grow"></span>
+                      </h3>
+                      
+                      <div className="grid grid-cols-1 gap-3">
+                        {groupedByType[category].map((item) => (
+                          <Link 
+                            key={item.id} 
+                            href={`/plants/${item.plants.id}?mode=my-garden`} 
+                            className="flex items-center justify-between bg-white/60 p-4 rounded-[2rem] border border-white shadow-sm hover:bg-white transition-colors"
+                          >
+                            <div className="flex items-center gap-3">
+                              <PlantThumbnail plant={item.plants} size="sm" />
+                              <div>
+                                <h4 className="text-s font-black text-green-950 uppercase">
+                                  {item.nickname || item.plants.common_name}
+                                </h4>
+                                <p className="text-[8px] text-gray-400 font-black uppercase tracking-tighter">
+                                  {item.plants.scientific_name}
+                                </p>
+                              </div>
+                            </div>
+                            <ArrowRight size={12} className="text-gray-300" />
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
