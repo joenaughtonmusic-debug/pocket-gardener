@@ -1,16 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Heart, ChevronRight, Camera, User, Plus } from 'lucide-react'
 import Navigation from '../../components/Navigation'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+// Adjust this path to match your actual file location from the screenshot
+import { createSupabaseBrowserClient } from '../lib/supabaseClient'
 
 const GARDEN_ARCHIVE = [
   {
@@ -35,6 +31,9 @@ const GARDEN_ARCHIVE = [
 
 export default function GardenFeatures() {
   const router = useRouter()
+  // Uses the shared browser client to ensure the login "sticks" via cookies
+  const supabase = useMemo(() => createSupabaseBrowserClient(), [])
+
   const [favorites, setFavorites] = useState<string[]>([])
   const [featuredIndex, setFeaturedIndex] = useState(0)
   const [currentPlants, setCurrentPlants] = useState<any[]>([])
@@ -42,26 +41,32 @@ export default function GardenFeatures() {
 
   const current = GARDEN_ARCHIVE[featuredIndex]
 
+  // 1. Fetch Featured Plants (UI)
   useEffect(() => {
     async function fetchPlantDetails() {
-      if (!current?.plantNames) return
+      if (!current?.plantNames?.length) return
       setLoading(true)
-      const { data } = await supabase
+      
+      const { data, error } = await supabase
         .from('plants')
-        .select('id, common_name, image_url') 
+        .select('id, common_name, image_url')
         .in('common_name', current.plantNames)
 
-      if (data) {
+      if (error) {
+        console.error('Error fetching featured plants:', error)
+        setCurrentPlants([]) // Clear stale data on error
+      } else if (data) {
         const uniqueMap = new Map();
-        data.forEach(p => { if (!uniqueMap.has(p.common_name)) uniqueMap.set(p.common_name, p); });
-        const sorted = Array.from(uniqueMap.values()).sort((a, b) => a.common_name.localeCompare(b.common_name))
+        data.forEach((p) => { if (!uniqueMap.has(p.common_name)) uniqueMap.set(p.common_name, p); });
+        const sorted = Array.from(uniqueMap.values()).sort((a: any, b: any) => a.common_name.localeCompare(b.common_name))
         setCurrentPlants(sorted)
       }
       setLoading(false)
     }
     fetchPlantDetails()
-  }, [featuredIndex, current.plantNames])
+  }, [featuredIndex, supabase]) // Simplified dependencies for stability
 
+  // 2. Load Favorites
   useEffect(() => {
     const saved = localStorage.getItem('garden-favorites')
     if (saved) setFavorites(JSON.parse(saved))
@@ -77,41 +82,57 @@ export default function GardenFeatures() {
     router.push(`/plants/${plantId}`)
   }
 
+  // 3. The Hardened Email Logic
   const handleEmailSubmit = async () => {
-    // 1. Get the LIVE logged-in user
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
+    // A. Verify Auth
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    console.log('DEBUG - Auth User:', user);
+    if (userError || !user) {
       alert("Please log in to submit your garden!");
       return;
     }
 
-    // 2. Fetch the actual plant names using the join
-    const { data: userPlants } = await supabase
+    // B. Fetch User's Plants (Using explicit join syntax)
+    const { data: userPlants, error: plantsError } = await supabase
       .from('user_plants')
       .select(`
+        plant_id,
         plants (
           common_name
         )
       `)
       .eq('user_id', user.id);
 
-    // 3. Format the list 
+    console.log('DEBUG - Raw userPlants data:', JSON.stringify(userPlants, null, 2));
+
+    if (plantsError) {
+      console.error('DEBUG - Query Error:', plantsError);
+      alert(`Database Error: ${plantsError.message}`);
+      return;
+    }
+
+    // C. Format Plant List
     const plantListText = (userPlants && userPlants.length > 0)
-      ? userPlants.map(item => (item.plants as any)?.common_name).filter(Boolean).join(', ')
+      ? userPlants
+          .map((item: any) => {
+            const p = item.plants;
+            return Array.isArray(p) ? p[0]?.common_name : p?.common_name;
+          })
+          .filter(Boolean)
+          .join(', ')
       : "No plants in my garden yet";
 
     const recipient = "pocketgardeneruploads@gmail.com";
     const subject = "Pocket Gardener Feature Submission";
     
-    // 4. CLEAN FORMATTING WITH NEW LINES (\n)
     const body = 
       `Hi Pocket Gardener,\n\n` +
       `I'd love to feature my garden in the app!\n\n` +
       `My garden style: [type here]\n` +
       `My location: [type here]\n` +
       `My current app plants: ${plantListText}\n\n` +
-      `Photos of my garden are attached`;
+      `Please attach photos of your garden to this email before sending.`;
 
     window.location.href = `mailto:${recipient}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   }
