@@ -84,7 +84,6 @@ export default function GardenFeatures() {
   const handleEmailSubmit = async () => {
     setLoading(true)
     
-    // Check Auth
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     
     if (userError || !user) {
@@ -93,7 +92,6 @@ export default function GardenFeatures() {
       return;
     }
 
-    // Fetch User's Plants
     const { data: userPlants, error: plantsError } = await supabase
       .from('user_plants')
       .select(`
@@ -111,7 +109,6 @@ export default function GardenFeatures() {
       return;
     }
 
-    // Format Plant List with fallback
     const plantListText = (userPlants && userPlants.length > 0)
       ? userPlants
           .map((item: any) => {
@@ -122,25 +119,27 @@ export default function GardenFeatures() {
           .join(', ')
       : "No plants in my garden yet";
 
-    // --- EMAIL FORMATTING FIX START ---
+    // --- UPDATED EMAIL FORMATTING ---
     const recipient = "pocketgardeneruploads@gmail.com";
     const subject = "Pocket Gardener Feature Submission";
     
-    // Using \r\n for universal line breaks in email clients
-    const bodyText = 
-      `Hi Pocket Gardener,\r\n\r\n` +
-      `I'd love to feature my garden in the app!\r\n\r\n` +
-      `MY GARDEN STYLE: [Type here]\r\n` +
-      `MY LOCATION: [Type here]\r\n` +
-      `MY PLANTS: ${plantListText}\r\n\r\n` +
-      `Please attach photos of your garden to this email before sending.`;
+    // Using \r\n inside the join for ultimate reliability across devices
+    const bodyText = [
+      'Hi Pocket Gardener,',
+      '',
+      "I'd love to feature my garden in the app!",
+      '',
+      'My garden style: [Type here]',
+      'My location: [Type here]',
+      `My current app plants: ${plantListText}`,
+      '',
+      'Please attach photos of your garden to this email before sending.'
+    ].join('\r\n');
 
-    // Final Encoding to ensure spaces and lines work on mobile
     const mailtoUrl = `mailto:${recipient}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
 
     setLoading(false);
     window.location.href = mailtoUrl;
-    // --- EMAIL FORMATTING FIX END ---
   }
 
   return (
