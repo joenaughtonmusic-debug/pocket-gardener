@@ -7,7 +7,6 @@ import { Heart, ChevronRight, Camera, User, Plus } from 'lucide-react'
 import Navigation from '../../components/Navigation'
 import { createClient } from '@supabase/supabase-js'
 
-// Initialize Supabase Client
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -43,48 +42,33 @@ export default function GardenFeatures() {
 
   const current = GARDEN_ARCHIVE[featuredIndex]
 
-  // FETCH & SORT PLANTS
   useEffect(() => {
     async function fetchPlantDetails() {
       if (!current?.plantNames) return
-      
       setLoading(true)
       const { data, error } = await supabase
         .from('plants')
         .select('id, common_name, image_url') 
         .in('common_name', current.plantNames)
 
-      if (error) console.error('Supabase error:', error)
-
       if (data) {
         const uniqueMap = new Map();
-        data.forEach(p => {
-          if (!uniqueMap.has(p.common_name)) {
-            uniqueMap.set(p.common_name, p);
-          }
-        });
-        
-        const sorted = Array.from(uniqueMap.values()).sort((a, b) => 
-          a.common_name.localeCompare(b.common_name)
-        )
+        data.forEach(p => { if (!uniqueMap.has(p.common_name)) uniqueMap.set(p.common_name, p); });
+        const sorted = Array.from(uniqueMap.values()).sort((a, b) => a.common_name.localeCompare(b.common_name))
         setCurrentPlants(sorted)
       }
       setLoading(false)
     }
-
     fetchPlantDetails()
   }, [featuredIndex, current.plantNames])
 
-  // Persist Favorites
   useEffect(() => {
     const saved = localStorage.getItem('garden-favorites')
     if (saved) setFavorites(JSON.parse(saved))
   }, [])
 
   const toggleFavorite = (id: string) => {
-    const newFavs = favorites.includes(id) 
-      ? favorites.filter(fav => fav !== id) 
-      : [...favorites, id]
+    const newFavs = favorites.includes(id) ? favorites.filter(fav => fav !== id) : [...favorites, id]
     setFavorites(newFavs)
     localStorage.setItem('garden-favorites', JSON.stringify(newFavs))
   }
@@ -93,23 +77,23 @@ export default function GardenFeatures() {
     router.push(`/plants/${plantId}`)
   }
 
-  // NEW: AUTOMATED EMAIL LOGIC
+  // THE HARDCODED TEST LOGIC
   const handleEmailSubmit = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    let plantListText = "No plants added to garden yet.";
+    const testUserId = "6f4ebb4b-7052-4676-ac2f-a6f27ab3acaa"; 
 
-    if (user) {
-      const { data: userPlants } = await supabase
-        .from('user_plants')
-        .select('plants(common_name)')
-        .eq('user_id', user.id);
+    const { data: userPlants, error } = await supabase
+      .from('user_plants')
+      .select(`plants ( common_name )`)
+      .eq('user_id', testUserId);
 
-      if (userPlants && userPlants.length > 0) {
-        // @ts-ignore - handling nested supabase join
-        plantListText = userPlants.map(p => p.plants.common_name).join(', ');
-      }
+    if (error) {
+      console.error("Database Error:", error);
+      return;
     }
+
+    const plantListText = (userPlants && userPlants.length > 0)
+      ? userPlants.map(item => (item.plants as any)?.common_name).filter(Boolean).join(', ')
+      : "No plants found.";
 
     const recipient = "pocketgardeneruploads@gmail.com";
     const subject = encodeURIComponent("Pocket Gardener Feature Submission");
@@ -118,7 +102,7 @@ export default function GardenFeatures() {
       `My Style: \n` +
       `My Location: \n\n` +
       `My Current App Plants: ${plantListText}\n\n` +
-      `[Please attach 1-2 landscape photos to this email!]`
+      `[Photos attached]`
     );
 
     window.location.href = `mailto:${recipient}?subject=${subject}&body=${body}`;
@@ -137,13 +121,11 @@ export default function GardenFeatures() {
             className="w-full h-full object-cover" 
           />
         </AnimatePresence>
-        
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
-        
-        <div className="absolute bottom-12 left-6 right-6 flex justify-between items-end">
-          <div className="text-white">
+        <div className="absolute bottom-12 left-6 right-6 flex justify-between items-end text-white">
+          <div>
             <div className="flex items-center gap-2 mb-2">
-               <span className="bg-green-500 text-[8px] font-black uppercase px-2 py-1 rounded-md text-white tracking-widest">Community Feature</span>
+               <span className="bg-green-500 text-[8px] font-black uppercase px-2 py-1 rounded-md tracking-widest">Community Feature</span>
                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-300">{current.month}</p>
             </div>
             <h1 className="text-4xl font-black italic uppercase tracking-tighter leading-none mb-2">{current.style}</h1>
@@ -152,11 +134,7 @@ export default function GardenFeatures() {
                 <p className="text-[10px] font-bold uppercase tracking-tight">Featured: {current.submittedBy}</p>
             </div>
           </div>
-          
-          <button 
-            onClick={() => toggleFavorite(current.id)}
-            className={`p-4 rounded-3xl backdrop-blur-md transition-all active:scale-75 ${favorites.includes(current.id) ? 'bg-red-500 text-white' : 'bg-white/10 text-white border border-white/20'}`}
-          >
+          <button onClick={() => toggleFavorite(current.id)} className={`p-4 rounded-3xl backdrop-blur-md transition-all active:scale-75 ${favorites.includes(current.id) ? 'bg-red-500 text-white' : 'bg-white/10 text-white border border-white/20'}`}>
             <Heart size={20} fill={favorites.includes(current.id) ? "currentColor" : "none"} />
           </button>
         </div>
@@ -168,24 +146,14 @@ export default function GardenFeatures() {
             <span className="text-green-700 font-black mr-1 text-[10px] uppercase">The Story:</span>
             {current.description}
           </p>
-          
           <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-6">Featured Plants (A-Z)</h2>
-          
           <div className="grid grid-cols-1 gap-3">
             {loading ? (
-              <div className="text-[10px] font-bold text-gray-300 animate-pulse uppercase">Syncing Photos...</div>
+              <div className="text-[10px] font-bold text-gray-300 animate-pulse uppercase text-center">Syncing Photos...</div>
             ) : (
               currentPlants.map((plant) => (
-                <button 
-                  key={plant.id} 
-                  onClick={() => handlePlantClick(plant.id)}
-                  className="flex items-center gap-4 bg-gray-50/50 p-3 rounded-2xl border border-gray-100 transition-all active:scale-[0.97] hover:bg-green-50/50 group w-full text-left"
-                >
-                  <img 
-                    src={plant.image_url} 
-                    alt={plant.common_name}
-                    className="w-12 h-12 rounded-xl object-cover shadow-sm border border-white"
-                  />
+                <button key={plant.id} onClick={() => handlePlantClick(plant.id)} className="flex items-center gap-4 bg-gray-50/50 p-3 rounded-2xl border border-gray-100 transition-all active:scale-[0.97] hover:bg-green-50/50 group w-full text-left">
+                  <img src={plant.image_url} alt={plant.common_name} className="w-12 h-12 rounded-xl object-cover shadow-sm border border-white" />
                   <div className="flex-1">
                     <h3 className="text-[11px] font-black uppercase text-gray-800 tracking-tight leading-none group-hover:text-green-800 transition-colors">{plant.common_name}</h3>
                     <p className="text-[8px] font-bold text-green-600/60 uppercase mt-1">Tap for care info</p>
@@ -201,10 +169,7 @@ export default function GardenFeatures() {
       </section>
 
       <section className="px-6 mb-8">
-        <button 
-            onClick={handleEmailSubmit}
-            className="w-full bg-green-900 rounded-[2rem] p-6 text-white flex items-center justify-between group active:scale-[0.98] transition-all"
-        >
+        <button onClick={handleEmailSubmit} className="w-full bg-green-900 rounded-[2rem] p-6 text-white flex items-center justify-between group active:scale-[0.98] transition-all">
             <div className="text-left">
                 <h4 className="text-sm font-black uppercase italic tracking-tight">Feature your garden?</h4>
                 <p className="text-[10px] opacity-70">Send a photo to be featured next month</p>
@@ -217,13 +182,8 @@ export default function GardenFeatures() {
 
       <section className="px-6 space-y-4">
         <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-2">Garden Archive</h2>
-        
         {GARDEN_ARCHIVE.map((garden, index) => (
-          <button 
-            key={garden.id}
-            onClick={() => setFeaturedIndex(index)}
-            className={`w-full flex items-center gap-4 p-3 rounded-3xl transition-all border ${featuredIndex === index ? 'bg-green-50 border-green-200' : 'bg-white border-gray-100 shadow-sm'}`}
-          >
+          <button key={garden.id} onClick={() => setFeaturedIndex(index)} className={`w-full flex items-center gap-4 p-3 rounded-3xl transition-all border ${featuredIndex === index ? 'bg-green-50 border-green-200' : 'bg-white border-gray-100 shadow-sm'}`}>
             <img src={garden.image} className="w-16 h-16 rounded-2xl object-cover" />
             <div className="flex-1 text-left">
               <p className="text-[8px] font-black text-gray-400 uppercase">{garden.month}</p>
@@ -233,7 +193,6 @@ export default function GardenFeatures() {
           </button>
         ))}
       </section>
-
       <Navigation />
     </main>
   )
