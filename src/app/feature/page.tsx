@@ -46,7 +46,7 @@ export default function GardenFeatures() {
     async function fetchPlantDetails() {
       if (!current?.plantNames) return
       setLoading(true)
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('plants')
         .select('id, common_name, image_url') 
         .in('common_name', current.plantNames)
@@ -78,37 +78,42 @@ export default function GardenFeatures() {
   }
 
   const handleEmailSubmit = async () => {
-    // 1. HARDCODED ID FOR TESTING
-    const testUserId = "6f4ebb4b-7052-4676-ac2f-a6f27ab3acaa"; 
+    // 1. Get the LIVE logged-in user
+    const { data: { user } } = await supabase.auth.getUser();
 
-    // 2. FETCH ATTEMPT
-    const { data: userPlants, error } = await supabase
-      .from('user_plants')
-      .select(`plants ( common_name )`)
-      .eq('user_id', testUserId);
-
-    // 3. FALLBACK LOGIC
-    // If the database is empty or errors, we use the fallback list so the email isn't blank
-    let plantListText = "";
-    
-    if (userPlants && userPlants.length > 0) {
-      plantListText = userPlants.map(item => (item.plants as any)?.common_name).filter(Boolean).join(', ');
-    } else {
-      // Friendly fallback list for testing/demo
-      plantListText = "Bird of Paradise, Kentia Palm, Manuka, NZ Flax";
+    if (!user) {
+      alert("Please log in to submit your garden!");
+      return;
     }
 
-    const recipient = "pocketgardeneruploads@gmail.com";
-    const subject = encodeURIComponent("Pocket Gardener Feature Submission");
-    const body = encodeURIComponent(
-      `Hi Joe,\n\nI'd love to feature my garden in the app!\n\n` +
-      `My Style: \n` +
-      `My Location: \n\n` +
-      `My Current App Plants: ${plantListText}\n\n` +
-      `[Photos attached]`
-    );
+    // 2. Fetch the actual plant names using the join
+    const { data: userPlants } = await supabase
+      .from('user_plants')
+      .select(`
+        plants (
+          common_name
+        )
+      `)
+      .eq('user_id', user.id);
 
-    window.location.href = `mailto:${recipient}?subject=${subject}&body=${body}`;
+    // 3. Format the list 
+    const plantListText = (userPlants && userPlants.length > 0)
+      ? userPlants.map(item => (item.plants as any)?.common_name).filter(Boolean).join(', ')
+      : "No plants in my garden yet";
+
+    const recipient = "pocketgardeneruploads@gmail.com";
+    const subject = "Pocket Gardener Feature Submission";
+    
+    // 4. CLEAN FORMATTING WITH NEW LINES (\n)
+    const body = 
+      `Hi Pocket Gardener,\n\n` +
+      `I'd love to feature my garden in the app!\n\n` +
+      `My garden style: [type here]\n` +
+      `My location: [type here]\n` +
+      `My current app plants: ${plantListText}\n\n` +
+      `Photos of my garden are attached`;
+
+    window.location.href = `mailto:${recipient}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   }
 
   return (
@@ -152,7 +157,7 @@ export default function GardenFeatures() {
           <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-6">Featured Plants (A-Z)</h2>
           <div className="grid grid-cols-1 gap-3">
             {loading ? (
-              <div className="text-[10px] font-bold text-gray-300 animate-pulse uppercase text-center">Syncing Photos...</div>
+              <div className="text-[10px] font-bold text-gray-300 animate-pulse uppercase text-center">Syncing...</div>
             ) : (
               currentPlants.map((plant) => (
                 <button key={plant.id} onClick={() => handlePlantClick(plant.id)} className="flex items-center gap-4 bg-gray-50/50 p-3 rounded-2xl border border-gray-100 transition-all active:scale-[0.97] hover:bg-green-50/50 group w-full text-left">
