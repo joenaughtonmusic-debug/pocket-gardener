@@ -11,20 +11,20 @@ const GARDEN_ARCHIVE = [
   {
     id: 'apr-26',
     month: 'April 2026',
-    style: 'Modern Architectural',
+    style: 'Sub-tropical',
     submittedBy: 'Joe from Auckland',
-    description: 'Clean lines and structural plants that look great year-round in the NZ sun.',
-    image: 'https://images.unsplash.com/photo-1558905619-17355095afe0?auto=format&fit=crop&q=80',
-    plantNames: ['Bird Of Paradise', 'Kentia Palm', 'Griselinia', 'Star Jasmine']
+    description: 'Subtropical garden with multiple textures, colours and heights.',
+    image: 'https://sonxnuxhrivzgcevtdtc.supabase.co/storage/v1/object/public/plants/IMG20260129134358.jpg',
+    plantNames: ['Rhododendron Vireya', 'Kentia Palm', 'Gardenia', 'Buxus Japonica', 'Star Jasmine']
   },
   {
     id: 'mar-26',
     month: 'March 2026',
-    style: 'Native Bush Retreat',
+    style: 'Lush garden',
     submittedBy: 'Sarah from Titirangi',
-    description: 'A selection of hardy natives designed to blend into the local Waitakere landscape.',
-    image: 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&q=80',
-    plantNames: ['Pohutukawa', 'NZ Flax', 'Manuka', 'Silver Flax']
+    description: 'A selection of lush plants and natives to create a full and thriving garden.',
+    image: 'https://sonxnuxhrivzgcevtdtc.supabase.co/storage/v1/object/public/plants/IMG20260113164903.jpg',
+    plantNames: ['Tractor Seat Plant', 'Lomandra', 'Pratia', 'Puriri']
   }
 ]
 
@@ -155,7 +155,7 @@ export default function GardenFeatures() {
             className="w-full h-full object-cover" 
           />
         </AnimatePresence>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
         <div className="absolute bottom-12 left-6 right-6 flex justify-between items-end text-white">
           <div>
             <div className="flex items-center gap-2 mb-2">

@@ -6,7 +6,6 @@ import Link from 'next/link'
 import { Pencil, Camera, ArrowRight, Check, Sparkles, AlertCircle } from 'lucide-react' 
 import Navigation from '../../components/Navigation'
 import PlantThumbnail from '../../components/PlantThumbnail'
-import PageHelp from '../../components/PageHelp'
 import WelcomeOverlay from '../../components/WelcomeOverlay'
 import UpgradeButton from '../../components/UpgradeButton'
 
@@ -184,7 +183,6 @@ export default function MyGardenDashboard() {
   const specificPlants = processedPlants.filter(p => p.isSpecific);
   const generalPlants = processedPlants.filter(p => !p.isSpecific);
 
-  // GROUPING LOGIC FOR GENERAL PLANTS
   const groupedByType = generalPlants.reduce((acc, item) => {
     const type = item.plants.plant_type || 'Other';
     if (!acc[type]) acc[type] = [];
@@ -195,80 +193,90 @@ export default function MyGardenDashboard() {
   const sortedCategories = Object.keys(groupedByType).sort();
 
   return (
-    <main className="min-h-screen bg-[#f0f4f1] p-6 pb-40 text-gray-900">
+    <main className="min-h-screen bg-[#f0f4f1] pb-40 text-gray-900">
       <WelcomeOverlay />
 
-      <header className="mb-8 pt-4 flex justify-between items-start">
-        <div>
-          <h1 className="text-4xl font-black text-green-950 tracking-tighter italic uppercase leading-none">My Garden</h1>
-          <div className="flex items-center gap-2 mt-3 bg-white/50 w-fit px-3 py-1.5 rounded-full border border-white/50 shadow-sm">
-            <p className="text-[11px] font-black uppercase tracking-tight text-gray-500">
-              Welcome, <span className="text-green-700">{userName}</span>
-            </p>
-            <button onClick={async () => {
-              const n = window.prompt("Name:", userName); 
-              if(n) { await supabase.auth.updateUser({data:{display_name:n}}); getGarden(); }
-            }} className="text-green-600 hover:scale-110 transition-transform">
-              <Pencil size={12} strokeWidth={3} />
-            </button>
-          </div>
-        </div>
-        <div className="flex flex-col items-center gap-1.5">
-          <Link href="/about" className="text-2xl bg-white w-14 h-14 rounded-[1.5rem] border-2 border-white flex items-center justify-center shadow-lg active:scale-90 transition-all">🧑‍🌾</Link>
-          <span className="text-[8px] font-black text-green-800/40 uppercase tracking-widest">Profile/About</span>
-        </div>
-      </header>
+      {/* --- HERO SECTION --- */}
+      <section className="relative h-[55vh] w-full overflow-hidden rounded-b-[4rem] shadow-2xl shadow-green-900/20 mb-10">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/10 z-10" />
+        
+        <img 
+          src={gardenPhoto || "https://pristinegardens.co.nz/wp-content/uploads/2022/07/20220115_152342.jpg"} 
+          alt="My Garden"
+          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
+        />
 
-      {!loading && isPro && (
-        <section className="mb-10 group">
-          <div className="bg-white p-2 rounded-[2.5rem] border-2 border-white shadow-xl overflow-hidden relative">
-            <div 
-              onClick={() => fileInputRef.current?.click()} 
-              className="relative w-full h-52 bg-green-50 rounded-[2rem] flex items-center justify-center cursor-pointer overflow-hidden border border-green-100"
-            >
-              {uploading ? (
-                <div className="flex flex-col items-center gap-2 animate-bounce">
-                   <Sparkles className="text-amber-500" />
-                   <span className="text-[10px] font-black text-green-700 uppercase">Saving...</span>
-                </div>
-              ) : gardenPhoto ? (
-                <img src={gardenPhoto} alt="My Garden" className="w-full h-full object-cover" />
-              ) : (
-                <div className="flex flex-col items-center gap-2">
-                  <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm">
-                    <Camera className="text-green-950" size={20} />
-                  </div>
-                  <span className="text-[9px] font-black uppercase tracking-[0.2em] text-green-800/40">Feature your garden</span>
-                </div>
-              )}
-              {gardenPhoto && (
-                <div className="absolute bottom-4 right-4 bg-green-700 p-2 rounded-full shadow-lg text-white">
-                   <Camera size={14} strokeWidth={3} />
-                </div>
-              )}
-            </div>
-          </div>
-          <input type="file" ref={fileInputRef} onChange={handlePhotoUpload} className="hidden" accept="image/*" />
-        </section>
-      )}
-
-      {!isPro && (
-        <section className="mb-12">
-            <div className="bg-green-950 rounded-[3rem] p-8 relative overflow-hidden flex flex-col items-center text-center shadow-2xl border-4 border-amber-400/20">
-              <div className="relative z-10">
-                  <div className="bg-amber-400 text-green-950 text-[9px] font-black uppercase tracking-widest px-4 py-1 rounded-full mx-auto w-fit mb-4">
-                    Pro Membership
-                  </div>
-                  <h2 className="text-2xl font-black mb-3 uppercase tracking-tighter text-white leading-none italic">Unlimited Growth</h2>
-                  <p className="text-[11px] text-green-200/70 font-medium italic mb-8 px-4">Unlock the Garden Matchmaker, full identification tools, and expert guides.</p>
-                  <UpgradeButton />
+        <div className="absolute inset-0 z-20 flex flex-col justify-between p-8 pt-12">
+          <div className="flex justify-end">
+            <Link href="/about" className="group flex flex-col items-center gap-1.5 active:scale-95 transition-all">
+              <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl border border-white/30 flex items-center justify-center text-xl shadow-lg">
+                🧑‍🌾
               </div>
-              <Sparkles className="absolute -right-4 -bottom-4 text-white/5 w-32 h-32 rotate-12" />
-            </div>
-        </section>
-      )}
+              <span className="text-[7px] font-black text-white/60 uppercase tracking-[0.2em]">Profile</span>
+            </Link>
+          </div>
 
-      <div className="space-y-12">
+          <div className="pb-4">
+            <h1 className="text-5xl font-black text-white tracking-tighter italic uppercase leading-none mb-4 [text-shadow:_0_2px_10px_rgb(0_0_0_/_30%)]">
+              My Garden
+            </h1>
+            
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 shadow-sm">
+                <p className="text-[10px] font-black uppercase tracking-widest text-white/90">
+                   {userName}
+                </p>
+                <button 
+                  onClick={async () => {
+                    const n = window.prompt("Name:", userName); 
+                    if(n) { await supabase.auth.updateUser({data:{display_name:n}}); getGarden(); }
+                  }} 
+                  className="text-green-400 hover:scale-110 transition-transform"
+                >
+                  <Pencil size={10} strokeWidth={3} />
+                </button>
+              </div>
+
+              {isPro && (
+                <button 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="bg-green-500 p-2.5 rounded-full text-white shadow-lg active:scale-90 transition-all border border-green-400"
+                >
+                  <Camera size={14} strokeWidth={3} />
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <input type="file" ref={fileInputRef} onChange={handlePhotoUpload} className="hidden" accept="image/*" />
+        
+        {uploading && (
+          <div className="absolute inset-0 z-30 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center text-white gap-3">
+             <div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin"></div>
+             <span className="text-[10px] font-black uppercase tracking-widest">Saving View...</span>
+          </div>
+        )}
+      </section>
+
+      <div className="px-6 space-y-12">
+        {/* --- PRO UPSELL --- */}
+        {!isPro && (
+          <section>
+              <div className="bg-green-950 rounded-[3rem] p-8 relative overflow-hidden flex flex-col items-center text-center shadow-2xl border-4 border-amber-400/20">
+                <div className="relative z-10">
+                    <div className="bg-amber-400 text-green-950 text-[9px] font-black uppercase tracking-widest px-4 py-1 rounded-full mx-auto w-fit mb-4">
+                      Pro Membership
+                    </div>
+                    <h2 className="text-xl font-black mb-2 uppercase tracking-tighter text-white italic leading-none">Unlimited Growth</h2>
+                    <p className="text-[10px] text-green-200/60 font-medium italic mb-6 px-4">Unlock identification, expert guides, and custom garden photos.</p>
+                    <UpgradeButton />
+                </div>
+              </div>
+          </section>
+        )}
+
+        {/* --- ALERTS --- */}
         {followUpAlerts.length > 0 && (
           <section className="space-y-4">
             <div className="flex items-center gap-2 px-2">
@@ -294,6 +302,7 @@ export default function MyGardenDashboard() {
           </section>
         )}
 
+        {/* --- SEASON TIP --- */}
         {featuredTip && (
           <section>
             <div className="bg-green-900 rounded-[2.5rem] shadow-2xl p-8 border-b-4 border-amber-400">
@@ -309,6 +318,7 @@ export default function MyGardenDashboard() {
           </section>
         )}
 
+        {/* --- PLANT LIST --- */}
         {ownedPlants.length > 0 && (
           <section className="space-y-8">
             <h2 className="text-[15px] font-black text-green-950 uppercase tracking-[0.2em] px-2 flex items-center justify-between">
@@ -323,7 +333,9 @@ export default function MyGardenDashboard() {
                     <div className="flex items-center gap-4">
                       <PlantThumbnail plant={item.plants} size="sm" />
                       <div>
-                        <h3 className="text-md font-black text-green-950 tracking-tighter uppercase leading-none">{item.nickname || item.plants.common_name}</h3>
+                        <h3 className="text-md font-black text-green-950 tracking-tighter uppercase leading-none">
+                          {item.nickname || item.plants?.common_name || "Unknown Plant (Link Broken)"}
+                        </h3>
                         <p className="text-[8px] text-amber-600 font-black uppercase tracking-widest mt-1.5 italic">Special Care Month</p>
                       </div>
                     </div>
@@ -342,7 +354,6 @@ export default function MyGardenDashboard() {
             {generalPlants.length > 0 && (
               <div className="space-y-4 pt-4">
                 <div className="bg-white p-6 rounded-[2.5rem] border-2 border-green-100 shadow-xl relative overflow-hidden">
-                  <p className="absolute -top-2 -left-2 text-green-800/5 w-24 h-24 rotate-12" />
                   <div className="relative z-10">
                     <div className="flex items-center gap-2 mb-4">
                       <span className="text-[14px] font-black text-green-800/60 uppercase tracking-[0.2em]">{currentMonthName} - General Garden Notes</span>
@@ -391,6 +402,7 @@ export default function MyGardenDashboard() {
           </section>
         )}
 
+        {/* --- PROJECTS --- */}
         {projectPlants.length > 0 && (
           <section className="space-y-4 pb-10">
             <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] px-2 italic">Upcoming Projects</h2>

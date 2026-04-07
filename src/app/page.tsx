@@ -10,32 +10,37 @@ export default async function LandingPage() {
   const monthName = new Date().toLocaleString('en-NZ', { month: 'long' });
   const monthShort = new Date().toLocaleString('en-NZ', { month: 'short' });
 
-  // 2. Fetch the ONE featured row for this month from your new table
+  // 2. Fetch the Expert Advice from Supabase (for the guest preview box)
   const { data: featured } = await supabase
     .from('featured_advice')
     .select('*')
     .eq('month_number', currentMonthNumber)
     .single();
 
-  // 3. Fallback logic: Use Mondo Grass if the database row isn't found yet
+  // 3. Fallback logic for the Expert Advice box
   const displayData = featured || {
-    plant_name: "Mondo Grass",
-    care_note: "Keep your garden beds clear of fallen autumn leaves to prevent rot.",
-    image_url: "https://images.unsplash.com/photo-1533038590840-1cde6e668a91?auto=format&fit=crop&q=80",
-    emoji: "🌿"
+    plant_name: "Star Jasmine",
+    care_note: "A generally hardy and fast growing vine with fragrant flowers in November, add to your garden to see specific care and plant health advice.",
+    image_url: "https://sonxnuxhrivzgcevtdtc.supabase.co/storage/v1/object/public/plants/star-jasmine-trachelospermum-jasminoides-garden-design_18028.webp",
   };
+
+  // 4. FEATURED GARDEN IMAGE (Pulling from your Garden Archive)
+  // This matches your April 2026 featured photo
+  const featuredGardenImg = "https://sonxnuxhrivzgcevtdtc.supabase.co/storage/v1/object/public/plants/IMG20260129134358.jpg";
 
   return (
     <main className="min-h-screen bg-[#f8fbf9] text-gray-900">
       {/* 1. HERO SECTION */}
       <section className="relative h-[65vh] w-full overflow-hidden rounded-b-[4rem] shadow-2xl shadow-green-900/10">
-        <div className="absolute inset-0 bg-gradient-to-t from-[#1a3525] via-transparent to-black/20 z-10" />
         
-        {/* Featured Background Image (Auckland Garden) */}
+        {/* Softened Shadow: from-black/40 instead of heavy green/90 */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/10 z-10" />
+        
+        {/* DYNAMIC IMAGE: Now pulls your actual featured garden photo */}
         <img 
-          src="https://pristinegardens.co.nz/wp-content/uploads/2022/07/20220115_152342.jpg" 
+          src={featuredGardenImg} 
           alt="Featured Auckland Garden"
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
         />
         
         <div className="absolute inset-0 z-20 flex flex-col justify-between p-8 pt-16">
@@ -48,7 +53,7 @@ export default async function LandingPage() {
           </div>
 
           <div className="pb-6">
-            <h1 className="text-2xl font-black text-white italic uppercase mb-6 leading-none tracking-tighter">
+            <h1 className="text-2xl font-black text-white italic uppercase mb-6 leading-none tracking-tighter [text-shadow:_0_1px_10px_rgb(0_0_0_/_20%)]">
               Featured: {monthName}
             </h1>
             
@@ -62,11 +67,10 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* 2. DYNAMIC GUEST PREVIEW (Shows plant-specific advice from Supabase) */}
+      {/* 2. DYNAMIC GUEST PREVIEW (Advice section) */}
       {!user && (
         <section className="px-8 -mt-10 relative z-30 mb-12">
           <div className="bg-white rounded-[3rem] shadow-xl border border-green-50 overflow-hidden">
-             {/* Plant Photo from the database */}
              <img 
                src={displayData.image_url} 
                className="w-full h-48 object-cover" 
