@@ -599,6 +599,23 @@ const { error } = await supabase.from('user_plants').insert([{
           </div>
         )}
       </div>
+      <div className="mt-12 p-8 rounded-[2.5rem] bg-white border border-dashed border-gray-200 text-center shadow-sm mx-2">
+          <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
+            <HelpCircle size={24} />
+          </div>
+          <h3 className="font-black text-gray-800 text-sm uppercase tracking-tight mb-2">
+            Can't find your plant?
+          </h3>
+          <p className="text-[11px] text-gray-400 font-medium leading-relaxed mb-6 px-4">
+            If we're missing something from your garden, let us know and we'll add it for you.
+          </p>
+          <a
+            href="mailto:pocketgardeneruploads@gmail.com?subject=Library Addition Request"
+            className="inline-flex items-center gap-2 bg-green-950 text-white px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-sm active:scale-95 transition-transform"
+          >
+            <Mail size={14} /> Request Addition
+          </a>
+        </div>
 
       {selectedPlantImage && (
         <div

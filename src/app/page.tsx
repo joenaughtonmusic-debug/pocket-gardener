@@ -58,10 +58,10 @@ export default async function LandingPage() {
             </h1>
             
             <Link 
-              href={user ? "/dashboard" : "/login"} 
+              href={user ? "/calendar" : "/login"} 
               className="inline-block w-full text-center bg-white text-[#2d5a3f] py-6 rounded-[2.5rem] font-black uppercase tracking-[0.2em] text-[12px] shadow-xl active:scale-95 transition-all"
             >
-              {user ? "Enter My Garden" : "Start Your Garden"}
+              {user ? "View My Calendar" : "Start Your Garden"}
             </Link>
           </div>
         </div>
