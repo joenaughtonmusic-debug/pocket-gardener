@@ -128,11 +128,19 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* 4. FOOTER */}
       <footer className="pb-24 text-center">
-         <Link href="/about" className="group inline-flex items-center gap-2 opacity-40 hover:opacity-100 transition-opacity">
-           <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Designed by</span>
-           <span className="text-xl group-hover:rotate-12 transition-transform">🧑‍🌾</span>
+         <Link href="/about" className="group inline-flex flex-col items-center gap-2 opacity-30 hover:opacity-100 transition-all">
+           {/* Small, subtle version of your logo instead of the 'Designed by' text */}
+           <div className="w-12 h-12 bg-white/50 rounded-xl flex items-center justify-center border border-gray-200 shadow-sm overflow-hidden grayscale group-hover:grayscale-0 transition-all">
+             <img 
+               src="/pglogo.png" 
+               alt="Pocket Gardener" 
+               className="w-12 h-12 object-contain"
+             />
+           </div>
+           <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.4em]">
+             Pocket Gardener • v1.0
+           </span>
          </Link>
       </footer>
     </main>

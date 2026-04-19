@@ -17,35 +17,35 @@ export default function Navigation() {
     <nav className="fixed bottom-6 left-3 right-3 max-w-md mx-auto bg-white/90 backdrop-blur-lg border border-gray-100 rounded-full py-2 shadow-2xl z-50">
       <div className="grid grid-cols-5 items-center w-full px-1">
         
-        {/* GARDEN */}
-        <Link href="/dashboard" className="flex flex-col items-center group">
-          <span className={`text-lg transition-transform ${pathname === '/dashboard' ? 'scale-125 mb-1' : 'opacity-70'}`}>🏡</span>
-          <span className={`text-[8px] font-black uppercase tracking-tighter transition-colors ${pathname === '/dashboard' ? 'text-green-800' : 'text-gray-400'}`}>Garden</span>
-        </Link>
-        
-        {/* LIBRARY */}
-        <Link href="/plants" className="flex flex-col items-center group">
-          <span className={`text-lg transition-transform ${pathname === '/plants' ? 'scale-125 mb-1' : 'opacity-70'}`}>🌿</span>
-          <span className={`text-[8px] font-black uppercase tracking-tighter transition-colors ${pathname === '/plants' ? 'text-green-800' : 'text-gray-400'}`}>Library</span>
-        </Link>
+        {/* Calendar */}
+  <Link href="/calendar" className="flex flex-col items-center group">
+    <span className={`text-lg transition-transform ${pathname === '/calendar' ? 'scale-125 mb-1' : 'opacity-70'}`}>🗓️</span>
+    <span className={`text-[8px] font-black uppercase tracking-tighter transition-colors ${pathname === '/calendar' ? 'text-green-950' : 'text-gray-400'}`}>Calendar</span>
+  </Link>
 
-        {/* MATCH - Using Emoji to match the House style */}
-        <Link href="/match" className="flex flex-col items-center group">
-          <span className={`text-lg transition-transform ${pathname === '/match' ? 'scale-125 mb-1' : 'opacity-70'}`}>✅</span>
-          <span className={`text-[8px] font-black uppercase tracking-tighter transition-colors ${pathname === '/match' ? 'text-green-800' : 'text-gray-400'}`}>Match</span>
-        </Link>
+  {/* GARDEN */}
+  <Link href="/dashboard" className="flex flex-col items-center group">
+    <span className={`text-lg transition-transform ${pathname === '/dashboard' ? 'scale-125 mb-1' : 'opacity-70'}`}>🏡</span>
+    <span className={`text-[8px] font-black uppercase tracking-tighter transition-colors ${pathname === '/dashboard' ? 'text-green-950' : 'text-gray-400'}`}>Garden</span>
+  </Link>
+  
+  {/* LIBRARY */}
+  <Link href="/plants" className="flex flex-col items-center group">
+    <span className={`text-lg transition-transform ${pathname === '/plants' ? 'scale-125 mb-1' : 'opacity-70'}`}>🌿</span>
+    <span className={`text-[8px] font-black uppercase tracking-tighter transition-colors ${pathname === '/plants' ? 'text-green-950' : 'text-gray-400'}`}>Library</span>
+  </Link>
 
-        {/* GUIDES */}
-        <Link href="/guides" className="flex flex-col items-center group">
-          <span className={`text-lg transition-transform ${pathname === '/guides' ? 'scale-125 mb-1' : 'opacity-70'}`}>📖</span>
-          <span className={`text-[8px] font-black uppercase tracking-tighter transition-colors ${pathname === '/guides' ? 'text-green-800' : 'text-gray-400'}`}>Guides</span>
-        </Link>
+  {/* GUIDES */}
+  <Link href="/guides" className="flex flex-col items-center group">
+    <span className={`text-lg transition-transform ${pathname === '/guides' ? 'scale-125 mb-1' : 'opacity-70'}`}>📖</span>
+    <span className={`text-[8px] font-black uppercase tracking-tighter transition-colors ${pathname === '/guides' ? 'text-green-950' : 'text-gray-400'}`}>Guides</span>
+  </Link>
 
-        {/* FEATURE (The New Star) */}
-        <Link href="/feature" className="flex flex-col items-center group">
-          <span className={`text-lg transition-transform ${pathname === '/feature' ? 'scale-125 mb-1' : 'opacity-70'}`}>🖼️</span>
-          <span className={`text-[8px] font-black uppercase tracking-tighter transition-colors ${pathname === '/feature' ? 'text-green-800' : 'text-gray-400'}`}>Feature</span>
-        </Link>
+  {/* FEATURE */}
+  <Link href="/feature" className="flex flex-col items-center group">
+    <span className={`text-lg transition-transform ${pathname === '/feature' ? 'scale-125 mb-1' : 'opacity-70'}`}>🖼️</span>
+    <span className={`text-[8px] font-black uppercase tracking-tighter transition-colors ${pathname === '/feature' ? 'text-green-950' : 'text-gray-400'}`}>Feature</span>
+  </Link>
         
       </div>
     </nav>

@@ -1,12 +1,25 @@
-'use client' 
+'use client'
 
-import { useEffect, useState } from "react"; 
+import { useEffect, useState, useRef } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import Link from "next/link";
-import { ChevronDown, ChevronUp, Search, X, Camera, RefreshCw, Plus, CheckCircle, ArrowRight, HelpCircle, Mail, AlertTriangle, Image as ImageIcon } from "lucide-react"; 
+import {
+  ChevronDown,
+  ChevronUp,
+  Search,
+  X,
+  Camera,
+  RefreshCw,
+  Plus,
+  CheckCircle,
+  ArrowRight,
+  HelpCircle,
+  Mail,
+  AlertTriangle,
+  Image as ImageIcon
+} from "lucide-react";
 import Navigation from "../../components/Navigation";
 import PlantThumbnail from "../../components/PlantThumbnail";
-import QuickAddButton from "../../components/QuickAddButton";
 import PageHelp from "../../components/PageHelp";
 
 // Full Weed Registry for AI Recognition (Auckland/NZ Focus)
@@ -41,6 +54,7 @@ interface Plant {
   sun_requirement: string | string[] | null;
   image_url?: string | null;
   plant_type?: string | null;
+  task_category?: string | null;
   is_star_performer?: boolean;
   is_native?: boolean;
   flower_color?: string | null;
@@ -50,17 +64,24 @@ export default function LibraryPage() {
   const [plants, setPlants] = useState<Plant[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPlantImage, setSelectedPlantImage] = useState<Plant | null>(null);
-  const [showIdentifier, setShowIdentifier] = useState(false); 
-  
+  const [showIdentifier, setShowIdentifier] = useState(false);
+
   const [isScanning, setIsScanning] = useState(false);
   const [aiMatch, setAiMatch] = useState<Plant | null>(null);
   const [aiResultName, setAiResultName] = useState<string | null>(null);
-  const [detectedWeed, setDetectedWeed] = useState<{scientific: string, common: string} | null>(null);
+  const [detectedWeed, setDetectedWeed] = useState<{ scientific: string, common: string } | null>(null);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isNative, setIsNative] = useState("");
   const [flowerColor, setFlowerColor] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
+
+  const [existingPlantIds, setExistingPlantIds] = useState<number[]>([]);
+  const [openAddPlantId, setOpenAddPlantId] = useState<number | null>(null);
+  const [addQuantity, setAddQuantity] = useState<number>(1);
+  const [addLengthMetres, setAddLengthMetres] = useState<string>("");
+  const [isAddingPlantId, setIsAddingPlantId] = useState<number | null>(null);
+  const quantityInputRef = useRef<HTMLInputElement | null>(null);
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -84,14 +105,38 @@ export default function LibraryPage() {
         });
         setPlants(Array.from(uniquePlantsMap.values()));
       }
+
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
+
+      if (user) {
+        const { data: userPlants } = await supabase
+          .from('user_plants')
+          .select('plant_id')
+          .eq('user_id', user.id)
+          .eq('is_project', false);
+
+        if (userPlants) {
+          setExistingPlantIds(userPlants.map((p: any) => p.plant_id));
+        }
+      }
+
       setLoading(false);
     }
+
     fetchPlants();
   }, [supabase]);
 
+  useEffect(() => {
+  if (openAddPlantId && quantityInputRef.current) {
+    quantityInputRef.current.focus();
+  }
+}, [openAddPlantId]);
+
   // STABLE CLIENT DOWNSCALE APPROACH (Prevents Mobile Crashes)
   async function downscaleOnClient(file: File): Promise<Blob> {
-    const MAX = 1200; 
+    const MAX = 1200;
     const url = URL.createObjectURL(file);
     try {
       const img = await new Promise<HTMLImageElement>((resolve, reject) => {
@@ -119,7 +164,7 @@ export default function LibraryPage() {
         canvas.toBlob(
           (b) => (b ? resolve(b) : reject(new Error("toBlob failed"))),
           "image/jpeg",
-          0.7 
+          0.7
         );
       });
     } finally {
@@ -138,7 +183,7 @@ export default function LibraryPage() {
 
     try {
       const blob = await downscaleOnClient(file);
-      e.target.value = ""; 
+      e.target.value = "";
 
       const formData = new FormData();
       formData.append("image", blob, "plant.jpg");
@@ -151,12 +196,12 @@ export default function LibraryPage() {
       if (!response.ok) throw new Error("Identification failed");
 
       const data = await response.json();
-      const scientificName = data.result?.classification?.suggestions?.[0]?.name 
-                             || data.suggestions?.[0]?.scientific_name;
-      
+      const scientificName = data.result?.classification?.suggestions?.[0]?.name
+        || data.suggestions?.[0]?.scientific_name;
+
       if (scientificName) {
         setAiResultName(scientificName);
-        const weedMatch = COMMON_WEEDS.find(w => 
+        const weedMatch = COMMON_WEEDS.find(w =>
           scientificName.toLowerCase().includes(w.scientific.toLowerCase())
         );
 
@@ -187,10 +232,67 @@ export default function LibraryPage() {
     }
   };
 
+  const handleOpenAddPanel = (plantId: number) => {
+    setOpenAddPlantId(plantId);
+    setAddQuantity(1);
+    setAddLengthMetres("");
+  };
+
+  const handleConfirmAdd = async (plant: Plant) => {
+    try {
+      setIsAddingPlantId(plant.id);
+
+      const {
+        data: { session }
+      } = await supabase.auth.getSession();
+
+      if (!session?.user) {
+        alert("Please log in first!");
+        return;
+      }
+
+      const isHedge =
+  (plant.task_category || plant.plant_type || '').toLowerCase() === 'hedge';
+
+const safeQuantity = isHedge
+  ? null
+  : Number.isFinite(addQuantity) && addQuantity > 0
+  ? addQuantity
+  : 1;
+
+const safeLengthMetres =
+  isHedge && addLengthMetres.trim() !== '' && !Number.isNaN(Number(addLengthMetres))
+    ? Number(addLengthMetres)
+    : null;
+
+const { error } = await supabase.from('user_plants').insert([{
+  user_id: session.user.id,
+  plant_id: plant.id,
+  is_project: false,
+  status: 'Ongoing',
+  quantity: safeQuantity,
+  length_metres: safeLengthMetres,
+}]);
+
+      if (error) {
+        console.error(error);
+        alert("Could not add plant.");
+        return;
+      }
+
+      setExistingPlantIds(prev => [...prev, plant.id]);
+      setOpenAddPlantId(null);
+      setAddQuantity(1);
+      setAddLengthMetres("");
+    } finally {
+      setIsAddingPlantId(null);
+    }
+  };
+
   const filteredPlants = plants.filter(plant => {
     const matchesSearch = plant.common_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         plant.scientific_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         plant.plant_type?.toLowerCase().includes(searchQuery.toLowerCase());
+      plant.scientific_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      plant.plant_type?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesNative = isNative === "" ? true : (isNative === "Yes" ? plant.is_native === true : plant.is_native === false);
     const matchesColor = flowerColor === "" ? true : plant.flower_color === flowerColor;
     const matchesType = typeFilter === "" ? true : plant.plant_type === typeFilter;
@@ -213,7 +315,7 @@ export default function LibraryPage() {
       <header className="mb-8 pt-4">
         <div className="flex items-center gap-3">
           <h1 className="text-3xl font-black text-green-900 tracking-tight italic uppercase leading-none">Plant Library</h1>
-          <PageHelp 
+          <PageHelp
             title="Plant Library"
             description="Browse database or use AI identification."
             bullets={["Search by name", "Identify via photo upload", "Add to garden"]}
@@ -226,7 +328,7 @@ export default function LibraryPage() {
 
       {/* Search Bar */}
       <div className="mb-6 relative">
-        <input 
+        <input
           type="text"
           placeholder="Search by name..."
           value={searchQuery}
@@ -244,11 +346,10 @@ export default function LibraryPage() {
 
       {/* Identifier Tool */}
       <div className="mb-10 transition-all duration-300">
-        <button 
+        <button
           onClick={() => setShowIdentifier(!showIdentifier)}
-          className={`w-full p-7 rounded-[2.5rem] text-left relative overflow-hidden shadow-lg transition-all duration-300 ${
-            showIdentifier ? 'bg-white border border-green-100 shadow-green-900/5' : 'bg-[#2d5a3f] text-white'
-          }`}
+          className={`w-full p-7 rounded-[2.5rem] text-left relative overflow-hidden shadow-lg transition-all duration-300 ${showIdentifier ? 'bg-white border border-green-100 shadow-green-900/5' : 'bg-[#2d5a3f] text-white'
+            }`}
         >
           <div className="relative z-10">
             <h3 className={`font-black text-xl mb-1 uppercase italic tracking-tight ${showIdentifier ? 'text-[#2d5a3f]' : 'text-white'}`}>
@@ -307,8 +408,8 @@ export default function LibraryPage() {
                         <span className="text-[10px] font-black uppercase tracking-widest">Invasive Species</span>
                       </div>
                       <h4 className="font-black text-sm uppercase text-red-900 leading-tight mb-3">{detectedWeed.common}</h4>
-                      <Link 
-                        href="/guides/weeds" 
+                      <Link
+                        href="/guides/weeds"
                         className="w-full bg-red-600 text-white py-3 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-transform"
                       >
                         How to Kill It →
@@ -320,7 +421,7 @@ export default function LibraryPage() {
                         <span className="text-[8px] font-black uppercase text-gray-400">AI Result (Not in library)</span>
                         <h4 className="font-black text-sm uppercase text-slate-800 leading-tight">{aiResultName}</h4>
                       </div>
-                      <a 
+                      <a
                         href={`mailto:hello@yourdomain.com?subject=Library%20Addition%20Request:%20${aiResultName}`}
                         className="w-full bg-slate-900 text-white py-3 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-transform mt-3"
                       >
@@ -328,7 +429,7 @@ export default function LibraryPage() {
                       </a>
                     </div>
                   )}
-                  <button onClick={() => {setAiResultName(null); setAiMatch(null); setDetectedWeed(null);}} className="mt-4 text-[9px] font-black text-gray-300 uppercase hover:text-gray-500 tracking-widest">Reset Scanner</button>
+                  <button onClick={() => { setAiResultName(null); setAiMatch(null); setDetectedWeed(null); }} className="mt-4 text-[9px] font-black text-gray-300 uppercase hover:text-gray-500 tracking-widest">Reset Scanner</button>
                 </div>
               )}
             </div>
@@ -341,7 +442,7 @@ export default function LibraryPage() {
 
             <div className="bg-white rounded-[1.5rem] border border-gray-100 px-5 py-3 shadow-sm">
               <label className="text-[8px] font-black text-gray-300 uppercase tracking-widest block mb-1">Plant Category</label>
-              <select 
+              <select
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
                 className="w-full bg-transparent text-sm font-bold text-gray-700 outline-none h-8 appearance-none cursor-pointer"
@@ -385,30 +486,110 @@ export default function LibraryPage() {
             <div key={letter}>
               <h2 className="text-xs font-black text-green-800 uppercase tracking-[0.3em] mb-4 px-2">{letter}</h2>
               <div className="grid grid-cols-1 gap-4">
-                {groupedPlants[letter].map((plant: Plant) => (
-                  <div key={plant.id} className="relative group">
-                    <div className="flex items-center p-5 bg-white rounded-[2.5rem] border border-gray-100 shadow-sm hover:border-green-100 transition-all duration-200">
-                      <button onClick={() => setSelectedPlantImage(plant)} className="w-14 h-14 flex-shrink-0 transition-transform active:scale-90">
-                        <PlantThumbnail plant={plant} size="sm" />
-                      </button>
-                      <Link href={`/plants/${plant.id}`} className="flex-grow flex items-center justify-between ml-4 active:scale-[0.98] transition-transform">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-black text-gray-800 text-sm uppercase leading-none mb-1">{plant.common_name}</h3>
-                            {plant.is_native && (
-                              <span className="text-[8px] bg-green-50 text-green-700 px-1.5 py-0.5 rounded-full font-black uppercase">Native</span>
-                            )}
+                {groupedPlants[letter].map((plant: Plant) => {
+                  const isAlreadyAdded = existingPlantIds.includes(plant.id);
+                  const isOpen = openAddPlantId === plant.id;
+                  const isHedge =
+                    (plant.task_category || plant.plant_type || '').toLowerCase() === 'hedge';
+
+                  return (
+                    <div key={plant.id} className="relative group">
+                      <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm hover:border-green-100 transition-all duration-200 overflow-hidden">
+                        <div className="flex items-center p-5">
+                          <button onClick={() => setSelectedPlantImage(plant)} className="w-14 h-14 flex-shrink-0 transition-transform active:scale-90">
+                            <PlantThumbnail plant={plant} size="sm" />
+                          </button>
+
+                          <Link href={`/plants/${plant.id}`} className="flex-grow flex items-center justify-between ml-4 active:scale-[0.98] transition-transform">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <h3 className="font-black text-gray-800 text-sm uppercase leading-none mb-1">{plant.common_name}</h3>
+                                {plant.is_native && (
+                                  <span className="text-[8px] bg-green-50 text-green-700 px-1.5 py-0.5 rounded-full font-black uppercase">Native</span>
+                                )}
+                              </div>
+                              <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest italic">{plant.plant_type || 'General'}</p>
+                            </div>
+                            <div className="text-gray-200 group-hover:text-green-600 group-hover:translate-x-1 transition-all text-lg mr-12">→</div>
+                          </Link>
+
+                          <div className="absolute right-4 top-1/2 -translate-y-1/2 z-30">
+                           {isAlreadyAdded ? (
+  <div className="w-9 h-9 rounded-full bg-green-50 border border-green-200 flex items-center justify-center text-green-700">
+    <CheckCircle size={18} />
+  </div>
+) : !isOpen ? (
+  <button
+    onClick={() => handleOpenAddPanel(plant.id)}
+    className="w-9 h-9 rounded-full bg-green-900 text-white flex items-center justify-center shadow-sm active:scale-95 transition-transform"
+  >
+    <Plus size={18} />
+  </button>
+) : null}
                           </div>
-                          <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest italic">{plant.plant_type || 'General'}</p>
                         </div>
-                        <div className="text-gray-200 group-hover:text-green-600 group-hover:translate-x-1 transition-all text-lg mr-12">→</div>
-                      </Link>
-                      <div className="absolute right-4 top-1/2 -translate-y-1/2 z-30">
-                        <QuickAddButton plantId={plant.id} plantName={plant.common_name} />
+
+                        {isOpen && !isAlreadyAdded && (
+                          <div className="px-5 pb-5 pt-1 border-t border-gray-100 bg-[#fbfdfb]">
+                            <div className="grid grid-cols-1 gap-3">
+  {isHedge ? (
+    <div>
+      <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">
+        Hedge Length (Lineal Metres)
+      </label>
+      <input
+        type="number"
+        min={0}
+        step="0.1"
+        value={addLengthMetres}
+        onChange={(e) => setAddLengthMetres(e.target.value)}
+        placeholder="Enter hedge length"
+        className="w-full p-3 bg-white border border-gray-200 rounded-2xl text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 ring-green-200"
+      />
+    </div>
+  ) : (
+    <div>
+      <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">
+        Quantity
+      </label>
+      <input
+        ref={quantityInputRef}
+        type="number"
+        min={1}
+        value={addQuantity}
+        onChange={(e) => setAddQuantity(Math.max(1, Number(e.target.value) || 1))}
+        className="w-full p-3 bg-white border border-gray-200 rounded-2xl text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 ring-green-200"
+      />
+    </div>
+  )}
+
+                              <div className="flex gap-2 pt-1">
+                                <button
+                                  onClick={() => handleConfirmAdd(plant)}
+                                  disabled={isAddingPlantId === plant.id}
+                                  className="flex-1 py-3 rounded-2xl bg-[#2d5a3f] text-white text-[10px] font-black uppercase tracking-widest shadow-sm active:scale-95 transition-transform"
+                                >
+                                  {isAddingPlantId === plant.id ? 'Adding...' : 'Add to My Garden'}
+                                </button>
+
+                                <button
+                                  onClick={() => {
+                                    setOpenAddPlantId(null);
+                                    setAddQuantity(1);
+                                    setAddLengthMetres("");
+                                  }}
+                                  className="px-4 py-3 rounded-2xl bg-gray-100 text-gray-500 text-[10px] font-black uppercase tracking-widest"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           ))
@@ -418,6 +599,37 @@ export default function LibraryPage() {
           </div>
         )}
       </div>
+
+      {selectedPlantImage && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-6"
+          onClick={() => setSelectedPlantImage(null)}
+        >
+          <div className="relative max-w-md w-full">
+            <button
+              onClick={() => setSelectedPlantImage(null)}
+              className="absolute -top-12 right-0 text-white bg-white/10 rounded-full p-2"
+            >
+              <X size={20} />
+            </button>
+            <div className="bg-white rounded-[2rem] overflow-hidden shadow-2xl">
+              <img
+                src={selectedPlantImage.image_url || "https://via.placeholder.com/600x600?text=No+Image"}
+                alt={selectedPlantImage.common_name}
+                className="w-full aspect-square object-cover"
+              />
+              <div className="p-5">
+                <h3 className="text-lg font-black text-green-900 uppercase">
+                  {selectedPlantImage.common_name}
+                </h3>
+                <p className="text-sm italic text-gray-400">
+                  {selectedPlantImage.scientific_name}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Navigation />
     </main>

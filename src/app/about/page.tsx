@@ -83,8 +83,13 @@ export default function AboutPage() {
           ←
         </button>
         <div className="text-center relative z-10">
-          <div className="w-20 h-20 bg-white rounded-[2rem] mx-auto mb-4 flex items-center justify-center text-4xl shadow-2xl">
-            🧑‍🌾
+          {/* UPDATED LOGO BOX: Matches Dashboard Styling */}
+          <div className="w-20 h-20 bg-white rounded-[2rem] mx-auto mb-4 flex items-center justify-center border-2 border-white/50 shadow-2xl overflow-hidden">
+            <img 
+              src="/pglogo.png" 
+              alt="Pocket Gardener Logo"
+              className="w-14 h-14 object-contain" 
+            />
           </div>
           <h1 className="text-xl font-black text-white tracking-tight uppercase tracking-[0.1em]">The Pocket Gardener</h1>
         </div>

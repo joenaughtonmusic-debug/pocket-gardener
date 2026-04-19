@@ -4,7 +4,6 @@ import { useEffect, useState, useRef } from 'react'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 import Navigation from "../../../components/Navigation"
-import AddPlantButton from "../../../components/AddPlantButton"
 import PlantThumbnail from "../../../components/PlantThumbnail"
 import { Check, Search, Sparkles, Quote } from 'lucide-react'
 
@@ -19,7 +18,7 @@ export default function PlantDetailPage() {
 
   const [plant, setPlant] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [isProcessing, setIsProcessing] = useState(false) 
+  const [isProcessing, setIsProcessing] = useState(false)
   const [userPlantRecordId, setUserPlantRecordId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
@@ -27,9 +26,12 @@ export default function PlantDetailPage() {
   const [remedies, setRemedies] = useState<any[]>([])
   const [personalNote, setPersonalNote] = useState("")
   const [nickname, setNickname] = useState<string | null>(null)
-  const [plantPhotos, setPlantPhotos] = useState<any[]>([]) 
+  const [plantPhotos, setPlantPhotos] = useState<any[]>([])
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [issueHistory, setIssueHistory] = useState<any[]>([])
+
+  const [quantity, setQuantity] = useState<number>(1)
+  const [lengthMetres, setLengthMetres] = useState<string>("")
 
   // --- SEARCH STATE ---
   const [searchQuery, setSearchQuery] = useState("")
@@ -47,6 +49,8 @@ export default function PlantDetailPage() {
     return { bg: 'bg-[#C8E6C9]', text: 'text-[#1B5E20]' };
   }
 
+  const isHedgePlant = (plant?.task_category || plant?.plant_type || '').toLowerCase() === 'hedge'
+
   async function fetchIssueHistory(userPlantId: string) {
     const { data } = await supabase
       .from('plant_logs')
@@ -62,7 +66,7 @@ export default function PlantDetailPage() {
       .from('plant_logs')
       .update({ status: 'Resolved', resolved_at: new Date().toISOString() })
       .eq('id', logId)
-    
+
     if (!error) {
       if (userPlantRecordId) fetchIssueHistory(userPlantRecordId)
     }
@@ -90,7 +94,11 @@ export default function PlantDetailPage() {
       const { data: { publicUrl } } = supabase.storage.from('weed-images').getPublicUrl(filePath)
       const { error } = await supabase.from('plant_photos').insert([{ user_plant_id: userPlantRecordId, photo_url: publicUrl }])
       if (!error) fetchPlantPhotos(userPlantRecordId)
-    } catch (err) { console.error(err) } finally { setUploadingPhoto(false) }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setUploadingPhoto(false)
+    }
   }
 
   async function handleUpdateNickname() {
@@ -105,43 +113,79 @@ export default function PlantDetailPage() {
   useEffect(() => {
     async function fetchPlantAndStatus() {
       if (!id) return
+
       const { data: plantData } = await supabase.from("plants").select("*").eq('id', id).single()
       if (plantData) setPlant(plantData)
-      
+
       const { data: remedyData } = await supabase
         .from('plant_remedies')
         .select('*')
         .or(`specific_plant_id.eq.${id},is_universal.eq.true`)
-      
+
       if (remedyData) setRemedies(remedyData)
 
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        const { data: userPlantRecord } = await supabase.from('user_plants').select('id, personal_notes, nickname').eq('user_id', user.id).eq('plant_id', Number(id)).single()
+        const { data: userPlantRecord } = await supabase
+          .from('user_plants')
+          .select('id, personal_notes, nickname, quantity, length_metres')
+          .eq('user_id', user.id)
+          .eq('plant_id', Number(id))
+          .single()
+
         if (userPlantRecord) {
           setUserPlantRecordId(userPlantRecord.id)
           setPersonalNote(userPlantRecord.personal_notes || plantData?.pro_tip || "")
           setNickname(userPlantRecord.nickname)
+          setQuantity(userPlantRecord.quantity || 1)
+          setLengthMetres(
+            userPlantRecord.length_metres !== null && userPlantRecord.length_metres !== undefined
+              ? String(userPlantRecord.length_metres)
+              : ""
+          )
           fetchIssueHistory(userPlantRecord.id)
           fetchPlantPhotos(userPlantRecord.id)
+        } else {
+          setQuantity(1)
+          setLengthMetres("")
         }
       }
+
       setLoading(false)
     }
+
     fetchPlantAndStatus()
   }, [id, supabase])
 
-  async function handleLogIssue(issueType: string) {
-    if (!userPlantRecordId) return
-    setIsProcessing(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    const { error } = await supabase.from('plant_logs').insert([{ user_id: user?.id, user_plant_id: userPlantRecordId, issue_type: issueType, status: 'Ongoing' }])
-    if (!error) {
-      alert(`Logged: ${issueType}. I'll check back in with you in 30 days!`)
-      fetchIssueHistory(userPlantRecordId)
-    }
-    setIsProcessing(false)
+ async function handleLogIssue(issueType: string, remedyTitle?: string) {
+  if (!userPlantRecordId) return
+  setIsProcessing(true)
+
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const { error } = await supabase.from('plant_logs').insert([{
+    user_id: user?.id,
+    user_plant_id: userPlantRecordId,
+    issue_type: issueType,
+    status: 'Ongoing'
+  }])
+
+  if (!error) {
+    await supabase
+      .from('user_plants')
+      .update({
+        is_sick: true,
+        current_issue: issueType,
+        current_remedy: remedyTitle || null,
+      })
+      .eq('id', userPlantRecordId)
+
+    alert(`Logged: ${issueType}. I'll check back in with you in 30 days!`)
+    fetchIssueHistory(userPlantRecordId)
   }
+
+  setIsProcessing(false)
+}
 
   async function handleRemove() {
     if (!userPlantRecordId || !window.confirm(`Remove ${plant.common_name}?`)) return
@@ -154,8 +198,32 @@ export default function PlantDetailPage() {
   async function handleAddToProject() {
     setIsProcessing(true)
     const { data: { session } } = await supabase.auth.getSession()
-    if (!session?.user) return alert("Please log in first!")
-    const { error } = await supabase.from('user_plants').insert([{ user_id: session.user.id, plant_id: Number(id), is_project: true, status: 'Planning' }])
+    if (!session?.user) {
+      setIsProcessing(false)
+      alert("Please log in first!")
+      return
+    }
+
+    const safeQuantity = isHedgePlant
+  ? null
+  : Number.isFinite(quantity) && quantity > 0
+  ? quantity
+  : 1
+
+const safeLengthMetres =
+  isHedgePlant && lengthMetres.trim() !== '' && !Number.isNaN(Number(lengthMetres))
+    ? Number(lengthMetres)
+    : null
+
+const { error } = await supabase.from('user_plants').insert([{
+  user_id: session.user.id,
+  plant_id: Number(id),
+  is_project: true,
+  status: 'Planning',
+  quantity: safeQuantity,
+  length_metres: safeLengthMetres,
+}])
+
     if (!error) router.push('/dashboard')
     setIsProcessing(false)
   }
@@ -163,39 +231,62 @@ export default function PlantDetailPage() {
   async function handleDirectAdd() {
     setIsProcessing(true)
     const { data: { session } } = await supabase.auth.getSession()
-    if (!session?.user) return alert("Please log in first!")
-    const { error } = await supabase.from('user_plants').insert([{ user_id: session.user.id, plant_id: Number(id), is_project: false, status: 'Ongoing' }])
+    if (!session?.user) {
+      setIsProcessing(false)
+      alert("Please log in first!")
+      return
+    }
+
+    const safeQuantity = isHedgePlant
+  ? null
+  : Number.isFinite(quantity) && quantity > 0
+  ? quantity
+  : 1
+
+const safeLengthMetres =
+  isHedgePlant && lengthMetres.trim() !== '' && !Number.isNaN(Number(lengthMetres))
+    ? Number(lengthMetres)
+    : null
+
+const { error } = await supabase.from('user_plants').insert([{
+  user_id: session.user.id,
+  plant_id: Number(id),
+  is_project: false,
+  status: 'Ongoing',
+  quantity: safeQuantity,
+  length_metres: safeLengthMetres,
+}])
+
     if (!error) router.push('/dashboard')
     setIsProcessing(false)
   }
 
-  // SEARCH & FILTER LOGIC
   const filteredRemedies = remedies.filter(r => {
-    if (!isSearching) return r.specific_plant_id === Number(id);
-    const searchString = (r.issue_type + (r.search_keywords || "") + r.remedy_title).toLowerCase();
-    return searchString.includes(searchQuery.toLowerCase());
-  });
+    if (!isSearching) return r.specific_plant_id === Number(id)
+    const searchString = (r.issue_type + (r.search_keywords || "") + r.remedy_title).toLowerCase()
+    return searchString.includes(searchQuery.toLowerCase())
+  })
 
-  const specificMatches = filteredRemedies.filter(r => r.specific_plant_id === Number(id));
-  const universalMatches = filteredRemedies.filter(r => r.is_universal === true && r.specific_plant_id !== Number(id));
+  const specificMatches = filteredRemedies.filter(r => r.specific_plant_id === Number(id))
+  const universalMatches = filteredRemedies.filter(r => r.is_universal === true && r.specific_plant_id !== Number(id))
 
   if (loading) return <div className="min-h-screen bg-white flex items-center justify-center font-bold text-gray-400 uppercase tracking-widest text-xs">Loading...</div>
   if (!plant) return <div className="p-20 text-center">Plant not found.</div>
 
-  const hardinessStyle = getLevelStyles(plant.hardiness_level);
-  const maintenanceStyle = getLevelStyles(plant.maintenance_level);
+  const hardinessStyle = getLevelStyles(plant.hardiness_level)
+  const maintenanceStyle = getLevelStyles(plant.maintenance_level)
 
   return (
     <main className="min-h-screen bg-white pb-40 text-gray-900">
       <div className="h-[45vh] bg-[#f0f7f3] relative flex items-center justify-center pt-8 pb-16">
         <button onClick={() => router.back()} className="absolute top-12 left-6 z-30 bg-white/90 w-10 h-10 rounded-full flex items-center justify-center shadow-sm text-gray-400">←</button>
         <div className="relative z-10 w-48 h-48 shadow-2xl rounded-[2.5rem] overflow-hidden bg-white group">
-          <PlantThumbnail 
-            plant={plantPhotos[0] ? { ...plant, image_url: plantPhotos[0].photo_url } : plant} 
-            size="lg" 
+          <PlantThumbnail
+            plant={plantPhotos[0] ? { ...plant, image_url: plantPhotos[0].photo_url } : plant}
+            size="lg"
           />
           {userPlantRecordId && (
-            <button 
+            <button
               onClick={() => fileInputRef.current?.click()}
               className="absolute bottom-0 left-0 right-0 bg-black/60 backdrop-blur-md py-3 text-[8px] font-black text-white uppercase tracking-[0.2em] opacity-0 group-hover:opacity-100 transition-opacity duration-300"
             >
@@ -209,7 +300,7 @@ export default function PlantDetailPage() {
       <div className="px-8 -mt-10 bg-white rounded-t-[3.5rem] relative z-20 border-t border-gray-100">
         <header className="pt-10 mb-8 relative">
           <div className="w-12 h-1.5 bg-gray-100 rounded-full mx-auto mb-8"></div>
-          
+
           <div className="absolute top-14 right-0 flex flex-col gap-3 items-end">
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-bold text-gray-400 italic lowercase">{plant.hardiness_level}</span>
@@ -243,7 +334,6 @@ export default function PlantDetailPage() {
           </div>
         </header>
 
-        {/* --- THE GARDENER'S VIEW / DESCRIPTION BOX --- */}
         <section className="mb-10 relative">
           <div className="bg-green-900 rounded-[2.5rem] p-8 shadow-xl relative overflow-hidden">
             <Quote className="absolute -top-2 -left-2 text-white/5 w-24 h-24 rotate-12" />
@@ -261,19 +351,79 @@ export default function PlantDetailPage() {
         </section>
 
         <div className="mb-10 flex flex-col items-center gap-4">
-          {!mode && !userPlantRecordId && <AddPlantButton plantId={Number(id)} />}
           {userPlantRecordId && !mode && (
-            <div className="w-full text-center py-4 bg-green-50 rounded-2xl border border-green-100 text-[10px] font-black text-green-700 uppercase tracking-widest italic">In Your Garden</div>
+            <div className="w-full text-center py-4 bg-green-50 rounded-2xl border border-green-100 text-[10px] font-black text-green-700 uppercase tracking-widest italic">
+              In Your Garden
+            </div>
           )}
-          {mode === 'builder' && (
-            <>
-              <button onClick={handleAddToProject} disabled={isProcessing} className="w-full py-6 rounded-[2.5rem] bg-[#2d5a3f] text-white font-bold uppercase tracking-[0.2em] text-[11px] shadow-xl active:scale-95 transition-all">
-                {isProcessing ? 'Adding...' : 'Add to Project List'}
-              </button>
-              <button onClick={handleDirectAdd} disabled={isProcessing} className="text-[10px] font-black text-green-700/50 uppercase tracking-[0.2em] border-b border-green-700/20 pb-1 italic hover:text-green-700 transition-colors">
-                or add directly to current garden
-              </button>
-            </>
+
+          {((mode === 'builder') || (!mode && !userPlantRecordId)) && (
+            <div className="w-full bg-gray-50 rounded-[2rem] border border-gray-100 p-5">
+              <div className="grid grid-cols-1 gap-4">
+  {isHedgePlant ? (
+    <div>
+      <label className="block text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2">
+        Hedge Length (Lineal Metres)
+      </label>
+      <input
+        type="number"
+        min={0}
+        step="0.1"
+        value={lengthMetres}
+        onChange={(e) => setLengthMetres(e.target.value)}
+        placeholder="Enter hedge length"
+        className="w-full p-4 bg-white border border-gray-200 rounded-2xl text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 ring-green-300"
+      />
+      <p className="mt-2 text-[10px] font-bold text-gray-400 italic">
+        Hedge tasks use lineal metres rather than plant count.
+      </p>
+    </div>
+  ) : (
+    <div>
+      <label className="block text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2">
+        Quantity
+      </label>
+      <input
+        type="number"
+        min={1}
+        value={quantity}
+        onChange={(e) => setQuantity(Math.max(1, Number(e.target.value) || 1))}
+        className="w-full p-4 bg-white border border-gray-200 rounded-2xl text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 ring-green-300"
+      />
+    </div>
+  )}
+
+                {!mode && !userPlantRecordId && (
+                  <button
+                    onClick={handleDirectAdd}
+                    disabled={isProcessing}
+                    className="w-full py-6 rounded-[2.5rem] bg-[#2d5a3f] text-white font-bold uppercase tracking-[0.2em] text-[11px] shadow-xl active:scale-95 transition-all mt-2"
+                  >
+                    {isProcessing ? 'Adding...' : 'Add to My Garden'}
+                  </button>
+                )}
+
+                {mode === 'builder' && (
+                  <>
+                    <button
+                      onClick={handleAddToProject}
+                      disabled={isProcessing}
+                      className="w-full py-6 rounded-[2.5rem] bg-[#2d5a3f] text-white font-bold uppercase tracking-[0.2em] text-[11px] shadow-xl active:scale-95 transition-all"
+                    >
+                      {isProcessing ? 'Adding...' : 'Add to Project List'}
+                    </button>
+
+                    <button
+                      onClick={handleDirectAdd}
+                      disabled={isProcessing}
+                      className="text-[10px] font-black text-green-700/50 uppercase tracking-[0.2em] border-b border-green-700/20 pb-1 italic hover:text-green-700 transition-colors"
+                    >
+                      or add directly to current garden
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
           )}
         </div>
 
@@ -311,20 +461,18 @@ export default function PlantDetailPage() {
           </div>
         )}
 
-        {/* --- COMMON ISSUES & SEARCH SECTION --- */}
         {userPlantRecordId && (
           <div className="mb-10 px-2">
             <div className="flex justify-between items-center mb-4">
               <h4 className="text-[14px] font-black text-black-800 uppercase tracking-[0.2em]">⚠️ Common Issues</h4>
               {isSearching && (
-                <button onClick={() => {setIsSearching(false); setSearchQuery("")}} className="text-[10px] font-bold text-orange-500 uppercase">Clear</button>
+                <button onClick={() => { setIsSearching(false); setSearchQuery("") }} className="text-[10px] font-bold text-orange-500 uppercase">Clear</button>
               )}
             </div>
 
-            {/* The Search Input */}
             {isSearching && (
               <div className="mb-4 relative">
-                <input 
+                <input
                   autoFocus
                   type="text"
                   placeholder="Search symptoms (e.g. brown leaf, bugs)..."
@@ -336,7 +484,6 @@ export default function PlantDetailPage() {
             )}
 
             <div className="space-y-3">
-              {/* 1. PLANT SPECIFIC REMEDIES - Limited to top 3 */}
               {!isSearching && specificMatches.length > 0 ? (
                 specificMatches.slice(0, 3).map((r) => (
                   <div key={r.id} className="overflow-hidden">
@@ -351,7 +498,18 @@ export default function PlantDetailPage() {
                       <div className="p-4 mt-1 bg-white rounded-2xl border border-orange-100 animate-in fade-in">
                         <p className="text-[10px] font-black text-orange-800 uppercase mb-1">{r.remedy_title}</p>
                         <p className="text-xs text-gray-600 italic leading-relaxed mb-4">"{r.remedy_description}"</p>
-                        <button onClick={() => handleLogIssue(r.issue_type)} disabled={isProcessing} className="w-full py-2 bg-orange-50 text-orange-700 rounded-xl text-[10px] font-black uppercase tracking-widest border border-orange-100 active:scale-95 transition-all">Log this issue</button>
+                        <button
+  onClick={() =>
+  handleLogIssue(
+    r.issue_type,
+    `${(r as any).remedy_title}: ${(r as any).remedy_description}`
+  )
+}
+  disabled={isProcessing}
+  className="w-full py-2 bg-orange-50 text-orange-700 rounded-xl text-[10px] font-black uppercase tracking-widest border border-orange-100 active:scale-95 transition-all"
+>
+  Log this issue
+</button>
                       </div>
                     )}
                   </div>
@@ -360,37 +518,45 @@ export default function PlantDetailPage() {
                 <div className="text-center py-4 opacity-40 italic text-[11px] text-orange-800 font-bold uppercase tracking-widest">No specific issues listed</div>
               )}
 
-              {/* 2. GLOBAL RESULTS - UNIQUE FILTER APPLIED */}
               {isSearching && universalMatches.length > 0 && (
                 <>
                   <div className="pt-4 pb-2 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Global Database Results</div>
-                  {/* Filtering by issue_type to prevent duplicates in search results */}
                   {Array.from(new Map(universalMatches.map(item => [item.issue_type, item])).values()).map((r: any) => (
                     <div key={r.id} className="overflow-hidden">
-                        <button onClick={() => setActiveRemedyId(activeRemedyId === r.id ? null : r.id)} className={`w-full py-4 px-6 rounded-2xl border flex items-center justify-between transition-all ${activeRemedyId === r.id ? 'bg-white border-orange-400 shadow-sm' : 'bg-gray-50 border-gray-100'}`}>
-                          <div className="flex flex-col items-start">
-                            <span className="text-[11px] font-black text-gray-700 uppercase tracking-tight">{r.issue_type}</span>
-                            <span className="text-[8px] text-gray-400 font-bold uppercase tracking-widest">{r.category || 'General'}</span>
-                          </div>
-                          <span className={`text-orange-400 font-bold transition-transform ${activeRemedyId === r.id ? 'rotate-45' : ''}`}>+</span>
-                        </button>
-                        {activeRemedyId === r.id && (
-                          <div className="p-4 mt-1 bg-white rounded-2xl border border-orange-100">
-                            <p className="text-[10px] font-black text-orange-800 uppercase mb-1">{r.remedy_title}</p>
-                            <p className="text-xs text-gray-600 italic leading-relaxed mb-4">"{r.remedy_description}"</p>
-                            <button onClick={() => handleLogIssue(r.issue_type)} disabled={isProcessing} className="w-full py-2 bg-orange-50 text-orange-700 rounded-xl text-[10px] font-black uppercase tracking-widest border border-orange-100 active:scale-95 transition-all">Log this issue</button>
-                          </div>
-                        )}
+                      <button onClick={() => setActiveRemedyId(activeRemedyId === r.id ? null : r.id)} className={`w-full py-4 px-6 rounded-2xl border flex items-center justify-between transition-all ${activeRemedyId === r.id ? 'bg-white border-orange-400 shadow-sm' : 'bg-gray-50 border-gray-100'}`}>
+                        <div className="flex flex-col items-start">
+                          <span className="text-[11px] font-black text-gray-700 uppercase tracking-tight">{r.issue_type}</span>
+                          <span className="text-[8px] text-gray-400 font-bold uppercase tracking-widest">{r.category || 'General'}</span>
+                        </div>
+                        <span className={`text-orange-400 font-bold transition-transform ${activeRemedyId === r.id ? 'rotate-45' : ''}`}>+</span>
+                      </button>
+                      {activeRemedyId === r.id && (
+                        <div className="p-4 mt-1 bg-white rounded-2xl border border-orange-100">
+                          <p className="text-[10px] font-black text-orange-800 uppercase mb-1">{r.remedy_title}</p>
+                          <p className="text-xs text-gray-600 italic leading-relaxed mb-4">"{r.remedy_description}"</p>
+                          <button
+  onClick={() =>
+  handleLogIssue(
+    r.issue_type,
+    `${(r as any).remedy_title}: ${(r as any).remedy_description}`
+  )
+}
+  disabled={isProcessing}
+  className="w-full py-2 bg-orange-50 text-orange-700 rounded-xl text-[10px] font-black uppercase tracking-widest border border-orange-100 active:scale-95 transition-all"
+>
+  Log this issue
+</button>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </>
               )}
 
-              {/* 3. THE SEARCH TRIGGER BUTTON */}
               {!isSearching && (
                 <div className="mt-6 p-6 bg-gray-50 rounded-[2rem] border border-dashed border-gray-200 text-center">
                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 italic">Can't see the issue here?</p>
-                  <button 
+                  <button
                     onClick={() => setIsSearching(true)}
                     className="flex items-center gap-2 mx-auto px-6 py-3 bg-white border border-gray-100 rounded-full shadow-sm text-[10px] font-black text-green-800 uppercase tracking-widest active:scale-95 transition-all"
                   >
@@ -419,7 +585,7 @@ export default function PlantDetailPage() {
                   </div>
                   <div className="flex items-center gap-3">
                     {log.status === 'Ongoing' && (
-                      <button 
+                      <button
                         onClick={() => handleResolveIssue(log.id)}
                         disabled={isProcessing}
                         className="flex items-center gap-1.5 px-3 py-1.5 bg-green-800 text-white rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm active:scale-95 transition-all"
@@ -440,7 +606,9 @@ export default function PlantDetailPage() {
 
         {userPlantRecordId && (
           <div className="mt-8 text-center pb-20">
-            <button onClick={handleRemove} className="text-[10px] font-black uppercase tracking-[0.2em] text-red-200 hover:text-red-400 transition-colors italic">× Remove from My Garden</button>
+            <button onClick={handleRemove} className="text-[10px] font-black uppercase tracking-[0.2em] text-red-200 hover:text-red-400 transition-colors italic">
+              × Remove from My Garden
+            </button>
           </div>
         )}
       </div>

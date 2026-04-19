@@ -2,6 +2,7 @@
 import Navigation from "../../components/Navigation";
 import Link from "next/link";
 import PageHelp from "../../components/PageHelp";
+import { Target, ArrowRight } from 'lucide-react'; 
 
 export default function GuidesPage() {
   const categories = [
@@ -51,20 +52,20 @@ export default function GuidesPage() {
       <section className="mb-4 relative z-10">
         <Link href="/guides/weeds" className="block no-underline">
           <div className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm flex items-center justify-between group active:scale-[0.98] transition-all">
-            <div className="flex items-center gap-4 pointer-events-none">
+            <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-2xl">🥀</div>
               <div>
                 <h3 className="font-black text-gray-800 text-sm uppercase tracking-tight">Common Weeds</h3>
                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Identification & Kill Guide</p>
               </div>
             </div>
-            <span className="text-gray-200 group-hover:text-amber-600 transition-colors text-xl mr-2 pointer-events-none">→</span>
+            <span className="text-gray-200 group-hover:text-amber-600 transition-colors text-xl mr-2">→</span>
           </div>
         </Link>
       </section>
 
       {/* CATEGORY LIST */}
-      <section className="flex flex-col gap-4 relative z-10">
+      <section className="flex flex-col gap-4 relative z-10 mb-12">
         {categories.map((cat) => (
           <Link 
             key={cat.name} 
@@ -72,17 +73,44 @@ export default function GuidesPage() {
             className="block no-underline cursor-pointer"
           >
             <div className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm flex items-center justify-between group active:scale-[0.98] transition-all">
-              <div className="flex items-center gap-4 pointer-events-none">
+              <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-2xl group-active:bg-green-50 transition-colors">{cat.icon}</div>
                 <div>
                   <h3 className="font-black text-gray-800 text-sm uppercase tracking-tight">{cat.name}</h3>
                   <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{cat.desc}</p>
                 </div>
               </div>
-              <span className="text-gray-200 group-hover:text-green-600 transition-colors text-xl mr-2 pointer-events-none">→</span>
+              <span className="text-gray-200 group-hover:text-green-600 transition-colors text-xl mr-2">→</span>
             </div>
           </Link>
         ))}
+      </section>
+
+      {/* DISCOVERY SECTION */}
+      <section className="space-y-4">
+        <h2 className="text-[12px] font-black text-green-800/40 uppercase tracking-[0.3em] px-2 flex items-center gap-3">
+          <span>Discovery Tools</span>
+          <span className="h-[1px] bg-green-200 flex-grow"></span>
+        </h2>
+
+        <div className="grid grid-cols-1">
+          {/* Matchmaker Tool Button */}
+          <Link 
+  href="/match" // Ensure this matches your actual file path (e.g., /app/matchmaker/page.tsx)
+  className="w-full bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm flex items-center justify-between group active:scale-[0.98] transition-all no-underline"
+>
+  <div className="flex items-center gap-4">
+    <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center">
+      <Target className="text-green-800" size={22} />
+    </div>
+    <div>
+      <h3 className="font-black text-gray-800 text-sm uppercase tracking-tight">Plant Matchmaker</h3>
+      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-tight">Find the perfect match for your space</p>
+    </div>
+  </div>
+  <ArrowRight size={14} className="text-gray-200 group-hover:text-green-600 transition-colors mr-2" />
+</Link>
+        </div>
       </section>
 
       <Navigation />
