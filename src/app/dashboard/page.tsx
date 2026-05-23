@@ -187,28 +187,25 @@ export default function MyGardenDashboard() {
   }
 
   async function handleToggleUnhealthy(item: UserPlant, checked: boolean) {
-    if (checked) {
-      await supabase
-        .from('user_plants')
-        .update({ is_sick: true })
-        .eq('id', item.id)
-
-      await openIssueModalForPlant(item)
-      return
-    }
-
-    await supabase
-      .from('user_plants')
-      .update({
-        is_sick: false,
-        current_issue: null,
-        current_remedy: null,
-        current_shopping_tags: null,
-      })
-      .eq('id', item.id)
-
-    getGarden()
+  if (checked) {
+    // Do not mark the plant as sick yet.
+    // Only open the issue picker.
+    await openIssueModalForPlant(item)
+    return
   }
+
+  await supabase
+    .from('user_plants')
+    .update({
+      is_sick: false,
+      current_issue: null,
+      current_remedy: null,
+      current_shopping_tags: null,
+    })
+    .eq('id', item.id)
+
+  getGarden()
+}
 
   async function handleSelectIssue(remedy: PlantRemedy) {
     if (!selectedUnhealthyPlant) return

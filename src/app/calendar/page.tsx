@@ -271,7 +271,7 @@ export default function CalendarPage() {
 
   const weekDays = Array.from({ length: 7 }, (_, i) => {
     const d = new Date()
-    d.setDate(today.getDate() - today.getDay() + i)
+    d.setDate(today.getDate() + i - 3)
     return d
   })
 
@@ -745,7 +745,7 @@ export default function CalendarPage() {
           alt="Garden"
           className="absolute inset-0 w-full h-full object-cover"
         />
-        <div className="absolute inset-0 z-20 flex flex-col justify-end p-8 pb-20">
+        <div className="absolute inset-0 z-[100] flex flex-col justify-end p-8 pb-20">
           <div className="flex items-center gap-2 bg-black/30 backdrop-blur-md w-fit px-3 py-1.5 rounded-full border border-white/20 mb-4">
             <MapPin size={10} className="text-white" />
             <span className="text-[10px] font-black text-white uppercase tracking-widest">
@@ -753,7 +753,7 @@ export default function CalendarPage() {
             </span>
           </div>
 
-          <div className="flex items-center gap-3 mb-8">
+          <div className="flex items-center gap-3 mb-8 relative z-50">
             <h1 className="text-5xl font-black text-white tracking-tighter uppercase italic leading-none">
               {currentMonthName.toUpperCase()} <span className="text-amber-400">TO-DO</span>
             </h1>
@@ -769,32 +769,39 @@ export default function CalendarPage() {
             />
           </div>
 
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-            {weekDays.map((date, i) => (
-              <div
-                key={i}
-                className={`flex flex-col items-center min-w-[50px] p-3 rounded-2xl border ${
-                  date.getDate() === today.getDate()
-                    ? 'bg-amber-400 border-amber-400'
-                    : 'bg-black/40 border-white/10 backdrop-blur-sm'
-                }`}
-              >
-                <span
-                  className={`text-[10px] font-black uppercase ${
-                    date.getDate() === today.getDate() ? 'text-green-950' : 'text-white/60'
+                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            {weekDays.map((date, i) => {
+              const isToday =
+                date.getDate() === today.getDate() &&
+                date.getMonth() === today.getMonth() &&
+                date.getFullYear() === today.getFullYear()
+
+              return (
+                <div
+                  key={i}
+                  className={`flex flex-col items-center min-w-[50px] p-3 rounded-2xl border ${
+                    isToday
+                      ? 'bg-amber-400 border-amber-400'
+                      : 'bg-black/40 border-white/10 backdrop-blur-sm'
                   }`}
                 >
-                  {date.toLocaleDateString('en-NZ', { weekday: 'short' })}
-                </span>
-                <span
-                  className={`text-sm font-black ${
-                    date.getDate() === today.getDate() ? 'text-green-950' : 'text-white'
-                  }`}
-                >
-                  {date.getDate()}
-                </span>
-              </div>
-            ))}
+                  <span
+                    className={`text-[10px] font-black uppercase ${
+                      isToday ? 'text-green-950' : 'text-white/60'
+                    }`}
+                  >
+                    {date.toLocaleDateString('en-NZ', { weekday: 'short' })}
+                  </span>
+                  <span
+                    className={`text-sm font-black ${
+                      isToday ? 'text-green-950' : 'text-white'
+                    }`}
+                  >
+                    {date.getDate()}
+                  </span>
+                </div>
+              )
+            })}
           </div>
         </div>
       </section>

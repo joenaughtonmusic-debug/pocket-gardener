@@ -10,7 +10,7 @@ const feedingCategories = [
     sections: [
       { 
         name: "Liquid Seaweed", 
-        image: "https://sonxnuxhrivzgcevtdtc.supabase.co/storage/v1/object/public/guides/liquid-fertilizer.jpg",
+        image: "https://sonxnuxhrivzgcevtdtc.supabase.co/storage/v1/object/public/garden%20assets/1090-6204_Marshalls-Liquid-Seaweed-1-Litre-6.jpeg",
         description: "Think of this as a quick health 'boost'. Perfect for new plantings, stressed plants, or a quick spring pick-me-up.",
         proTip: "Apply to the leaves (foliar feeding) early in the morning for the fastest absorption and great as a soil drench.",
         objectPosition: "center"
@@ -23,7 +23,7 @@ const feedingCategories = [
     sections: [
       { 
         name: "Slow-Release Granular", 
-        image: "https://sonxnuxhrivzgcevtdtc.supabase.co/storage/v1/object/public/guides/granular-fertilizer.jpg",
+        image: "https://sonxnuxhrivzgcevtdtc.supabase.co/storage/v1/object/public/garden%20assets/shutterstock_1087283084.jpg",
         description: "The backbone of your garden. These broken-down pellets feed your plants steadily over 3-4 months.",
         proTip: "In Auckland, apply these in early Spring and early Autumn when the rain will help wash them into the clay.",
         objectPosition: "center"
@@ -36,9 +36,9 @@ const feedingCategories = [
     sections: [
       { 
         name: "Correcting Yellow Leaves", 
-        image: "https://sonxnuxhrivzgcevtdtc.supabase.co/storage/v1/object/public/guides/yellow-leaves.jpg",
+        image: "https://sonxnuxhrivzgcevtdtc.supabase.co/storage/v1/object/public/garden%20assets/Epsom_salt_for_gardeners_grande.jpeg",
         description: "If your leaves are turning yellow but the veins stay green (Interveinal Chlorosis), your plant is likely 'Magnesium hungry'. This is very common with Citrus and Gardenias in local soils.",
-        proTip: "Dissolve 1 tablespoon of Epsom Salts in a 10L watering can for a quick green-up.",
+        proTip: "Dissolve 1 tablespoon of Epsom Salts in a 10L watering can for a quick green-up (alternatively purchase Magenesium Chelate and apply as a liquid drench or spray).",
         objectPosition: "center"
       }
     ]

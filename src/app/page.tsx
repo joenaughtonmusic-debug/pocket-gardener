@@ -107,9 +107,9 @@ export default async function LandingPage() {
       {/* 3. CORE FEATURES */}
       <section className="px-8 py-8 space-y-12">
         <div className="grid grid-cols-2 gap-4">
-          <Link href="/identify" className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm active:scale-95 transition-all">
+          <Link href="/plants" className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm active:scale-95 transition-all">
             <div className="text-2xl mb-3">🔍</div>
-            <h3 className="font-extrabold text-sm text-green-900 leading-tight">Identify</h3>
+            <h3 className="font-extrabold text-sm text-green-900 leading-tight">Library</h3>
             <p className="text-[9px] text-gray-400 mt-1 font-bold uppercase tracking-tighter">Plant Finder</p>
           </Link>
           
