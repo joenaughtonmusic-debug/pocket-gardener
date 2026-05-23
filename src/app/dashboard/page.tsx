@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
-import { createBrowserClient } from '@supabase/ssr'
+import { useEffect, useState, useRef, useMemo } from 'react'
+import { createSupabaseBrowserClient } from '../lib/supabaseClient'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Pencil, Camera, ArrowRight, Check, AlertCircle, Search, X } from 'lucide-react'
 import Navigation from '../../components/Navigation'
@@ -59,10 +60,8 @@ export default function MyGardenDashboard() {
   const [savingIssue, setSavingIssue] = useState(false)
   
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+  const router = useRouter()
+  const supabase = useMemo(() => createSupabaseBrowserClient(), [])
 
   const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
   const currentMonthName = months[new Date().getMonth()];
@@ -246,9 +245,9 @@ export default function MyGardenDashboard() {
     }
 
     setSavingIssue(false)
-closeIssueModal()
-getGarden()
-window.location.href = '/calendar'
+    closeIssueModal()
+    getGarden()
+    router.push('/calendar')
   }
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {

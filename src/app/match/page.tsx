@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { createBrowserClient } from '@supabase/ssr'
+import { useState, useEffect, useMemo } from 'react'
+import { createSupabaseBrowserClient } from '../lib/supabaseClient'
 import { Sun, Droplets, Ruler, ChevronRight, Plus, X, Shovel } from 'lucide-react'
 import Navigation from "../../components/Navigation"
 import PlantThumbnail from "../../components/PlantThumbnail"
@@ -50,13 +50,22 @@ export default function MatchPage() {
   const [loading, setLoading] = useState(false)
   const [selectedPlant, setSelectedPlant] = useState<any | null>(null)
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+  const supabase = useMemo(() => createSupabaseBrowserClient(), [])
 
   const handleAddToProject = async (plantId: string) => {
-    const { error } = await supabase.from('project_plants').insert([{ plant_id: plantId }]);
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+    if (sessionError || !session?.user) {
+      alert('Please log in first!')
+      return
+    }
+
+    const { error } = await supabase.from('user_plants').insert([{
+      user_id: session.user.id,
+      plant_id: Number(plantId),
+      is_project: true,
+      status: 'Planning',
+    }])
+
     if (!error) { alert('Added to your project!'); setSelectedPlant(null); }
   }
 

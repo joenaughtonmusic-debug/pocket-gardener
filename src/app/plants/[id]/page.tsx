@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
-import { createBrowserClient } from '@supabase/ssr'
+import { createSupabaseBrowserClient } from '../../lib/supabaseClient'
 import Navigation from "../../../components/Navigation"
 import PlantThumbnail from "../../../components/PlantThumbnail"
 import { Check, Search, Sparkles, Quote } from 'lucide-react'
@@ -37,10 +37,7 @@ export default function PlantDetailPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [isSearching, setIsSearching] = useState(false)
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+  const supabase = useMemo(() => createSupabaseBrowserClient(), [])
 
   const getLevelStyles = (level: string) => {
     const l = level?.toLowerCase();

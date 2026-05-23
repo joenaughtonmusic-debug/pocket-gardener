@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState, useRef } from "react";
-import { createBrowserClient } from "@supabase/ssr";
+import { useEffect, useState, useRef, useMemo } from "react";
+import { createSupabaseBrowserClient } from "../lib/supabaseClient";
 import Link from "next/link";
 import {
   ChevronDown,
@@ -83,10 +83,7 @@ export default function LibraryPage() {
   const [isAddingPlantId, setIsAddingPlantId] = useState<number | null>(null);
   const quantityInputRef = useRef<HTMLInputElement | null>(null);
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
 
   useEffect(() => {
     async function fetchPlants() {
