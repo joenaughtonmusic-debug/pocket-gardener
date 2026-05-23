@@ -201,6 +201,20 @@ export default function PlantDetailPage() {
       return
     }
 
+    const { data: existingProject } = await supabase
+      .from('user_plants')
+      .select('id')
+      .eq('user_id', session.user.id)
+      .eq('plant_id', Number(id))
+      .eq('is_project', true)
+      .maybeSingle()
+
+    if (existingProject) {
+      setIsProcessing(false)
+      alert('Already in your project list.')
+      return
+    }
+
     const safeQuantity = isHedgePlant
   ? null
   : Number.isFinite(quantity) && quantity > 0
@@ -232,6 +246,41 @@ const { error } = await supabase.from('user_plants').insert([{
       setIsProcessing(false)
       alert("Please log in first!")
       return
+    }
+
+    const { data: existing } = await supabase
+      .from('user_plants')
+      .select('id')
+      .eq('user_id', session.user.id)
+      .eq('plant_id', Number(id))
+      .eq('is_project', false)
+      .maybeSingle()
+
+    if (existing) {
+      setIsProcessing(false)
+      alert('Already in your garden.')
+      return
+    }
+
+    const { data: { user } } = await supabase.auth.getUser()
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('is_pro')
+      .eq('id', user?.id)
+      .maybeSingle()
+
+    if (!profileData?.is_pro) {
+      const { count } = await supabase
+        .from('user_plants')
+        .select('id', { count: 'exact' })
+        .eq('user_id', session.user.id)
+        .eq('is_project', false)
+
+      if (count && count >= 3) {
+        setIsProcessing(false)
+        alert('Free account limited to 3 plants. Upgrade to add more!')
+        return
+      }
     }
 
     const safeQuantity = isHedgePlant

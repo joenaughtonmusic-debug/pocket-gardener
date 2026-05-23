@@ -59,6 +59,19 @@ export default function MatchPage() {
       return
     }
 
+    const { data: existingProject } = await supabase
+      .from('user_plants')
+      .select('id')
+      .eq('user_id', session.user.id)
+      .eq('plant_id', Number(plantId))
+      .eq('is_project', true)
+      .maybeSingle()
+
+    if (existingProject) {
+      alert('Already in your project list.')
+      return
+    }
+
     const { error } = await supabase.from('user_plants').insert([{
       user_id: session.user.id,
       plant_id: Number(plantId),
