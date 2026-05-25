@@ -564,13 +564,20 @@ export default function CalendarPage() {
       if (!shouldShowThisWeek) return
 
       const plantSpecificCare = monthlyCare.find((c) => {
-        const careType = (c.plant_type || '').trim().toLowerCase()
-        return (
-          careType === (p.common_name || '').toLowerCase() ||
-          careType === plantType.toLowerCase() ||
-          careType === taskCategory
-        )
-      })
+  const careType = (c.plant_type || '').trim().toLowerCase()
+  const commonName = (p.common_name || '').trim().toLowerCase()
+  const plantType = (p.plant_type || '').trim().toLowerCase()
+  const taskCategory = (p.task_category || '').trim().toLowerCase()
+
+  if (careType === commonName) return true
+  if (careType === taskCategory) return true
+
+  // Allow genuinely general fruit advice, but only after citrus/deciduous rows
+  // have been split out in the database.
+  if (careType === 'fruit' && plantType === 'fruit') return true
+
+  return false
+})
 
       if (plantSpecificCare?.care_note) {
         const monthlyCareScore =
