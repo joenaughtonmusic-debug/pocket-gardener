@@ -145,14 +145,35 @@ export default function MyGardenDashboard() {
     getGarden(); 
   }, []);
 
-  async function handleResolveIssue(logId: string, plantName: string) {
+  async function handleResolveIssue(logId: string, plantName: string, userPlantId?: string) {
     const { error } = await supabase
       .from('plant_logs')
       .update({ status: 'Resolved', resolved_at: new Date().toISOString() })
       .eq('id', logId)
 
     if (!error) {
+      if (userPlantId) {
+        const { error: plantError } = await supabase
+          .from('user_plants')
+          .update({
+            is_sick: false,
+            current_issue: null,
+            current_remedy: null,
+            current_shopping_tags: null,
+          })
+          .eq('id', userPlantId)
+
+        if (!plantError) {
+          setOwnedPlants((prev) =>
+            prev.map((plant) =>
+              plant.id === userPlantId ? { ...plant, is_sick: false } : plant
+            )
+          )
+        }
+      }
+
       alert(`Great news about your ${plantName}!`)
+      setFollowUpAlerts((prev) => prev.filter((alert) => alert.id !== logId))
       getGarden()
     }
   }
@@ -193,7 +214,7 @@ export default function MyGardenDashboard() {
     return
   }
 
-  await supabase
+  const { error } = await supabase
     .from('user_plants')
     .update({
       is_sick: false,
@@ -203,7 +224,12 @@ export default function MyGardenDashboard() {
     })
     .eq('id', item.id)
 
-  getGarden()
+  if (!error) {
+    setOwnedPlants((prev) =>
+      prev.map((plant) => (plant.id === item.id ? { ...plant, is_sick: false } : plant))
+    )
+    getGarden()
+  }
 }
 
   async function handleSelectIssue(remedy: PlantRemedy) {
@@ -239,6 +265,12 @@ export default function MyGardenDashboard() {
 
     if (updateRes.error) {
       console.error('Error updating unhealthy plant:', updateRes.error)
+    } else {
+      setOwnedPlants((prev) =>
+        prev.map((plant) =>
+          plant.id === selectedUnhealthyPlant.id ? { ...plant, is_sick: true } : plant
+        )
+      )
     }
     if (logRes.error) {
       console.error('Error inserting plant log:', logRes.error)
@@ -422,7 +454,7 @@ export default function MyGardenDashboard() {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={() => handleResolveIssue(alert.id, alert.user_plants?.plants?.common_name)} className="flex-1 bg-green-800 py-3 rounded-2xl text-[9px] font-black uppercase text-white shadow-lg active:scale-95 transition-all">
+                  <button onClick={() => handleResolveIssue(alert.id, alert.user_plants?.plants?.common_name, alert.user_plant_id)} className="flex-1 bg-green-800 py-3 rounded-2xl text-[9px] font-black uppercase text-white shadow-lg active:scale-95 transition-all">
                     Recovered!
                   </button>
                   <Link href={`/plants/${alert.user_plants?.plants?.id}?mode=my-garden`} className="flex-1 bg-amber-400 py-3 rounded-2xl text-[9px] font-black uppercase text-green-950 text-center active:scale-95 shadow-lg transition-all">

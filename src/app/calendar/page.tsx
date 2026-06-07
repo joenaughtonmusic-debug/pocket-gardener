@@ -488,7 +488,6 @@ export default function CalendarPage() {
   const agenda = useMemo(() => {
     if (!allPlants.length) {
       return {
-        sickTasks: [] as TaskCandidate[],
         tasks: [] as TaskCandidate[],
         shoppingList: [] as string[],
         toolsList: ['Watering Can'],
@@ -507,49 +506,45 @@ export default function CalendarPage() {
       const commonName = up.nickname || p.common_name || 'Plant'
 
       if (up.is_sick) {
-  const issueText = up.current_issue?.trim()
-  const remedyText = up.current_remedy?.trim()
-  const shoppingTags = parseArrayField(up.current_shopping_tags).map(prettyTag)
+        const issueText = up.current_issue?.trim()
+        const remedyText = up.current_remedy?.trim()
+        const shoppingTags = parseArrayField(up.current_shopping_tags).map(prettyTag)
 
-  let sickNote = 'This plant needs attention.'
-  if (issueText && remedyText) {
-    sickNote = `${issueText} — ${remedyText}`
-  } else if (issueText) {
-    sickNote = issueText
-  } else if (remedyText) {
-    sickNote = remedyText
-  }
+        let sickNote = 'This plant needs attention.'
+        if (issueText && remedyText) {
+          sickNote = `${issueText} — ${remedyText}`
+        } else if (issueText) {
+          sickNote = issueText
+        } else if (remedyText) {
+          sickNote = remedyText
+        }
 
-  const needsSprayer = shoppingTags.some((tag) => {
-    const lower = tag.toLowerCase()
-    return (
-      lower.includes('spray') ||
-      lower.includes('neem') ||
-      lower.includes('oil') ||
-      lower.includes('fungicide')
-    )
-  })
+        const needsSprayer = shoppingTags.some((tag) => {
+          const lower = tag.toLowerCase()
+          return (
+            lower.includes('spray') ||
+            lower.includes('neem') ||
+            lower.includes('oil') ||
+            lower.includes('fungicide')
+          )
+        })
 
-  if (needsSprayer) {
-    finalTools.add('Garden Sprayer')
-  }
-
-  sickCandidates.push({
-    id: `sick-${up.id}`,
-    title: commonName,
-    note: sickNote,
-    taskType: 'sick',
-    score: 999,
-    urgency: 'must',
-    minutes: 15,
-    tools: [],
-    shopping: shoppingTags,
-    canBundle: false,
-  })
-}
+        sickCandidates.push({
+          id: `sick-${up.id}`,
+          title: commonName,
+          note: sickNote,
+          taskType: 'sick',
+          score: 999,
+          urgency: 'must',
+          minutes: 15,
+          tools: needsSprayer ? ['Garden Sprayer'] : [],
+          shopping: shoppingTags,
+          canBundle: false,
+        })
+      }
     })
 
-    allPlants.forEach((up, index) => {
+    allPlants.filter((up) => !up.is_sick).forEach((up, index) => {
       const p = up.plants
       if (!p) return
 
@@ -702,9 +697,9 @@ export default function CalendarPage() {
       })
     })
 
-    const visibleSickTasks = sickCandidates.filter((task) => !taskStatus[task.id])
+    const visibleSickTasks = sickCandidates
 
-    const sortedTasks = finalTasks
+    const sortedNormalTasks = finalTasks
       .filter((task) => !taskStatus[task.id])
       .sort((a, b) => {
         if (b.score !== a.score) return b.score - a.score
@@ -712,13 +707,14 @@ export default function CalendarPage() {
       })
       .slice(0, 4)
 
-    ;[...visibleSickTasks, ...sortedTasks].forEach((task) => {
+    const sortedTasks = [...visibleSickTasks, ...sortedNormalTasks]
+
+    sortedTasks.forEach((task) => {
       task.tools.forEach((tool) => finalTools.add(tool))
       task.shopping.forEach((item) => finalShopping.add(item))
     })
 
     return {
-      sickTasks: visibleSickTasks,
       tasks: sortedTasks,
       shoppingList: Array.from(finalShopping),
       toolsList: Array.from(finalTools),
@@ -839,58 +835,6 @@ export default function CalendarPage() {
       </div>
 
       <div className="px-6 py-10 space-y-10">
-        {agenda.sickTasks.length > 0 && (
-          <section className="space-y-4">
-            <h2 className="text-[10px] font-black text-red-500 uppercase tracking-[0.3em] px-2 italic">
-              Needs Attention
-            </h2>
-
-            <div className="space-y-3">
-              {agenda.sickTasks.map((task) => (
-                <div
-                  key={task.id}
-                  className="p-6 rounded-[2.5rem] border-2 border-red-200 bg-red-50 shadow-md flex gap-4 items-start"
-                >
-                  <div className="mt-1 w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-red-100">
-                    <input
-                      type="checkbox"
-                      checked={taskStatus[task.id] || false}
-                      onChange={(e) => toggleTask(task, e.target.checked)}
-                      className="w-4 h-4 accent-red-600"
-                    />
-                  </div>
-
-                  <div className="flex-1">
-                    <div className="flex justify-between items-start w-full gap-4">
-                      <div>
-                        <h3 className="font-black uppercase text-sm tracking-tight text-red-900">
-                          {task.title}
-                        </h3>
-                        <p className="text-[10px] font-black uppercase tracking-[0.18em] mt-1 text-red-600">
-                          Needs Attention
-                        </p>
-                      </div>
-
-                      <div className="flex items-center gap-1 opacity-60 shrink-0">
-                        <Clock size={10} />
-                        <span className="text-[10px] font-bold uppercase">
-                          {task.minutes >= 60
-                            ? `${(task.minutes / 60).toFixed(1)} HRS`
-                            : `${Math.round(task.minutes)} MIN`}
-                        </span>
-                      </div>
-                    </div>
-
-                    <p className="text-[15px] font-normal leading-relaxed mt-3 text-red-800">
-                      {task.note}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
         <section className="space-y-4">
           <h2 className="text-[10px] font-black text-green-900/30 uppercase tracking-[0.3em] px-2 italic">
             Priority Tasks
@@ -900,24 +844,42 @@ export default function CalendarPage() {
             {priorityLevel1Tasks.map((task) => (
               <div
                 key={task.id}
-                className="p-6 rounded-[2.5rem] border-2 border-amber-300 bg-amber-50/60 shadow-md flex gap-4 items-start"
+                className={`p-6 rounded-[2.5rem] border-2 shadow-md flex gap-4 items-start ${
+                  task.taskType === 'sick'
+                    ? 'border-red-200 bg-red-50'
+                    : 'border-amber-300 bg-amber-50/60'
+                }`}
               >
-                <div className="mt-1 w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-amber-200">
+                <div
+                  className={`mt-1 w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                    task.taskType === 'sick' ? 'bg-red-100' : 'bg-amber-200'
+                  }`}
+                >
                   <input
                     type="checkbox"
-                    checked={taskStatus[task.id] || false}
+                    checked={task.taskType === 'sick' ? false : taskStatus[task.id] || false}
                     onChange={(e) => toggleTask(task, e.target.checked)}
-                    className="w-4 h-4 accent-green-800"
+                    className={`w-4 h-4 ${
+                      task.taskType === 'sick' ? 'accent-red-600' : 'accent-green-800'
+                    }`}
                   />
                 </div>
 
                 <div className="flex-1">
                   <div className="flex justify-between items-start w-full gap-4">
                     <div>
-                      <h3 className="font-black uppercase text-sm tracking-tight text-green-950">
+                      <h3
+                        className={`font-black uppercase text-sm tracking-tight ${
+                          task.taskType === 'sick' ? 'text-red-900' : 'text-green-950'
+                        }`}
+                      >
                         {task.title}
                       </h3>
-                      <p className="text-[10px] font-black uppercase tracking-[0.18em] mt-1 text-amber-700">
+                      <p
+                        className={`text-[10px] font-black uppercase tracking-[0.18em] mt-1 ${
+                          task.taskType === 'sick' ? 'text-red-600' : 'text-amber-700'
+                        }`}
+                      >
                         {urgencyToLabel(task.urgency)}
                       </p>
                     </div>
@@ -932,7 +894,11 @@ export default function CalendarPage() {
                     </div>
                   </div>
 
-                  <p className="text-[16px] font-normal leading-relaxed mt-3 text-gray-700">
+                  <p
+                    className={`text-[16px] font-normal leading-relaxed mt-3 ${
+                      task.taskType === 'sick' ? 'text-red-800' : 'text-gray-700'
+                    }`}
+                  >
                     {task.note}
                   </p>
                 </div>
@@ -987,7 +953,7 @@ export default function CalendarPage() {
               </div>
             ))}
 
-            {agenda.sickTasks.length === 0 && agenda.tasks.length === 0 && (
+            {agenda.tasks.length === 0 && (
               <div className="bg-white rounded-[2.5rem] p-6 shadow-sm text-sm text-gray-500 italic">
                 No tasks for this week yet.
               </div>

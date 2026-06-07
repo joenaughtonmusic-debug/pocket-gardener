@@ -65,6 +65,18 @@ export default function PlantDetailPage() {
       .eq('id', logId)
 
     if (!error) {
+      if (userPlantRecordId) {
+        await supabase
+          .from('user_plants')
+          .update({
+            is_sick: false,
+            current_issue: null,
+            current_remedy: null,
+            current_shopping_tags: null,
+          })
+          .eq('id', userPlantRecordId)
+      }
+
       if (userPlantRecordId) fetchIssueHistory(userPlantRecordId)
     }
     setIsProcessing(false)
@@ -174,6 +186,7 @@ export default function PlantDetailPage() {
         is_sick: true,
         current_issue: issueType,
         current_remedy: remedyTitle || null,
+        current_shopping_tags: null,
       })
       .eq('id', userPlantRecordId)
 
