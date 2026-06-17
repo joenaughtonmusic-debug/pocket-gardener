@@ -30,4 +30,5 @@ export interface Plant {
   soil_type?: string | string[] | null;
   water_behavior?: string | string[] | null;
   mature_size?: string | string[] | null;
+  slope_suitability?: string | string[] | null;
 }

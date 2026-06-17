@@ -2,15 +2,17 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { createSupabaseBrowserClient } from '../../lib/supabaseClient'
-import { Sun, Droplets, Ruler, ChevronRight, Plus, X, Shovel } from 'lucide-react'
+import { Sun, Droplets, Ruler, ChevronRight, Plus, X, Shovel, TrendingUp } from 'lucide-react'
 import PlantThumbnail from '../../../components/PlantThumbnail'
 import PageHelp from '../../../components/PageHelp'
 
 // Configuration for Visual Sliders
-const SUN_OPTIONS = ['Full Sun', 'Part Shade', 'Full Shade'];
-const SOIL_OPTIONS = ['Healthy/loam', 'Clay', 'Sandy', 'Potting Mix'];
+const SUN_OPTIONS   = ['Full Sun', 'Part Shade', 'Full Shade'];
+const SOIL_OPTIONS  = ['Healthy/loam', 'Clay', 'Sandy', 'Potting Mix'];
 const WATER_OPTIONS = ['Holds Water', 'Drains Well', 'Dry', 'Under a Roof'];
-const SIZE_OPTIONS = ['<1m', '1-2m', '2-4m', '4m+'];
+const SIZE_OPTIONS  = ['<1m', '1-2m', '2-4m', '4m+'];
+const SLOPE_OPTIONS = ['flat', 'gentle', 'moderate', 'steep'];
+const SLOPE_LABELS  = ['Flat', 'Gentle Slope', 'Moderate Slope', 'Steep Slope'];
 
 // Visual Asset Mapping
 const SUN_IMAGES = [
@@ -40,11 +42,19 @@ const SIZE_IMAGES = [
   'https://sonxnuxhrivzgcevtdtc.supabase.co/storage/v1/object/public/weed-images/garden-photos/ChatGPT%20Image%20Apr%203,%202026,%2012_56_23%20PM%20tree.png'
 ];
 
+const SLOPE_IMAGES = [
+  'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?q=80',  // Flat garden
+  'https://images.unsplash.com/photo-1591857177580-dc82b9ac4e1e?q=80',  // Gentle slope
+  'https://images.unsplash.com/photo-1585320806297-9794b3e4aaae?q=80',  // Moderate / terraced
+  'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?q=80',  // Steep hillside
+];
+
 export default function MatchPage() {
   const [sunIdx, setSunIdx] = useState(0);
   const [soilIdx, setSoilIdx] = useState(0);
   const [waterIdx, setWaterIdx] = useState(1);
   const [sizeIdx, setSizeIdx] = useState(1);
+  const [slopeIdx, setSlopeIdx] = useState(0);
   const [matches, setMatches] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedPlant, setSelectedPlant] = useState<any | null>(null)
@@ -87,16 +97,17 @@ export default function MatchPage() {
       const { data } = await supabase
         .from('plants')
         .select('*')
-        .contains('sun_requirement', [SUN_OPTIONS[sunIdx]])
-        .contains('soil_type', [SOIL_OPTIONS[soilIdx]])
-        .contains('water_behavior', [WATER_OPTIONS[waterIdx]])
-        .contains('mature_size', [SIZE_OPTIONS[sizeIdx]])
+        .contains('sun_requirement',   [SUN_OPTIONS[sunIdx]])
+        .contains('soil_type',         [SOIL_OPTIONS[soilIdx]])
+        .contains('water_behavior',    [WATER_OPTIONS[waterIdx]])
+        .contains('mature_size',       [SIZE_OPTIONS[sizeIdx]])
+        .contains('slope_suitability', [SLOPE_OPTIONS[slopeIdx]])
       
       if (data) setMatches([...data].sort((a, b) => (a.common_name || "").localeCompare(b.common_name || "")))
       setLoading(false)
     }
     getLiveMatches()
-  }, [sunIdx, soilIdx, waterIdx, sizeIdx, supabase])
+  }, [sunIdx, soilIdx, waterIdx, sizeIdx, slopeIdx, supabase])
 
   return (
     <main className="min-h-screen bg-[#f0f4f1] text-gray-900 pb-40">
@@ -107,7 +118,7 @@ export default function MatchPage() {
             <h1 className="text-3xl font-black text-green-950 tracking-tighter italic uppercase leading-none">The Matchmaker</h1>
             <p className="text-[10px] text-green-700/60 font-black uppercase tracking-[0.2em] mt-2">Precision planting</p>
           </div>
-          <PageHelp title="Matchmaker" description="Slide to see what thrives." bullets={["4 Dynamic sliders"]} />
+          <PageHelp title="Matchmaker" description="Slide to see what thrives." bullets={["5 Dynamic sliders"]} />
         </header>
 
         <div className="space-y-10 mb-12">
@@ -170,6 +181,19 @@ export default function MatchPage() {
                 />
               ))}
               <input type="range" min="0" max="3" step="1" value={sizeIdx} onChange={(e) => setSizeIdx(parseInt(e.target.value))} className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[80%] h-1.5 bg-green-900/10 rounded-full appearance-none cursor-pointer accent-green-900 z-10" />
+            </div>
+          </div>
+          {/* SLOPE SLIDER */}
+          <div className="space-y-3">
+            <div className="flex justify-between items-end px-1">
+              <label className="text-[10px] font-black uppercase tracking-widest text-green-900/40 flex items-center gap-2"><TrendingUp size={14}/> Slope</label>
+              <span className="text-xs font-black italic uppercase text-green-950">{SLOPE_LABELS[slopeIdx]}</span>
+            </div>
+            <div className="relative h-44 w-full rounded-[2.5rem] overflow-hidden shadow-lg border-4 border-white bg-gray-100">
+              {SLOPE_IMAGES.map((url, i) => (
+                <div key={i} className="absolute inset-0 bg-cover bg-center transition-opacity duration-500" style={{ backgroundImage: `url("${url}")`, opacity: slopeIdx === i ? 1 : 0 }} />
+              ))}
+              <input type="range" min="0" max="3" step="1" value={slopeIdx} onChange={(e) => setSlopeIdx(parseInt(e.target.value))} className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[80%] h-1.5 bg-white/30 backdrop-blur-md rounded-full appearance-none cursor-pointer accent-white z-10" />
             </div>
           </div>
         </div>
