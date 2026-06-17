@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useRef, useMemo } from 'react'
 import { createSupabaseBrowserClient } from '../../lib/supabaseClient'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Pencil, Camera, ArrowRight, Check, AlertCircle, Search, X } from 'lucide-react'
 import PlantThumbnail from '../../../components/PlantThumbnail'
@@ -30,7 +29,6 @@ export default function MyGardenDashboard() {
   const [savingIssue, setSavingIssue] = useState(false)
   
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const router = useRouter()
   const supabase = useMemo(() => createSupabaseBrowserClient(), [])
 
   const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -249,7 +247,6 @@ export default function MyGardenDashboard() {
     setSavingIssue(false)
     closeIssueModal()
     getGarden()
-    router.push('/calendar')
   }
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -702,8 +699,8 @@ export default function MyGardenDashboard() {
                               )}
                             </div>
                             <div className="text-orange-500 text-[10px] font-black uppercase tracking-widest shrink-0">
-  Add to Calendar
-</div>
+                              Start Treatment
+                            </div>
                           </div>
                         </button>
                       ))}
@@ -751,8 +748,8 @@ export default function MyGardenDashboard() {
                               )}
                             </div>
                             <div className="text-orange-500 text-[10px] font-black uppercase tracking-widest shrink-0">
-  Add to Calendar
-</div>
+                              Start Treatment
+                            </div>
                           </div>
                         </button>
                       ))}
