@@ -1,7 +1,6 @@
 'use client'
 import Link from "next/link";
 import PageHelp from "../../../components/PageHelp";
-import { Target, ArrowRight } from 'lucide-react'; 
 
 export default function GuidesPage() {
   const categories = [
@@ -85,30 +84,27 @@ export default function GuidesPage() {
         ))}
       </section>
 
-      {/* DISCOVERY SECTION */}
+      {/* INSPIRATION SECTION */}
       <section className="space-y-4">
         <h2 className="text-[12px] font-black text-green-800/40 uppercase tracking-[0.3em] px-2 flex items-center gap-3">
-          <span>Discovery Tools</span>
+          <span>Inspiration</span>
           <span className="h-[1px] bg-green-200 flex-grow"></span>
         </h2>
 
         <div className="grid grid-cols-1">
-          {/* Matchmaker Tool Button */}
-          <Link 
-  href="/match"
-  className="w-full bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm flex items-center justify-between group active:scale-[0.98] transition-all no-underline"
->
-  <div className="flex items-center gap-4">
-    <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center">
-      <Target className="text-green-800" size={22} />
-    </div>
-    <div>
-      <h3 className="font-black text-gray-800 text-sm uppercase tracking-tight">Plant Matchmaker</h3>
-      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-tight">Find the perfect match for your space</p>
-    </div>
-  </div>
-  <ArrowRight size={14} className="text-gray-200 group-hover:text-green-600 transition-colors mr-2" />
-</Link>
+          <Link
+            href="/feature"
+            className="w-full bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm flex items-center justify-between group active:scale-[0.98] transition-all no-underline"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-2xl">🖼️</div>
+              <div>
+                <h3 className="font-black text-gray-800 text-sm uppercase tracking-tight">This Month&apos;s Feature Garden</h3>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-tight">Auckland garden inspiration</p>
+              </div>
+            </div>
+            <span className="text-gray-200 group-hover:text-green-600 transition-colors text-xl mr-2">→</span>
+          </Link>
         </div>
       </section>
     </main>
