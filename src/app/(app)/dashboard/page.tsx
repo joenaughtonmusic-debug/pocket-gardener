@@ -9,6 +9,13 @@ import WelcomeOverlay from '../../../components/WelcomeOverlay'
 import UpgradeButton from '../../../components/UpgradeButton'
 import type { UserPlant, PlantRemedy } from '../../../types/garden'
 
+const STOP_WORDS = new Set([
+  'my', 'the', 'a', 'an', 'is', 'are', 'was', 'were', 'has', 'have', 'had',
+  'got', 'it', 'its', 'this', 'that', 'and', 'or', 'but', 'so', 'for', 'with',
+  'of', 'in', 'on', 'at', 'to', 'by', 'from', 'up', 'into', 'be', 'been',
+  'plant', 'plants',
+])
+
 export default function MyGardenDashboard() {
   const [ownedPlants, setOwnedPlants] = useState<UserPlant[]>([])
   const [projectPlants, setProjectPlants] = useState<UserPlant[]>([])
@@ -27,6 +34,10 @@ export default function MyGardenDashboard() {
   const [remedies, setRemedies] = useState<PlantRemedy[]>([])
   const [loadingRemedies, setLoadingRemedies] = useState(false)
   const [savingIssue, setSavingIssue] = useState(false)
+
+  const [symptomQuery, setSymptomQuery] = useState('')
+  const [allRemedies, setAllRemedies] = useState<PlantRemedy[] | null>(null)
+  const [symptomLoading, setSymptomLoading] = useState(false)
   
   const fileInputRef = useRef<HTMLInputElement>(null)
   const supabase = useMemo(() => createSupabaseBrowserClient(), [])
@@ -282,6 +293,108 @@ export default function MyGardenDashboard() {
     }
   }
 
+  const symptomResults = useMemo(() => {
+    if (!symptomQuery.trim() || !allRemedies) return []
+    const tokens = symptomQuery
+      .toLowerCase()
+      .split(/\s+/)
+      .filter((t) => t.length > 1 && !STOP_WORDS.has(t))
+    if (tokens.length === 0) return []
+
+    // Detect a plant name in the query by matching against owned plant common names.
+    // A match requires either an exact token equality or a prefix overlap of ≥4 chars.
+    const rawTokens = symptomQuery.toLowerCase().split(/\s+/).filter((t) => t.length >= 3)
+    let matchedPlantId: number | null = null
+    for (const plant of ownedPlants) {
+      const nameText = [
+        plant.nickname,
+        plant.plants?.common_name,
+        plant.plants?.scientific_name,
+        plant.plants?.botanical_name,
+      ].filter(Boolean).join(' ')
+      const nameTokens = nameText.toLowerCase().split(/[\s\-\/]+/).filter((t) => t.length >= 3)
+      const isMatch = nameTokens.some((nameToken) =>
+        rawTokens.some(
+          (qToken) =>
+            nameToken === qToken ||
+            (nameToken.length >= 4 && qToken.length >= 4 &&
+              (nameToken.startsWith(qToken) || qToken.startsWith(nameToken)))
+        )
+      )
+      if (isMatch) {
+        matchedPlantId = plant.plant_id
+        break
+      }
+    }
+
+    const scored = allRemedies.map((r) => {
+      const issueType  = (r.issue_type        || '').toLowerCase()
+      const title      = (r.remedy_title       || '').toLowerCase()
+      const desc       = (r.remedy_description || '').toLowerCase()
+      const keywords   = (r.search_keywords    || '').toLowerCase()
+      let score = 0
+      for (const token of tokens) {
+        if (issueType.includes(token))  score += 3
+        if (title.includes(token))      score += 2
+        if (keywords.includes(token))   score += 2
+        if (desc.includes(token))       score += 1
+      }
+
+      // Apply plant-context tier multiplier when a plant was detected in the query.
+      if (matchedPlantId !== null) {
+        const remedyPlantId = r.specific_plant_id ? Number(r.specific_plant_id) : null
+        if (remedyPlantId === matchedPlantId) {
+          score *= 100  // plant-specific for the matched plant — highest priority
+        } else if (remedyPlantId === null) {
+          score *= 10   // universal — second tier
+        }
+        // remedies specific to a different plant keep score × 1 — deprioritised
+      }
+
+      return { remedy: r, score }
+    })
+
+    const candidates = scored
+      .filter((s) => {
+        if (s.score === 0) return false
+        // When a plant is detected, hard-exclude remedies specific to other plants.
+        if (matchedPlantId !== null) {
+          const rPlantId = s.remedy.specific_plant_id ? Number(s.remedy.specific_plant_id) : null
+          if (rPlantId !== null && rPlantId !== matchedPlantId) return false
+        }
+        return true
+      })
+      .sort((a, b) => b.score - a.score)
+
+    // If a plant was detected and at least one plant-specific result exists,
+    // suppress universals — they would only dilute specific results.
+    // If no plant-specific results survive, fall back to universals.
+    let pool = candidates
+    if (matchedPlantId !== null) {
+      const hasSpecific = candidates.some(
+        (s) => s.remedy.specific_plant_id !== null &&
+               Number(s.remedy.specific_plant_id) === matchedPlantId
+      )
+      if (hasSpecific) {
+        pool = candidates.filter(
+          (s) => s.remedy.specific_plant_id !== null &&
+                 Number(s.remedy.specific_plant_id) === matchedPlantId
+        )
+      }
+    }
+
+    const seen = new Set<string>()
+    return pool
+      .filter(({ remedy: r }) => {
+        const key = r.issue_type
+        if (seen.has(key)) return false
+        seen.add(key)
+        return true
+      })
+      .slice(0, 5)
+      .map((s) => s.remedy)
+  }, [symptomQuery, allRemedies, ownedPlants])
+
   if (loading) return (
     <div className="min-h-screen bg-[#f0f4f1] flex items-center justify-center p-20 text-center">
       <div className="flex flex-col items-center gap-4">
@@ -312,6 +425,14 @@ export default function MyGardenDashboard() {
   const universalMatches = filteredRemedies.filter(
     (r) => r.is_universal === true && Number(r.specific_plant_id) !== Number(selectedUnhealthyPlant?.plant_id)
   )
+
+  async function fetchAllRemedies() {
+    if (allRemedies !== null) return
+    setSymptomLoading(true)
+    const { data } = await supabase.from('plant_remedies').select('*')
+    setAllRemedies((data ?? []) as PlantRemedy[])
+    setSymptomLoading(false)
+  }
 
   return (
     <main className="min-h-screen bg-[#f0f4f1] pb-40 text-gray-900">
@@ -389,6 +510,76 @@ export default function MyGardenDashboard() {
       </section>
 
       <div className="px-6 space-y-12">
+
+        <section className="space-y-3">
+          <p className="text-[10px] font-black text-green-800/50 uppercase tracking-[0.2em] px-1">
+            🔍 Find a plant problem
+          </p>
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="My lemon has bumpy fruit..."
+              value={symptomQuery}
+              onFocus={fetchAllRemedies}
+              onChange={(e) => setSymptomQuery(e.target.value)}
+              className="w-full bg-white border border-gray-100 rounded-full px-5 py-4 pr-12 text-sm font-bold text-gray-800 placeholder:text-gray-300 outline-none focus:border-green-200 shadow-sm transition-colors"
+            />
+            <Search size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none" />
+          </div>
+
+          {symptomQuery.trim().length > 0 && (
+            <div className="space-y-2 pt-1">
+              {symptomLoading ? (
+                <p className="text-center text-[10px] font-black uppercase tracking-widest text-gray-400 py-6">
+                  Searching...
+                </p>
+              ) : symptomResults.length === 0 ? (
+                <p className="text-center text-[10px] font-black uppercase tracking-widest text-gray-300 italic py-6">
+                  No matches found. Try different symptoms.
+                </p>
+              ) : (
+                <>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 px-1 pb-1">
+                    Possible matches
+                  </p>
+                  {symptomResults.map((r) => (
+                    <div
+                      key={r.id}
+                      className="bg-white rounded-[1.5rem] border border-gray-100 p-4 shadow-sm"
+                    >
+                      <p className="text-[11px] font-black text-orange-700 uppercase tracking-tight">
+                        {r.issue_type}
+                      </p>
+                      {r.remedy_title && (
+                        <p className="text-[10px] font-black text-green-800 uppercase tracking-widest mt-1">
+                          {r.remedy_title}
+                        </p>
+                      )}
+                      {r.remedy_description && (
+                        <p className="text-xs text-gray-500 italic leading-relaxed mt-1.5 line-clamp-2">
+                          {r.remedy_description}
+                        </p>
+                      )}
+                      {r.shopping_tags && r.shopping_tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mt-2.5">
+                          {r.shopping_tags.map((tag) => (
+                            <span
+                              key={tag}
+                              className="text-[8px] font-black uppercase tracking-widest bg-green-50 text-green-700 px-2 py-0.5 rounded-full border border-green-100"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+          )}
+        </section>
+
         {!isPro && (
           <section>
             <div className="bg-green-950 rounded-[3rem] p-8 relative overflow-hidden flex flex-col items-center text-center shadow-2xl border-4 border-amber-400/20">
