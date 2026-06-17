@@ -38,6 +38,8 @@ export default function MyGardenDashboard() {
   const [symptomQuery, setSymptomQuery] = useState('')
   const [allRemedies, setAllRemedies] = useState<PlantRemedy[] | null>(null)
   const [symptomLoading, setSymptomLoading] = useState(false)
+  const [pendingSymptomRemedy, setPendingSymptomRemedy] = useState<PlantRemedy | null>(null)
+  const [showPlantPicker, setShowPlantPicker] = useState(false)
   
   const fileInputRef = useRef<HTMLInputElement>(null)
   const supabase = useMemo(() => createSupabaseBrowserClient(), [])
@@ -211,8 +213,9 @@ export default function MyGardenDashboard() {
   }
 }
 
-  async function handleSelectIssue(remedy: PlantRemedy) {
-    if (!selectedUnhealthyPlant) return
+  async function handleSelectIssue(remedy: PlantRemedy, overridePlant?: UserPlant) {
+    const targetPlant = overridePlant ?? selectedUnhealthyPlant
+    if (!targetPlant) return
 
     setSavingIssue(true)
 
@@ -231,12 +234,12 @@ export default function MyGardenDashboard() {
           current_remedy: remedyText,
           current_shopping_tags: remedy.shopping_tags || [],
         })
-        .eq('id', selectedUnhealthyPlant.id),
+        .eq('id', targetPlant.id),
       supabase
         .from('plant_logs')
         .insert([{
           user_id: user?.id,
-          user_plant_id: selectedUnhealthyPlant.id,
+          user_plant_id: targetPlant.id,
           issue_type: remedy.issue_type,
           status: 'Ongoing',
         }])
@@ -247,7 +250,7 @@ export default function MyGardenDashboard() {
     } else {
       setOwnedPlants((prev) =>
         prev.map((plant) =>
-          plant.id === selectedUnhealthyPlant.id ? { ...plant, is_sick: true } : plant
+          plant.id === targetPlant.id ? { ...plant, is_sick: true } : plant
         )
       )
     }
@@ -258,6 +261,28 @@ export default function MyGardenDashboard() {
     setSavingIssue(false)
     closeIssueModal()
     getGarden()
+  }
+
+  async function handleTrackSymptomIssue(remedy: PlantRemedy) {
+    if (matchedPlantId !== null) {
+      const plant = ownedPlants.find((p) => p.plant_id === matchedPlantId)
+      if (plant) {
+        await handleSelectIssue(remedy, plant)
+        setSymptomQuery('')
+        return
+      }
+    }
+    setPendingSymptomRemedy(remedy)
+    setShowPlantPicker(true)
+  }
+
+  async function handlePickPlantForSymptom(plant: UserPlant) {
+    setShowPlantPicker(false)
+    const remedy = pendingSymptomRemedy
+    setPendingSymptomRemedy(null)
+    if (!remedy) return
+    await handleSelectIssue(remedy, plant)
+    setSymptomQuery('')
   }
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -293,18 +318,10 @@ export default function MyGardenDashboard() {
     }
   }
 
-  const symptomResults = useMemo(() => {
-    if (!symptomQuery.trim() || !allRemedies) return []
-    const tokens = symptomQuery
-      .toLowerCase()
-      .split(/\s+/)
-      .filter((t) => t.length > 1 && !STOP_WORDS.has(t))
-    if (tokens.length === 0) return []
-
-    // Detect a plant name in the query by matching against owned plant common names.
-    // A match requires either an exact token equality or a prefix overlap of ≥4 chars.
+  // Detect a plant name in the query — lifted out so handlers can read it too.
+  const matchedPlantId = useMemo(() => {
+    if (!symptomQuery.trim()) return null
     const rawTokens = symptomQuery.toLowerCase().split(/\s+/).filter((t) => t.length >= 3)
-    let matchedPlantId: number | null = null
     for (const plant of ownedPlants) {
       const nameText = [
         plant.nickname,
@@ -321,11 +338,44 @@ export default function MyGardenDashboard() {
               (nameToken.startsWith(qToken) || qToken.startsWith(nameToken)))
         )
       )
-      if (isMatch) {
-        matchedPlantId = plant.plant_id
-        break
+      if (isMatch) return plant.plant_id
+    }
+    return null
+  }, [symptomQuery, ownedPlants])
+
+  const symptomResults = useMemo(() => {
+    if (!symptomQuery.trim() || !allRemedies) return []
+    const tokens = symptomQuery
+      .toLowerCase()
+      .split(/\s+/)
+      .filter((t) => t.length > 1 && !STOP_WORDS.has(t))
+    if (tokens.length === 0) return []
+
+    // Strip plant name tokens from scoring so "lemon tree bumpy fruit" only
+    // scores on ["bumpy","fruit"], not on ["lemon","tree"].
+    let symptomTokens = tokens
+    if (matchedPlantId !== null) {
+      const matchedPlant = ownedPlants.find((p) => p.plant_id === matchedPlantId)
+      if (matchedPlant) {
+        const plantNameSet = new Set(
+          [
+            matchedPlant.nickname,
+            matchedPlant.plants?.common_name,
+            matchedPlant.plants?.scientific_name,
+            matchedPlant.plants?.botanical_name,
+          ]
+            .filter(Boolean)
+            .join(' ')
+            .toLowerCase()
+            .split(/[\s\-\/]+/)
+            .filter((t) => t.length > 1)
+        )
+        symptomTokens = tokens.filter((t) => !plantNameSet.has(t))
       }
     }
+    // If stripping plant-name tokens leaves nothing, the query is plant-name only.
+    // Fall back to the original tokens so plant-specific remedies still surface.
+    if (symptomTokens.length === 0) symptomTokens = tokens
 
     const scored = allRemedies.map((r) => {
       const issueType  = (r.issue_type        || '').toLowerCase()
@@ -333,7 +383,7 @@ export default function MyGardenDashboard() {
       const desc       = (r.remedy_description || '').toLowerCase()
       const keywords   = (r.search_keywords    || '').toLowerCase()
       let score = 0
-      for (const token of tokens) {
+      for (const token of symptomTokens) {
         if (issueType.includes(token))  score += 3
         if (title.includes(token))      score += 2
         if (keywords.includes(token))   score += 2
@@ -393,7 +443,7 @@ export default function MyGardenDashboard() {
       })
       .slice(0, 5)
       .map((s) => s.remedy)
-  }, [symptomQuery, allRemedies, ownedPlants])
+  }, [symptomQuery, allRemedies, ownedPlants, matchedPlantId])
 
   if (loading) return (
     <div className="min-h-screen bg-[#f0f4f1] flex items-center justify-center p-20 text-center">
@@ -535,7 +585,9 @@ export default function MyGardenDashboard() {
                 </p>
               ) : symptomResults.length === 0 ? (
                 <p className="text-center text-[10px] font-black uppercase tracking-widest text-gray-300 italic py-6">
-                  No matches found. Try different symptoms.
+                  {matchedPlantId !== null
+                    ? "Add a symptom — e.g. 'lemon tree bumpy fruit'"
+                    : 'No matches found. Try different symptoms.'}
                 </p>
               ) : (
                 <>
@@ -572,6 +624,13 @@ export default function MyGardenDashboard() {
                           ))}
                         </div>
                       )}
+                      <button
+                        onClick={() => handleTrackSymptomIssue(r)}
+                        disabled={savingIssue}
+                        className="mt-3 w-full bg-green-800 py-2.5 rounded-2xl text-[9px] font-black uppercase tracking-widest text-white active:scale-[0.98] transition-all disabled:opacity-50"
+                      >
+                        Track Issue
+                      </button>
                     </div>
                   ))}
                 </>
@@ -954,6 +1013,44 @@ export default function MyGardenDashboard() {
                   )}
                 </>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showPlantPicker && pendingSymptomRemedy && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
+          <div className="w-full max-w-xl bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 overflow-hidden">
+            <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
+              <div>
+                <p className="text-[9px] font-black text-orange-500 uppercase tracking-[0.2em] mb-1">
+                  Track Issue
+                </p>
+                <h3 className="text-lg font-black text-green-950 uppercase italic">
+                  Which plant is affected?
+                </h3>
+              </div>
+              <button
+                onClick={() => { setShowPlantPicker(false); setPendingSymptomRemedy(null) }}
+                className="w-10 h-10 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="p-4 space-y-2 max-h-[60vh] overflow-y-auto">
+              {ownedPlants.map((plant) => (
+                <button
+                  key={plant.id}
+                  onClick={() => handlePickPlantForSymptom(plant)}
+                  disabled={savingIssue}
+                  className="w-full flex items-center gap-3 p-4 rounded-[1.5rem] border border-gray-100 bg-gray-50/40 text-left active:scale-[0.98] transition-all disabled:opacity-50"
+                >
+                  <PlantThumbnail plant={plant.plants} size="sm" />
+                  <span className="text-sm font-black text-green-950 uppercase">
+                    {plant.nickname || plant.plants?.common_name || 'Unknown Plant'}
+                  </span>
+                </button>
+              ))}
             </div>
           </div>
         </div>
