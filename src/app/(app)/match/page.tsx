@@ -43,10 +43,10 @@ const SIZE_IMAGES = [
 ];
 
 const SLOPE_IMAGES = [
-  'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?q=80',  // Flat garden
-  'https://images.unsplash.com/photo-1591857177580-dc82b9ac4e1e?q=80',  // Gentle slope
-  'https://images.unsplash.com/photo-1585320806297-9794b3e4aaae?q=80',  // Moderate / terraced
-  'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?q=80',  // Steep hillside
+  'https://sonxnuxhrivzgcevtdtc.supabase.co/storage/v1/object/public/garden%20assets/Slope%20files/slope_flat%20v1.png',      // Flat
+  'https://sonxnuxhrivzgcevtdtc.supabase.co/storage/v1/object/public/garden%20assets/Slope%20files/slope_gentle%20%20v1.png', // Gentle
+  'https://sonxnuxhrivzgcevtdtc.supabase.co/storage/v1/object/public/garden%20assets/Slope%20files/slope_moderate%20v1.png',  // Moderate
+  'https://sonxnuxhrivzgcevtdtc.supabase.co/storage/v1/object/public/garden%20assets/Slope%20files/slope_steep%20v1.png',     // Steep
 ];
 
 export default function MatchPage() {
@@ -115,8 +115,8 @@ export default function MatchPage() {
         
         <header className="mb-8 pt-4 flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-black text-green-950 tracking-tighter italic uppercase leading-none">The Matchmaker</h1>
-            <p className="text-[10px] text-green-700/60 font-black uppercase tracking-[0.2em] mt-2">Precision planting</p>
+            <h1 className="text-3xl font-black text-green-950 tracking-tighter italic uppercase leading-none">Plant Selector</h1>
+            <p className="text-[10px] text-green-700/60 font-black uppercase tracking-[0.2em] mt-2">Find plants suited to your garden conditions.</p>
           </div>
           <PageHelp title="Matchmaker" description="Slide to see what thrives." bullets={["5 Dynamic sliders"]} />
         </header>
