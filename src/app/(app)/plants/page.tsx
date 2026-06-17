@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useRef, useMemo } from "react";
-import { createSupabaseBrowserClient } from "../lib/supabaseClient";
+import { createSupabaseBrowserClient } from "../../lib/supabaseClient";
 import Link from "next/link";
 import {
   ChevronDown,
@@ -18,10 +18,9 @@ import {
   AlertTriangle,
   Image as ImageIcon
 } from "lucide-react";
-import Navigation from "../../components/Navigation";
-import PlantThumbnail from "../../components/PlantThumbnail";
-import PageHelp from "../../components/PageHelp";
-import type { Plant } from "../../types/plants";
+import PlantThumbnail from "../../../components/PlantThumbnail";
+import PageHelp from "../../../components/PageHelp";
+import type { Plant } from "../../../types/plants";
 
 // Full Weed Registry for AI Recognition (Auckland/NZ Focus)
 const COMMON_WEEDS = [
@@ -666,7 +665,6 @@ const { error } = await supabase.from('user_plants').insert([{
         </div>
       )}
 
-      <Navigation />
     </main>
   );
 }

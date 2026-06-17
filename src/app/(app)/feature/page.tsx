@@ -4,8 +4,7 @@ import { useMemo, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Heart, ChevronRight, Camera, User, Plus } from 'lucide-react'
-import Navigation from '../../components/Navigation'
-import { createSupabaseBrowserClient } from '../lib/supabaseClient'
+import { createSupabaseBrowserClient } from '../../lib/supabaseClient'
 
 const GARDEN_ARCHIVE = [
   {
@@ -227,7 +226,6 @@ export default function GardenFeatures() {
           </button>
         ))}
       </section>
-      <Navigation />
     </main>
   )
 }

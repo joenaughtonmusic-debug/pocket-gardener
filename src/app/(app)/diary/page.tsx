@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, ClipboardList, Scissors, Droplets, Save, RotateCcw, ChevronDown, Calendar } from 'lucide-react'
-import Navigation from '../../components/Navigation'
 
 // Pre-defined tasks for the "Shelf"
 const TASK_LIBRARY = [
@@ -170,7 +169,6 @@ export default function GardenDiary() {
           </div>
         </section>
       </div>
-      <Navigation />
     </main>
   )
 }

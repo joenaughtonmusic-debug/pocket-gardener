@@ -3,9 +3,8 @@
 import { useState, useEffect } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import Link from 'next/link'
-import Navigation from '../../components/Navigation'
-import PlantThumbnail from '../../components/PlantThumbnail'
-import PageHelp from '../../components/PageHelp'
+import PlantThumbnail from '../../../components/PlantThumbnail'
+import PageHelp from '../../../components/PageHelp'
 
 export default function IdentifyPage() {
   const [plants, setPlants] = useState<any[]>([])
@@ -172,8 +171,6 @@ export default function IdentifyPage() {
           ))}
         </div>
       </div>
-
-      <Navigation />
     </main>
   )
 }

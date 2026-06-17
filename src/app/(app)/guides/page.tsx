@@ -1,7 +1,6 @@
 'use client'
-import Navigation from "../../components/Navigation";
 import Link from "next/link";
-import PageHelp from "../../components/PageHelp";
+import PageHelp from "../../../components/PageHelp";
 import { Target, ArrowRight } from 'lucide-react'; 
 
 export default function GuidesPage() {
@@ -96,7 +95,7 @@ export default function GuidesPage() {
         <div className="grid grid-cols-1">
           {/* Matchmaker Tool Button */}
           <Link 
-  href="/match" // Ensure this matches your actual file path (e.g., /app/matchmaker/page.tsx)
+  href="/match"
   className="w-full bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm flex items-center justify-between group active:scale-[0.98] transition-all no-underline"
 >
   <div className="flex items-center gap-4">
@@ -112,8 +111,6 @@ export default function GuidesPage() {
 </Link>
         </div>
       </section>
-
-      <Navigation />
     </main>
   );
 }

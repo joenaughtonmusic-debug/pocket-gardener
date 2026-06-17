@@ -1,6 +1,5 @@
 'use client'
 
-import Navigation from "../../../components/Navigation";
 import Link from "next/link";
 
 const toolCategories = [
@@ -13,7 +12,6 @@ const toolCategories = [
         image: "https://sonxnuxhrivzgcevtdtc.supabase.co/storage/v1/object/public/guides/niwashi-traditional-right.jpeg",
         description: "The ultimate tool for Auckland clay. The angled blade cuts through weeds at the root and breaks up hard ground with ease.",
         proTip: "Keep the inner edge sharp with a whetstone for effortless weeding.",
-        // Default centering is fine here
         objectPosition: "center center"
       }
     ]
@@ -27,7 +25,6 @@ const toolCategories = [
         image: "https://sonxnuxhrivzgcevtdtc.supabase.co/storage/v1/object/public/guides/Pole%20hedge%20trimmer.png",
         description: "Essential for keeping hedges like Griselinia or Pittosporum square without needing a ladder.",
         proTip: "Long-reach poles save your back and ensure a straighter line on tall boundary hedges.",
-        // Shift view down to show the head/mechanism
         objectPosition: "top center" 
       }
     ]
@@ -41,7 +38,6 @@ const toolCategories = [
         image: "https://sonxnuxhrivzgcevtdtc.supabase.co/storage/v1/object/public/guides/trench%20spade.jpg",
         description: "A narrow, heavy-duty spade. Perfect for digging precise holes in tight spots or transplanting established plants.",
         proTip: "The slim profile makes it much easier to slice through thick roots than a standard square spade.",
-        // Lift view up to show the spade head
         objectPosition: "bottom center" 
       }
     ]
@@ -55,7 +51,6 @@ const toolCategories = [
         image: "https://sonxnuxhrivzgcevtdtc.supabase.co/storage/v1/object/public/guides/GTO-SCLH-burgon-and-ball-left-handed-bypass-secateurs-02.jpeg",
         description: "Your everyday companion for clean cuts on living stems.",
         proTip: "Always choose bypass (scissor-action) over anvil style to avoid crushing the plant's 'veins'.",
-        // Default centering is fine here
         objectPosition: "center center"
       }
     ]
@@ -89,11 +84,9 @@ export default function ToolsGuide() {
                       alt={tool.name} 
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                       style={{ 
-                        // Apply the custom object position from the tool data
                         objectPosition: tool.objectPosition || 'center' 
                       }}
                       onError={(e) => { 
-                        // Using Privet as the ultimate fallback
                         e.currentTarget.src = "https://sonxnuxhrivzgcevtdtc.supabase.co/storage/v1/object/public/weed-images/privet.jpeg"; 
                       }}
                     />
@@ -122,8 +115,6 @@ export default function ToolsGuide() {
           </section>
         ))}
       </div>
-
-      <Navigation />
     </main>
   );
 }

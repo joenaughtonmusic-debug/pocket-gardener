@@ -2,9 +2,8 @@
 
 import { useEffect, useState, useRef, useMemo } from 'react'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
-import { createSupabaseBrowserClient } from '../../lib/supabaseClient'
-import Navigation from "../../../components/Navigation"
-import PlantThumbnail from "../../../components/PlantThumbnail"
+import { createSupabaseBrowserClient } from '../../../lib/supabaseClient'
+import PlantThumbnail from "../../../../components/PlantThumbnail"
 import { Check, Search, Sparkles, Quote } from 'lucide-react'
 
 export default function PlantDetailPage() {
@@ -671,7 +670,6 @@ const { error } = await supabase.from('user_plants').insert([{
           </div>
         )}
       </div>
-      <Navigation />
     </main>
   )
 }

@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
-import Navigation from '../../components/Navigation'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -109,9 +108,6 @@ export default function LoginPage() {
         )}
       </div>
 
-      {/* App Navigation */}
-      <Navigation />
-      
       <p className="mt-8 text-[9px] font-black text-gray-300 uppercase tracking-[0.3em]">
         Designed for Auckland Gardeners
       </p>

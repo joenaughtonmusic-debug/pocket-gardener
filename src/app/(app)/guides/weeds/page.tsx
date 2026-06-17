@@ -1,7 +1,6 @@
 'use client'
 import { useState, useEffect } from "react";
 import { createBrowserClient } from '@supabase/ssr'
-import Navigation from "../../../components/Navigation";
 import Link from "next/link";
 
 export default function WeedsDetail() {
@@ -84,8 +83,6 @@ export default function WeedsDetail() {
           ))
         )}
       </div>
-
-      <Navigation />
     </main>
   );
 }

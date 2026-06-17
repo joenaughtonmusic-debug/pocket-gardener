@@ -30,7 +30,7 @@ export default function PlantingGuide() {
           Auckland Planting Guide
         </h1>
         <p className="text-slate-600 font-bold leading-relaxed max-w-2xl">
-          Before you plant, make sure to get the right plants for your area. For site-specific selection (sun, soil, drainage), use the Plant Match Maker. This guide focuses on what to do once you’ve chosen your plants.
+          Before you plant, make sure to get the right plants for your area. For site-specific selection (sun, soil, drainage), use the Plant Match Maker. This guide focuses on what to do once you've chosen your plants.
         </p>
       </header>
 

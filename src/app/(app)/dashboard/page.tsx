@@ -1,15 +1,14 @@
 'use client'
 
 import { useEffect, useState, useRef, useMemo } from 'react'
-import { createSupabaseBrowserClient } from '../lib/supabaseClient'
+import { createSupabaseBrowserClient } from '../../lib/supabaseClient'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Pencil, Camera, ArrowRight, Check, AlertCircle, Search, X } from 'lucide-react'
-import Navigation from '../../components/Navigation'
-import PlantThumbnail from '../../components/PlantThumbnail'
-import WelcomeOverlay from '../../components/WelcomeOverlay'
-import UpgradeButton from '../../components/UpgradeButton'
-import type { UserPlant, PlantRemedy } from '../../types/garden'
+import PlantThumbnail from '../../../components/PlantThumbnail'
+import WelcomeOverlay from '../../../components/WelcomeOverlay'
+import UpgradeButton from '../../../components/UpgradeButton'
+import type { UserPlant, PlantRemedy } from '../../../types/garden'
 
 export default function MyGardenDashboard() {
   const [ownedPlants, setOwnedPlants] = useState<UserPlant[]>([])
@@ -698,7 +697,6 @@ export default function MyGardenDashboard() {
         </div>
       )}
 
-      <Navigation />
     </main>
   )
 }

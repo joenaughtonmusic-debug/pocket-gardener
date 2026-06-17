@@ -1,11 +1,10 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { createSupabaseBrowserClient } from '../lib/supabaseClient'
+import { createSupabaseBrowserClient } from '../../lib/supabaseClient'
 import { Sun, Droplets, Ruler, ChevronRight, Plus, X, Shovel } from 'lucide-react'
-import Navigation from "../../components/Navigation"
-import PlantThumbnail from "../../components/PlantThumbnail"
-import PageHelp from '../../components/PageHelp'
+import PlantThumbnail from '../../../components/PlantThumbnail'
+import PageHelp from '../../../components/PageHelp'
 
 // Configuration for Visual Sliders
 const SUN_OPTIONS = ['Full Sun', 'Part Shade', 'Full Shade'];
@@ -216,7 +215,6 @@ export default function MatchPage() {
           </div>
         </div>
       )}
-      <Navigation />
     </main>
   )
 }

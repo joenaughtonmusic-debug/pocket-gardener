@@ -1,6 +1,5 @@
 'use client'
 import { useState } from "react";
-import Navigation from "../../../components/Navigation";
 import Link from "next/link";
 
 const pestList = [
@@ -49,8 +48,6 @@ export default function PestsDetail() {
           </div>
         ))}
       </div>
-
-      <Navigation />
     </main>
   );
 }

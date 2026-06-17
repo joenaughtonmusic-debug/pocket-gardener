@@ -1,6 +1,5 @@
 'use client'
 
-import Navigation from "../../../components/Navigation";
 import Link from "next/link";
 
 const feedingCategories = [
@@ -96,8 +95,6 @@ export default function FeedingGuide() {
           </section>
         ))}
       </div>
-
-      <Navigation />
     </main>
   );
 }

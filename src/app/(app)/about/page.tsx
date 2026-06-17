@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
-import Navigation from '../../components/Navigation'
 
 const getSupabase = () => {
   return createBrowserClient(
@@ -155,8 +154,6 @@ export default function AboutPage() {
           </p>
         </footer>
       </div>
-
-      <Navigation />
     </main>
   )
 }

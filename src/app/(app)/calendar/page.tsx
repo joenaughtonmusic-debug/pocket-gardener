@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useMemo, useRef } from 'react'
-import { createSupabaseBrowserClient } from '../lib/supabaseClient'
+import { createSupabaseBrowserClient } from '../../lib/supabaseClient'
 import {
   ShoppingCart,
   Wrench,
@@ -10,8 +10,7 @@ import {
   MapPin,
   Clock,
 } from 'lucide-react'
-import Navigation from '../../components/Navigation'
-import PageHelp from '../../components/PageHelp'
+import PageHelp from '../../../components/PageHelp'
 import type {
   TaskCandidate,
   PlantRow,
@@ -19,7 +18,7 @@ import type {
   MonthlyCareRow,
   TaskRuleRow,
   TaskStatusRow,
-} from '../../types/calendar'
+} from '../../../types/calendar'
 
 function parseArrayField(value: unknown): string[] {
   if (!value) return []
@@ -966,7 +965,6 @@ export default function CalendarPage() {
         </div>
       )}
 
-      <Navigation />
     </main>
   )
 }
