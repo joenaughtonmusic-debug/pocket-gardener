@@ -12,6 +12,9 @@ export interface UserPlant {
   plants: Plant;
   latest_photo?: string | null;
   is_sick?: boolean | null;
+  current_issue?: string | null;
+  current_remedy?: string | null;
+  current_shopping_tags?: string[] | null;
 }
 
 /**

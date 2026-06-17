@@ -65,7 +65,7 @@ export default function MyGardenDashboard() {
           supabase.from('profiles').select('is_pro').eq('id', user.id).maybeSingle(),
           supabase
             .from('user_plants')
-            .select(`id, plant_id, is_project, nickname, is_sick, plants (*)`)
+            .select(`id, plant_id, is_project, nickname, is_sick, current_issue, current_remedy, current_shopping_tags, plants (*)`)
             .eq('user_id', user.id),
         ]);
 
@@ -115,37 +115,37 @@ export default function MyGardenDashboard() {
     getGarden(); 
   }, []);
 
-  async function handleResolveIssue(logId: string, plantName: string, userPlantId?: string) {
-    const { error } = await supabase
-      .from('plant_logs')
-      .update({ status: 'Resolved', resolved_at: new Date().toISOString() })
-      .eq('id', logId)
-
-    if (!error) {
-      if (userPlantId) {
-        const { error: plantError } = await supabase
-          .from('user_plants')
-          .update({
-            is_sick: false,
-            current_issue: null,
-            current_remedy: null,
-            current_shopping_tags: null,
-          })
-          .eq('id', userPlantId)
-
-        if (!plantError) {
-          setOwnedPlants((prev) =>
-            prev.map((plant) =>
-              plant.id === userPlantId ? { ...plant, is_sick: false } : plant
-            )
-          )
-        }
-      }
-
-      alert(`Great news about your ${plantName}!`)
-      setFollowUpAlerts((prev) => prev.filter((alert) => alert.id !== logId))
-      getGarden()
+  async function handleResolveIssue(logId: string | null, plantName: string, userPlantId?: string) {
+    if (logId) {
+      await supabase
+        .from('plant_logs')
+        .update({ status: 'Resolved', resolved_at: new Date().toISOString() })
+        .eq('id', logId)
     }
+
+    if (userPlantId) {
+      const { error: plantError } = await supabase
+        .from('user_plants')
+        .update({
+          is_sick: false,
+          current_issue: null,
+          current_remedy: null,
+          current_shopping_tags: null,
+        })
+        .eq('id', userPlantId)
+
+      if (!plantError) {
+        setOwnedPlants((prev) =>
+          prev.map((plant) =>
+            plant.id === userPlantId ? { ...plant, is_sick: false } : plant
+          )
+        )
+      }
+    }
+
+    alert(`Great news about your ${plantName}!`)
+    setFollowUpAlerts((prev) => prev.filter((alert) => alert.id !== logId))
+    getGarden()
   }
 
   async function openIssueModalForPlant(item: UserPlant) {
@@ -506,6 +506,80 @@ export default function MyGardenDashboard() {
 </div>
                       </div>
                     ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {ownedPlants.some(p => p.is_sick) && (
+          <section className="space-y-4">
+            <h2 className="text-[10px] font-black text-red-400 uppercase tracking-[0.2em] px-2 flex items-center gap-2">
+              <span>Infirmary</span>
+              <span className="text-gray-300 font-normal">—</span>
+              <span className="text-gray-400">{ownedPlants.filter(p => p.is_sick).length} plants</span>
+            </h2>
+            <div className="space-y-3">
+              {ownedPlants.filter(p => p.is_sick).map((item) => (
+                <div key={item.id} className="bg-white rounded-[2.5rem] border-2 border-red-50 overflow-hidden">
+                  <div className="h-1 w-full bg-red-300" />
+                  <div className="p-5 space-y-4">
+                    {/* Plant name + issue badge */}
+                    <div className="flex items-center gap-3">
+                      <PlantThumbnail plant={item.plants} size="sm" />
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-black text-green-950 uppercase leading-none truncate">
+                          {item.nickname || item.plants?.common_name || 'Unknown Plant'}
+                        </h3>
+                        {item.current_issue && (
+                          <span className="mt-1.5 inline-block text-[9px] font-black uppercase tracking-widest text-red-500 bg-red-50 border border-red-100 px-2.5 py-0.5 rounded-full">
+                            {item.current_issue}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Remedy */}
+                    {item.current_remedy && (
+                      <p className="text-[11px] text-gray-600 leading-relaxed font-medium border-l-2 border-red-100 pl-3">
+                        {item.current_remedy}
+                      </p>
+                    )}
+
+                    {/* Shopping tags */}
+                    {item.current_shopping_tags && item.current_shopping_tags.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {item.current_shopping_tags.map((tag) => (
+                          <span key={tag} className="text-[8px] font-black uppercase tracking-widest bg-green-50 text-green-700 px-2.5 py-1 rounded-full border border-green-100">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Actions */}
+                    <div className="flex gap-2 pt-1">
+                      <button
+                        onClick={() => {
+                          const matchingAlert = followUpAlerts.find(a => a.user_plant_id === item.id)
+                          handleResolveIssue(
+                            matchingAlert?.id ?? null,
+                            item.plants?.common_name || 'plant',
+                            item.id
+                          )
+                        }}
+                        className="flex-1 bg-green-800 py-3 rounded-2xl text-[9px] font-black uppercase text-white shadow-sm active:scale-95 transition-all"
+                      >
+                        Recovered
+                      </button>
+                      <Link
+                        href={`/plants/${item.plants?.id}?mode=my-garden`}
+                        className="flex-1 bg-red-50 border border-red-100 py-3 rounded-2xl text-[9px] font-black uppercase text-red-600 text-center active:scale-95 transition-all"
+                      >
+                        Remedies
+                      </Link>
+                    </div>
                   </div>
                 </div>
               ))}
