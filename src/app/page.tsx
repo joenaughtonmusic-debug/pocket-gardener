@@ -53,9 +53,15 @@ export default async function LandingPage() {
           </div>
 
           <div className="pb-6">
-            <h1 className="text-2xl font-black text-white italic uppercase mb-6 leading-none tracking-tighter [text-shadow:_0_1px_10px_rgb(0_0_0_/_20%)]">
+            <h1 className="text-2xl font-black text-white italic uppercase mb-3 leading-none tracking-tighter [text-shadow:_0_1px_10px_rgb(0_0_0_/_20%)]">
               Featured: {monthName}
             </h1>
+
+            {!user && (
+              <p className="text-white/80 text-sm font-medium leading-snug mb-5">
+                Month-by-month garden care for Auckland homeowners — beginner to established.
+              </p>
+            )}
             
             <Link 
               href={user ? "/calendar" : "/login"} 
@@ -110,13 +116,13 @@ export default async function LandingPage() {
           <Link href="/plants" className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm active:scale-95 transition-all">
             <div className="text-2xl mb-3">🔍</div>
             <h3 className="font-extrabold text-sm text-green-900 leading-tight">Library</h3>
-            <p className="text-[9px] text-gray-400 mt-1 font-bold uppercase tracking-tighter">Plant Finder</p>
+            <p className="text-[9px] text-gray-400 mt-1 font-bold uppercase tracking-tighter">A–Z plant index</p>
           </Link>
           
           <Link href="/guides" className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm active:scale-95 transition-all">
             <div className="text-2xl mb-3">📖</div>
             <h3 className="font-extrabold text-sm text-green-900 leading-tight">Guides</h3>
-            <p className="text-[9px] text-gray-400 mt-1 font-bold uppercase tracking-tighter">In depth guides</p>
+            <p className="text-[9px] text-gray-400 mt-1 font-bold uppercase tracking-tighter">Weeds, pests & planting</p>
           </Link>
         </div>
 

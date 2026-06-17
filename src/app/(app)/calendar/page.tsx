@@ -664,7 +664,7 @@ export default function CalendarPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#f0f4f1] flex items-center justify-center font-black text-green-800 tracking-widest text-[10px]">
-        SYNCING SMART CALENDAR...
+        BUILDING YOUR PLAN...
       </div>
     )
   }
@@ -858,7 +858,7 @@ export default function CalendarPage() {
 
             {agenda.tasks.length === 0 && (
               <div className="bg-white rounded-[2.5rem] p-6 shadow-sm text-sm text-gray-500 italic">
-                No tasks for this week yet.
+                No tasks scheduled for this week. Use the arrows to browse other weeks, or add more plants from the Library to build out your plan.
               </div>
             )}
           </div>

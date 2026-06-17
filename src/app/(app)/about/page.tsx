@@ -132,10 +132,13 @@ export default function AboutPage() {
 
         {/* 2. MISSION STATEMENT */}
         <section>
-          <h2 className="text-[9px] font-black text-gray-300 uppercase tracking-[0.2em] mb-4 px-1">The Mission</h2>
-          <div className="bg-white p-7 rounded-[2.5rem] border border-gray-100 shadow-sm">
+          <h2 className="text-[9px] font-black text-gray-300 uppercase tracking-[0.2em] mb-4 px-1">What We Do</h2>
+          <div className="bg-white p-7 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-4">
             <p className="text-[13px] text-gray-600 leading-relaxed font-medium italic">
-              "To help Aucklanders master their backyards through local, month-by-month advice and simple digital tools."
+              "Pocket Gardener helps everyday homeowners plan, improve, and maintain their garden — even if they don't know where to start."
+            </p>
+            <p className="text-[12px] text-gray-400 leading-relaxed font-medium">
+              Whether you have a bare section, an overgrown backyard, or an established garden that needs attention, Pocket Gardener gives you a clear, month-by-month plan built around your actual plants and Auckland's seasons.
             </p>
           </div>
         </section>

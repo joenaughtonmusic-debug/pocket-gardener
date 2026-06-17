@@ -698,6 +698,26 @@ export default function MyGardenDashboard() {
           </section>
         )}
 
+        {ownedPlants.length === 0 && !loading && (
+          <section>
+            <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm text-center space-y-3">
+              <p className="text-2xl">🌱</p>
+              <h3 className="text-sm font-black text-green-950 uppercase tracking-tight">
+                Your garden starts here
+              </h3>
+              <p className="text-[12px] text-gray-400 leading-relaxed font-medium max-w-xs mx-auto">
+                Add the plants you already have — or browse the Library to find what suits your section. Your care plan builds itself from there.
+              </p>
+              <Link
+                href="/plants"
+                className="inline-block mt-2 bg-green-900 text-white text-[10px] font-black uppercase tracking-widest px-8 py-3 rounded-full shadow-sm active:scale-95 transition-all"
+              >
+                Browse the Plant Library
+              </Link>
+            </div>
+          </section>
+        )}
+
         {ownedPlants.length > 0 && (
           <section className="space-y-8">
             <div className="pt-2 space-y-10">

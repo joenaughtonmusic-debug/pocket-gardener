@@ -118,7 +118,15 @@ export default function MatchPage() {
             <h1 className="text-3xl font-black text-green-950 tracking-tighter italic uppercase leading-none">Plant Selector</h1>
             <p className="text-[10px] text-green-700/60 font-black uppercase tracking-[0.2em] mt-2">Find plants suited to your garden conditions.</p>
           </div>
-          <PageHelp title="Matchmaker" description="Slide to see what thrives." bullets={["5 Dynamic sliders"]} />
+          <PageHelp
+            title="Plant Selector"
+            description="Set your garden conditions and instantly see which plants are suited to your section."
+            bullets={[
+              "Adjust sun, soil, drainage, size, and slope to match your garden",
+              "Results update in real time as you move each slider",
+              "Tap any result to add it to your project list"
+            ]}
+          />
         </header>
 
         <div className="space-y-10 mb-12">

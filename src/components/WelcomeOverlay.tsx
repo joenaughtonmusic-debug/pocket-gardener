@@ -15,23 +15,23 @@ export default function WelcomeOverlay() {
 
   const slides = [
     { 
-      title: "Expert Garden Management", 
-      desc: "Track every plant in your Auckland garden with custom care schedules.", 
+      title: "Your Garden, Sorted", 
+      desc: "Whether you're starting from scratch or keeping an established garden going, Pocket Gardener gives you a clear monthly plan — built around your plants and Auckland's seasons.", 
       icon: "🏡" 
     },
     { 
-      title: "The Garden Matchmaker", 
-      desc: "Find the perfect plants for your specific soil and sun conditions.", 
-      icon: "✅" 
+      title: "Find the Right Plants", 
+      desc: "Not sure what will grow in your conditions? Adjust the sliders for your sun, soil, and slope — and see exactly what thrives in your section.", 
+      icon: "🌱" 
     },
     { 
-      title: "Gardening Guides", 
-      desc: "In-depth local advice for weeds, pests, and Auckland planting seasons.", 
+      title: "Local Guides", 
+      desc: "Practical help with weeds, pests, feeding, and what to plant this month — written for Auckland conditions, not a gardening textbook.", 
       icon: "📖" 
     },
     { 
-      title: "Pro Tip", 
-      desc: "Look for the 'i' icon at the top of any page for instant help and tips!", 
+      title: "Quick Tip", 
+      desc: "Tap the 'i' icon at the top of any page for a quick explanation of what that section does.", 
       icon: "ℹ️" 
     }
   ];
