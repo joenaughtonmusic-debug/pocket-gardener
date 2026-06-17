@@ -9,36 +9,7 @@ import Navigation from '../../components/Navigation'
 import PlantThumbnail from '../../components/PlantThumbnail'
 import WelcomeOverlay from '../../components/WelcomeOverlay'
 import UpgradeButton from '../../components/UpgradeButton'
-
-interface Plant {
-  id: string;
-  common_name: string;
-  scientific_name?: string;
-  plant_type?: string;
-  image_url?: string;
-}
-
-interface UserPlant {
-  id: string;
-  plant_id: number;
-  is_project: boolean;
-  nickname?: string;
-  plants: Plant;
-  latest_photo?: string;
-  is_sick?: boolean;
-}
-
-interface PlantRemedy {
-  id: string | number;
-  issue_type: string;
-  remedy_title?: string | null;
-  remedy_description?: string | null;
-  category?: string | null;
-  specific_plant_id?: number | null;
-  is_universal?: boolean | null;
-  search_keywords?: string | null;
-  shopping_tags?: string[] | null;
-}
+import type { UserPlant, PlantRemedy } from '../../types/garden'
 
 export default function MyGardenDashboard() {
   const [ownedPlants, setOwnedPlants] = useState<UserPlant[]>([])

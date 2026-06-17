@@ -21,6 +21,7 @@ import {
 import Navigation from "../../components/Navigation";
 import PlantThumbnail from "../../components/PlantThumbnail";
 import PageHelp from "../../components/PageHelp";
+import type { Plant } from "../../types/plants";
 
 // Full Weed Registry for AI Recognition (Auckland/NZ Focus)
 const COMMON_WEEDS = [
@@ -46,19 +47,6 @@ const COMMON_WEEDS = [
   { scientific: "Hedychium", common: "Wild Ginger" },
   { scientific: "Jasminum polyanthum", common: "Wild Jasmine" }
 ];
-
-interface Plant {
-  id: number;
-  common_name: string;
-  scientific_name?: string;
-  sun_requirement: string | string[] | null;
-  image_url?: string | null;
-  plant_type?: string | null;
-  task_category?: string | null;
-  is_star_performer?: boolean;
-  is_native?: boolean;
-  flower_color?: string | null;
-}
 
 export default function LibraryPage() {
   const [plants, setPlants] = useState<Plant[]>([]);

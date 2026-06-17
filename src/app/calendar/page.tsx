@@ -12,70 +12,14 @@ import {
 } from 'lucide-react'
 import Navigation from '../../components/Navigation'
 import PageHelp from '../../components/PageHelp'
-
-type TaskCandidate = {
-  id: string
-  title: string
-  note: string
-  taskType: string
-  score: number
-  urgency: 'must' | 'should' | 'could'
-  minutes: number
-  tools: string[]
-  shopping: string[]
-  isGeneral?: boolean
-  canBundle: boolean
-}
-
-type PlantRow = {
-  id: number
-  common_name: string | null
-  plant_type: string | null
-  task_category: string | null
-  maintenance_level: string | null
-  trim_cycle: number | null
-  feed_cycle: number | null
-  trim_notes: string | null
-  feed_notes: string | null
-}
-
-type UserPlantRow = {
-  id: number
-  quantity: number | null
-  length_metres: number | null
-  nickname: string | null
-  personal_notes: string | null
-  is_sick: boolean | null
-  current_issue: string | null
-  current_remedy: string | null
-  current_shopping_tags: string[] | null
-  plants: PlantRow | null
-}
-
-type MonthlyCareRow = {
-  id: number
-  month_number: number
-  plant_type: string | null
-  care_note: string | null
-}
-
-type TaskRuleRow = {
-  id: number
-  plant_category: string | null
-  task_type: string | null
-  trigger_type: string | null
-  trigger_month: number | null
-  frequency_per_year: number | null
-  base_priority: number | null
-  estimated_minutes: number | null
-  tool_tags: string[] | null
-  shopping_tags: string[] | null
-}
-
-type TaskStatusRow = {
-  task_key: string
-  is_done: boolean
-}
+import type {
+  TaskCandidate,
+  PlantRow,
+  UserPlantRow,
+  MonthlyCareRow,
+  TaskRuleRow,
+  TaskStatusRow,
+} from '../../types/calendar'
 
 function parseArrayField(value: unknown): string[] {
   if (!value) return []
