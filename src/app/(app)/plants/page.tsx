@@ -439,7 +439,7 @@ const { error } = await supabase.from('user_plants').insert([{
                         <h4 className="font-black text-sm uppercase text-slate-800 leading-tight">{aiResultName}</h4>
                       </div>
                       <a
-                        href={`mailto:hello@yourdomain.com?subject=Library%20Addition%20Request:%20${aiResultName}`}
+                        href={`mailto:pocketgardeneruploads@gmail.com?subject=Library%20Addition%20Request:%20${aiResultName}`}
                         className="w-full bg-slate-900 text-white py-3 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-transform mt-3"
                       >
                         <Mail size={12} /> Request Addition

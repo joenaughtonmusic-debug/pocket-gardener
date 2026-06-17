@@ -209,12 +209,6 @@ export default function CalendarPage() {
     }).format(today)
   )
 
-  const weekDays = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date()
-    d.setDate(today.getDate() + i - 3)
-    return d
-  })
-
   useEffect(() => {
     async function loadData() {
       if (!hasLoadedOnce) {
@@ -712,40 +706,6 @@ export default function CalendarPage() {
             />
           </div>
 
-                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-            {weekDays.map((date, i) => {
-              const isToday =
-                date.getDate() === today.getDate() &&
-                date.getMonth() === today.getMonth() &&
-                date.getFullYear() === today.getFullYear()
-
-              return (
-                <div
-                  key={i}
-                  className={`flex flex-col items-center min-w-[50px] p-3 rounded-2xl border ${
-                    isToday
-                      ? 'bg-amber-400 border-amber-400'
-                      : 'bg-black/40 border-white/10 backdrop-blur-sm'
-                  }`}
-                >
-                  <span
-                    className={`text-[10px] font-black uppercase ${
-                      isToday ? 'text-green-950' : 'text-white/60'
-                    }`}
-                  >
-                    {date.toLocaleDateString('en-NZ', { weekday: 'short' })}
-                  </span>
-                  <span
-                    className={`text-sm font-black ${
-                      isToday ? 'text-green-950' : 'text-white'
-                    }`}
-                  >
-                    {date.getDate()}
-                  </span>
-                </div>
-              )
-            })}
-          </div>
         </div>
       </section>
 
@@ -760,7 +720,7 @@ export default function CalendarPage() {
 
           <div className="text-center flex flex-col items-center">
             <p className="text-[8px] font-black text-amber-500 uppercase tracking-[0.3em] mb-1">
-              Weekend Plan
+              Weekly Plan
             </p>
 
             <p className="font-black text-green-950 uppercase italic text-sm">

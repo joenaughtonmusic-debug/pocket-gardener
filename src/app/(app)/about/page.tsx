@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { createBrowserClient } from '@supabase/ssr'
 
 const getSupabase = () => {
@@ -117,7 +118,12 @@ export default function AboutPage() {
                   </button>
                 )}
                 {!isPro && (
-                   <p className="text-[10px] text-gray-400 italic">Upgrade on your dashboard to unlock all features.</p>
+                  <Link
+                    href="/dashboard"
+                    className="block w-full py-4 rounded-2xl bg-amber-400 text-green-950 font-black uppercase tracking-widest text-[9px] shadow-md active:scale-95 transition-all text-center"
+                  >
+                    Upgrade to Pro
+                  </Link>
                 )}
               </div>
             )}

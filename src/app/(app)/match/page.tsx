@@ -132,6 +132,7 @@ export default function MatchPage() {
               {SUN_IMAGES.map((url, i) => (
                 <div key={i} className="absolute inset-0 bg-cover bg-center transition-opacity duration-500" style={{ backgroundImage: `url("${url}")`, opacity: sunIdx === i ? 1 : 0 }} />
               ))}
+              <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/30 to-transparent pointer-events-none z-[5]" />
               <input type="range" min="0" max="2" step="1" value={sunIdx} onChange={(e) => setSunIdx(parseInt(e.target.value))} className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[80%] h-1.5 bg-white/30 backdrop-blur-md rounded-full appearance-none cursor-pointer accent-white z-10" />
             </div>
           </div>
@@ -146,6 +147,7 @@ export default function MatchPage() {
               {SOIL_IMAGES.map((url, i) => (
                 <div key={i} className="absolute inset-0 bg-cover bg-center transition-opacity duration-500" style={{ backgroundImage: `url("${url}")`, opacity: soilIdx === i ? 1 : 0 }} />
               ))}
+              <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/30 to-transparent pointer-events-none z-[5]" />
               <input type="range" min="0" max="3" step="1" value={soilIdx} onChange={(e) => setSoilIdx(parseInt(e.target.value))} className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[80%] h-1.5 bg-white/30 backdrop-blur-md rounded-full appearance-none cursor-pointer accent-white z-10" />
             </div>
           </div>
@@ -160,6 +162,7 @@ export default function MatchPage() {
               {WATER_IMAGES.map((url, i) => (
                 <div key={i} className="absolute inset-0 bg-cover bg-center transition-opacity duration-500" style={{ backgroundImage: `url("${url}")`, opacity: waterIdx === i ? 1 : 0 }} />
               ))}
+              <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/30 to-transparent pointer-events-none z-[5]" />
               <input type="range" min="0" max="3" step="1" value={waterIdx} onChange={(e) => setWaterIdx(parseInt(e.target.value))} className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[80%] h-1.5 bg-white/30 backdrop-blur-md rounded-full appearance-none cursor-pointer accent-white z-10" />
             </div>
           </div>
@@ -193,6 +196,7 @@ export default function MatchPage() {
               {SLOPE_IMAGES.map((url, i) => (
                 <div key={i} className="absolute inset-0 bg-cover bg-center transition-opacity duration-500" style={{ backgroundImage: `url("${url}")`, opacity: slopeIdx === i ? 1 : 0 }} />
               ))}
+              <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/30 to-transparent pointer-events-none z-[5]" />
               <input type="range" min="0" max="3" step="1" value={slopeIdx} onChange={(e) => setSlopeIdx(parseInt(e.target.value))} className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[80%] h-1.5 bg-white/30 backdrop-blur-md rounded-full appearance-none cursor-pointer accent-white z-10" />
             </div>
           </div>
