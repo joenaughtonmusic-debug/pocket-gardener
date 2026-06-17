@@ -41,10 +41,10 @@ export default function Navigation() {
     <span className={`text-[8px] font-black uppercase tracking-tighter transition-colors ${pathname === '/guides' ? 'text-green-950' : 'text-gray-400'}`}>Guides</span>
   </Link>
 
-  {/* FEATURE */}
-  <Link href="/feature" className="flex flex-col items-center group">
-    <span className={`text-lg transition-transform ${pathname === '/feature' ? 'scale-125 mb-1' : 'opacity-70'}`}>🖼️</span>
-    <span className={`text-[8px] font-black uppercase tracking-tighter transition-colors ${pathname === '/feature' ? 'text-green-950' : 'text-gray-400'}`}>Feature</span>
+  {/* MATCHMAKER */}
+  <Link href="/match" className="flex flex-col items-center group">
+    <span className={`text-lg transition-transform ${pathname === '/match' ? 'scale-125 mb-1' : 'opacity-70'}`}>🌳</span>
+    <span className={`text-[8px] font-black uppercase tracking-tighter transition-colors ${pathname === '/match' ? 'text-green-950' : 'text-gray-400'}`}>Plan</span>
   </Link>
         
       </div>
