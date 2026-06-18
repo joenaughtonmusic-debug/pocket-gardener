@@ -14,6 +14,8 @@ export interface GardenArea {
   size_condition: string | null;
   slope_condition: string | null;
   notes: string | null;
+  style: string | null;
+  goal: string | null;
   created_at: string;
 }
 

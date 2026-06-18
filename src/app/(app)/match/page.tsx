@@ -11,6 +11,13 @@ import PlantThumbnail from '../../../components/PlantThumbnail'
 import PageHelp from '../../../components/PageHelp'
 import LockedProFeatureCard from '../../../components/LockedProFeatureCard'
 import type { GardenArea } from '../../../types/garden'
+import {
+  GARDEN_AREA_STYLE_OPTIONS,
+  GARDEN_AREA_GOAL_OPTIONS,
+  rankPlantsForArea,
+  type RankedPlantMatch,
+} from '../../../lib/gardenAreaRecommendations'
+import type { Plant } from '../../../types/plants'
 
 // ─── Slider option constants ──────────────────────────────────────────────────
 const SUN_OPTIONS   = ['Full Sun', 'Part Shade', 'Full Shade']
@@ -124,18 +131,74 @@ function ConditionPill({
   icon,
   value,
   displayMap,
+  variant = 'condition',
 }: {
-  icon: ReactNode
+  icon?: ReactNode
   value: string | null | undefined
   displayMap?: Record<string, string>
+  variant?: 'condition' | 'planning'
 }) {
   if (!value) return null
   const label = displayMap ? (displayMap[value] ?? value) : value
+  const styles =
+    variant === 'planning'
+      ? 'bg-green-50 text-green-700 border-green-100'
+      : 'bg-gray-50 text-gray-500 border-gray-100'
   return (
-    <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wide bg-gray-50 text-gray-500 border border-gray-100 px-2 py-1 rounded-full">
+    <span className={`inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wide border px-2 py-1 rounded-full ${styles}`}>
       {icon} {label}
     </span>
   )
+}
+
+function OptionChips({
+  label,
+  optional,
+  options,
+  value,
+  onChange,
+}: {
+  label: string
+  optional?: boolean
+  options: readonly string[]
+  value: string | null
+  onChange: (v: string | null) => void
+}) {
+  return (
+    <div>
+      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+        {label}{' '}
+        {optional && (
+          <span className="text-gray-300 font-medium normal-case tracking-normal">(optional)</span>
+        )}
+      </label>
+      <div className="flex flex-wrap gap-2">
+        {options.map((opt) => {
+          const selected = value === opt
+          return (
+            <button
+              key={opt}
+              type="button"
+              onClick={() => onChange(selected ? null : opt)}
+              className={`text-[9px] font-black uppercase tracking-wide px-3 py-2 rounded-full border transition-all active:scale-95 ${
+                selected
+                  ? 'bg-green-900 text-white border-green-900'
+                  : 'bg-gray-50 text-gray-500 border-gray-100'
+              }`}
+            >
+              {opt}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function areaPlanningHint(area: GardenArea): string | null {
+  const parts = [area.style, area.goal].filter((v) => v && v !== 'Not Sure') as string[]
+  if (parts.length === 0) return null
+  return `Matched to conditions, prioritised for ${parts.join(' · ').toLowerCase()}.`
 }
 
 // ─── Main page component ──────────────────────────────────────────────────────
@@ -152,7 +215,7 @@ export default function MatchPage() {
 
   // ── Garden Areas state ────────────────────────────────────────────────────
   const [areas,           setAreas]           = useState<GardenArea[]>([])
-  const [areaMatches,     setAreaMatches]     = useState<Record<string, any[]>>({})
+  const [areaMatches,     setAreaMatches]     = useState<Record<string, RankedPlantMatch[]>>({})
   const [areasLoading,    setAreasLoading]    = useState(true)
   const [projectPlantIds, setProjectPlantIds] = useState<number[]>([])
   const [showAreaForm,    setShowAreaForm]    = useState(false)
@@ -169,6 +232,8 @@ export default function MatchPage() {
   const [formSizeIdx,   setFormSizeIdx]   = useState(1)
   const [formSlopeIdx,  setFormSlopeIdx]  = useState(0)
   const [formNotes,     setFormNotes]     = useState('')
+  const [formStyle,     setFormStyle]     = useState<string | null>(null)
+  const [formGoal,      setFormGoal]      = useState<string | null>(null)
   const [savingArea,    setSavingArea]    = useState(false)
 
   const supabase = useMemo(() => createSupabaseBrowserClient(), [])
@@ -230,7 +295,7 @@ export default function MatchPage() {
     )
 
     // Fetch up to 5 recommendations per area in parallel
-    const matchMap: Record<string, any[]> = {}
+    const matchMap: Record<string, RankedPlantMatch[]> = {}
     await Promise.all(
       loadedAreas.map(async (area) => {
         if (
@@ -247,7 +312,7 @@ export default function MatchPage() {
             area.size_condition,
             area.slope_condition,
           )
-          matchMap[area.id] = all.slice(0, 5)
+          matchMap[area.id] = rankPlantsForArea(all as Plant[], area.style, area.goal).slice(0, 5)
         } else {
           matchMap[area.id] = []
         }
@@ -269,6 +334,8 @@ export default function MatchPage() {
     setFormSizeIdx(1)
     setFormSlopeIdx(0)
     setFormNotes('')
+    setFormStyle(null)
+    setFormGoal(null)
     setShowAreaForm(true)
   }
 
@@ -281,6 +348,8 @@ export default function MatchPage() {
     setFormSizeIdx(idxFromOption(SIZE_OPTIONS,  area.size_condition))
     setFormSlopeIdx(idxFromOption(SLOPE_OPTIONS, area.slope_condition))
     setFormNotes(area.notes || '')
+    setFormStyle(area.style || null)
+    setFormGoal(area.goal || null)
     setShowAreaForm(true)
   }
 
@@ -299,6 +368,8 @@ export default function MatchPage() {
       size_condition:  SIZE_OPTIONS[formSizeIdx],
       slope_condition: SLOPE_OPTIONS[formSlopeIdx],
       notes:           formNotes.trim() || null,
+      style:           formStyle || null,
+      goal:            formGoal || null,
     }
 
     if (editingArea) {
@@ -531,6 +602,13 @@ export default function MatchPage() {
                         />
                       </div>
 
+                      {(area.style || area.goal) && (
+                        <div className="flex flex-wrap gap-1.5 mt-2">
+                          <ConditionPill value={area.style} variant="planning" />
+                          <ConditionPill value={area.goal} variant="planning" />
+                        </div>
+                      )}
+
                       {area.notes && (
                         <p className="mt-3 text-[11px] text-gray-400 italic leading-snug border-t border-gray-50 pt-3">
                           {area.notes}
@@ -543,6 +621,11 @@ export default function MatchPage() {
                       <p className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400 mb-3">
                         Suggested Plants{recs.length > 0 ? ` (${recs.length})` : ''}
                       </p>
+                      {areaPlanningHint(area) && (
+                        <p className="text-[10px] text-gray-400 font-medium italic leading-snug -mt-2 mb-3">
+                          {areaPlanningHint(area)}
+                        </p>
+                      )}
 
                       {recs.length === 0 ? (
                         <p className="text-[11px] text-gray-300 italic">
@@ -550,7 +633,7 @@ export default function MatchPage() {
                         </p>
                       ) : (
                         <div className="space-y-2">
-                          {recs.map((plant) => {
+                          {recs.map(({ plant, matchLabel }) => {
                             const inPlan  = projectPlantIds.includes(plant.id)
                             const addKey  = `${plant.id}-${area.id}`
                             const isAdding = addingToArea === addKey
@@ -568,7 +651,7 @@ export default function MatchPage() {
                                     {plant.common_name}
                                   </p>
                                   <p className="text-[9px] text-gray-400 font-bold uppercase italic mt-0.5">
-                                    {plant.plant_type}
+                                    {matchLabel || plant.plant_type}
                                   </p>
                                 </div>
 
@@ -884,6 +967,22 @@ export default function MatchPage() {
                 label="Slope" icon={<TrendingUp size={12} />}
                 options={SLOPE_OPTIONS} optionLabels={SLOPE_LABELS} images={SLOPE_IMAGES}
                 value={formSlopeIdx} onChange={setFormSlopeIdx}
+              />
+
+              <OptionChips
+                label="Style"
+                optional
+                options={GARDEN_AREA_STYLE_OPTIONS}
+                value={formStyle}
+                onChange={setFormStyle}
+              />
+
+              <OptionChips
+                label="Goal"
+                optional
+                options={GARDEN_AREA_GOAL_OPTIONS}
+                value={formGoal}
+                onChange={setFormGoal}
               />
 
               {/* Notes */}
