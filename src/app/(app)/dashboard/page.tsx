@@ -7,7 +7,7 @@ import { Pencil, Camera, ArrowRight, Check, AlertCircle, Search, X } from 'lucid
 import PlantThumbnail from '../../../components/PlantThumbnail'
 import WelcomeOverlay from '../../../components/WelcomeOverlay'
 import UpgradeButton from '../../../components/UpgradeButton'
-import type { UserPlant, PlantRemedy } from '../../../types/garden'
+import type { UserPlant, PlantRemedy, GardenArea } from '../../../types/garden'
 
 const STOP_WORDS = new Set([
   'my', 'the', 'a', 'an', 'is', 'are', 'was', 'were', 'has', 'have', 'had',
@@ -19,6 +19,7 @@ const STOP_WORDS = new Set([
 export default function MyGardenDashboard() {
   const [ownedPlants, setOwnedPlants] = useState<UserPlant[]>([])
   const [projectPlants, setProjectPlants] = useState<UserPlant[]>([])
+  const [gardenAreas, setGardenAreas] = useState<GardenArea[]>([])
   const [followUpAlerts, setFollowUpAlerts] = useState<any[]>([])
   const [featuredTip, setFeaturedTip] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -72,13 +73,19 @@ export default function MyGardenDashboard() {
         setUserName(user.user_metadata?.display_name || "Gardener")
         setGardenPhoto(user.user_metadata?.garden_photo || null)
 
-        const [profileRes, plantsRes] = await Promise.all([
+        const [profileRes, plantsRes, areasRes] = await Promise.all([
           supabase.from('profiles').select('is_pro').eq('id', user.id).maybeSingle(),
           supabase
             .from('user_plants')
-            .select(`id, plant_id, is_project, nickname, is_sick, current_issue, current_remedy, current_shopping_tags, plants (*)`)
+            .select(`id, plant_id, is_project, garden_area_id, nickname, is_sick, current_issue, current_remedy, current_shopping_tags, plants (*)`)
+            .eq('user_id', user.id),
+          supabase
+            .from('garden_areas')
+            .select('id, name')
             .eq('user_id', user.id),
         ]);
+
+        if (areasRes.data) setGardenAreas(areasRes.data as GardenArea[]);
 
         if (profileRes.data) setIsPro(profileRes.data.is_pro);
 
@@ -858,7 +865,11 @@ export default function MyGardenDashboard() {
           <section className="space-y-4 pb-10">
             <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] px-2 italic">Upcoming Projects</h2>
             <div className="space-y-3">
-              {projectPlants.map((item) => (
+              {(() => {
+                const areaMap = new Map(gardenAreas.map((a) => [a.id, a.name]));
+                return projectPlants.map((item) => {
+                  const areaName = item.garden_area_id ? areaMap.get(item.garden_area_id) : null;
+                  return (
                 <div key={item.id} className="flex items-center gap-3">
                   <button 
                     onClick={(e) => {
@@ -873,12 +884,21 @@ export default function MyGardenDashboard() {
                     <PlantThumbnail plant={item.plants} size="sm" />
                     <div className="flex-grow">
                       <h3 className="text-s font-black text-green-950 uppercase leading-none">{item.plants?.common_name || "Unknown Plant"}</h3>
-                      <span className="text-[8px] font-black uppercase text-amber-500 bg-amber-50 px-2 py-0.5 rounded-full inline-block mt-2">Planned</span>
+                      <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                        <span className="text-[8px] font-black uppercase text-amber-500 bg-amber-50 px-2 py-0.5 rounded-full">Planned</span>
+                        {areaName && (
+                          <span className="text-[8px] font-black uppercase text-green-700 bg-green-50 px-2 py-0.5 rounded-full">
+                            {areaName}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <ArrowRight size={14} className="text-green-950 ml-auto" strokeWidth={3} />
                   </Link>
                 </div>
-              ))}
+                  );
+                });
+              })()}
               {selectedIds.length > 0 && (
                 <button onClick={handleBulkMove} className="w-full bg-green-900 text-amber-400 text-[11px] font-black py-5 rounded-3xl uppercase tracking-widest shadow-2xl mt-4 animate-in zoom-in-95 duration-200 flex items-center justify-center gap-2">
                   <Check size={16} strokeWidth={4} />

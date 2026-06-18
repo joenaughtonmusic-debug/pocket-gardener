@@ -1,6 +1,23 @@
 import type { Plant } from './plants';
 
 /**
+ * A named garden area belonging to a user — a row from `garden_areas`.
+ * Stores the five matchmaker conditions so recommendations can be regenerated.
+ */
+export interface GardenArea {
+  id: string;
+  user_id: string;
+  name: string;
+  sun_condition: string | null;
+  soil_condition: string | null;
+  water_condition: string | null;
+  size_condition: string | null;
+  slope_condition: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
+/**
  * A user's garden plant — a row from `user_plants` joined with `plants`.
  * Used on the dashboard and plant detail pages.
  */
@@ -15,6 +32,7 @@ export interface UserPlant {
   current_issue?: string | null;
   current_remedy?: string | null;
   current_shopping_tags?: string[] | null;
+  garden_area_id?: string | null;
 }
 
 /**
