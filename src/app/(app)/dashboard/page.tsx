@@ -10,6 +10,7 @@ import UpgradeButton from '../../../components/UpgradeButton'
 import LockedProFeatureCard from '../../../components/LockedProFeatureCard'
 import GardenAreaBadge from '../../../components/GardenAreaBadge'
 import GardenAreaAssignSelect from '../../../components/GardenAreaAssignSelect'
+import GardenAreaSummaryCard from '../../../components/GardenAreaSummaryCard'
 import { resolveAreaName } from '../../../lib/gardenAreas'
 import type { UserPlant, PlantRemedy, GardenArea } from '../../../types/garden'
 
@@ -647,6 +648,54 @@ export default function MyGardenDashboard() {
           </div>
         </section>
 
+        {/* ── My Garden Areas overview ──────────────────────────────────── */}
+        {!loading && (
+          <section className="space-y-3">
+            <div className="flex items-center justify-between px-1">
+              <h2 className="text-xs font-black text-green-950 uppercase tracking-tight">
+                My Garden Areas
+              </h2>
+              {gardenAreas.length > 0 && (
+                <Link
+                  href="/match"
+                  className="text-[8px] font-black uppercase tracking-widest text-green-700"
+                >
+                  Manage →
+                </Link>
+              )}
+            </div>
+
+            {gardenAreas.length === 0 ? (
+              <div className="bg-white rounded-[2rem] border border-dashed border-gray-200 p-6 text-center space-y-3">
+                <p className="text-[12px] text-gray-400 font-medium leading-relaxed">
+                  Create your first Garden Area to organise plants and get recommendations.
+                </p>
+                <Link
+                  href="/match"
+                  className="inline-block bg-green-900 text-white text-[10px] font-black uppercase tracking-widest px-7 py-3 rounded-full shadow-sm active:scale-95 transition-all"
+                >
+                  Plan My Garden
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {gardenAreas.map((area) => {
+                  const ownedInArea    = ownedPlants.filter(p => p.garden_area_id === area.id).length
+                  const plannedInArea  = projectPlants.filter(p => p.garden_area_id === area.id).length
+                  return (
+                    <GardenAreaSummaryCard
+                      key={area.id}
+                      area={area}
+                      ownedCount={ownedInArea}
+                      plannedCount={plannedInArea}
+                    />
+                  )
+                })}
+              </div>
+            )}
+          </section>
+        )}
+
         {!isPro && (
           <section className="space-y-3">
             <div className="flex items-center justify-between px-1">
@@ -878,13 +927,10 @@ export default function MyGardenDashboard() {
                         >
                           <div className="flex items-center gap-3">
                             <PlantThumbnail plant={item.plants} size="sm" />
-                            <div>
-                              <h4 className="text-s font-black text-green-950 uppercase">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="text-s font-black text-green-950 uppercase leading-none truncate">
                                 {item.nickname || item.plants?.common_name || "Unknown Plant"}
                               </h4>
-                              <p className="text-[8px] text-gray-400 font-black uppercase tracking-tighter">
-                                {item.plants?.scientific_name}
-                              </p>
                               <div className="mt-1.5">
                                 <GardenAreaBadge name={resolveAreaName(item.garden_area_id, areaMap)} />
                               </div>

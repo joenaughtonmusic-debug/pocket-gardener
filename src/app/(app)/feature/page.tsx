@@ -6,11 +6,16 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Heart, ChevronRight, Camera, User, Plus } from 'lucide-react'
 import { createSupabaseBrowserClient } from '../../lib/supabaseClient'
 
+/**
+ * pgStyle maps each feature garden to an existing Garden Planner style value.
+ * null = no close match — button is not shown.
+ */
 const GARDEN_ARCHIVE = [
   {
     id: 'apr-26',
     month: 'April 2026',
     style: 'Sub-tropical',
+    pgStyle: 'Subtropical' as string | null,
     submittedBy: 'Joe from Auckland',
     description: 'Subtropical garden with multiple textures, colours and heights.',
     image: 'https://sonxnuxhrivzgcevtdtc.supabase.co/storage/v1/object/public/plants/IMG20260129134358.jpg',
@@ -20,6 +25,7 @@ const GARDEN_ARCHIVE = [
     id: 'mar-26',
     month: 'March 2026',
     style: 'Lush garden',
+    pgStyle: 'Native' as string | null,
     submittedBy: 'Sarah from Titirangi',
     description: 'A selection of lush plants and natives to create a full and thriving garden.',
     image: 'https://sonxnuxhrivzgcevtdtc.supabase.co/storage/v1/object/public/plants/IMG20260113164903.jpg',
@@ -155,17 +161,25 @@ export default function GardenFeatures() {
           />
         </AnimatePresence>
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-        <div className="absolute bottom-12 left-6 right-6 flex justify-between items-end text-white">
+          <div className="absolute bottom-12 left-6 right-6 flex justify-between items-end text-white">
           <div>
             <div className="flex items-center gap-2 mb-2">
                <span className="bg-green-500 text-[8px] font-black uppercase px-2 py-1 rounded-md tracking-widest">Community Feature</span>
                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-300">{current.month}</p>
             </div>
             <h1 className="text-4xl font-black italic uppercase tracking-tighter leading-none mb-2">{current.style}</h1>
-            <div className="flex items-center gap-1.5 opacity-80">
+            <div className="flex items-center gap-1.5 opacity-80 mb-3">
                 <User size={10} className="text-green-400" />
                 <p className="text-[10px] font-bold uppercase tracking-tight">Featured: {current.submittedBy}</p>
             </div>
+            {current.pgStyle && (
+              <a
+                href={`/match?style=${encodeURIComponent(current.pgStyle)}`}
+                className="inline-flex items-center gap-1.5 bg-white/15 backdrop-blur-md border border-white/25 text-white text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-full active:scale-95 transition-all"
+              >
+                Use This Style →
+              </a>
+            )}
           </div>
           <button onClick={() => toggleFavorite(current.id)} className={`p-4 rounded-3xl backdrop-blur-md transition-all active:scale-75 ${favorites.includes(current.id) ? 'bg-red-500 text-white' : 'bg-white/10 text-white border border-white/20'}`}>
             <Heart size={20} fill={favorites.includes(current.id) ? "currentColor" : "none"} />

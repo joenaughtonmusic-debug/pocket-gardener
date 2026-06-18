@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, Suspense } from 'react'
 import type { ReactNode } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { createSupabaseBrowserClient } from '../../lib/supabaseClient'
 import {
   Sun, Droplets, Ruler, ChevronRight, Plus, X,
@@ -202,7 +203,7 @@ function areaPlanningHint(area: GardenArea): string | null {
 }
 
 // ─── Main page component ──────────────────────────────────────────────────────
-export default function MatchPage() {
+function MatchPageInner() {
   // ── Existing matchmaker state ──────────────────────────────────────────────
   const [sunIdx,        setSunIdx]        = useState(0)
   const [soilIdx,       setSoilIdx]       = useState(0)
@@ -236,7 +237,15 @@ export default function MatchPage() {
   const [formGoal,      setFormGoal]      = useState<string | null>(null)
   const [savingArea,    setSavingArea]    = useState(false)
 
-  const supabase = useMemo(() => createSupabaseBrowserClient(), [])
+  const supabase      = useMemo(() => createSupabaseBrowserClient(), [])
+  const searchParams  = useSearchParams()
+
+  // Pre-fill style from ?style= URL param (e.g. from Feature Garden "Use This Style")
+  const styleParam = searchParams.get('style')
+  const initialStyle = useMemo(() => {
+    if (!styleParam) return null
+    return GARDEN_AREA_STYLE_OPTIONS.includes(styleParam as any) ? styleParam : null
+  }, [styleParam])
 
   // ── Shared matchmaker query helper ────────────────────────────────────────
   const fetchMatchesForConditions = useCallback(
@@ -324,6 +333,15 @@ export default function MatchPage() {
 
   useEffect(() => { loadAreas() }, [loadAreas])
 
+  // Auto-open the create form when arriving via ?style= from Feature Garden
+  useEffect(() => {
+    if (initialStyle && !areasLoading) {
+      openCreateForm()
+    }
+    // Only runs once after areas have loaded and a style param is present
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [areasLoading])
+
   // ── Area form helpers ──────────────────────────────────────────────────────
   function openCreateForm() {
     setEditingArea(null)
@@ -334,7 +352,8 @@ export default function MatchPage() {
     setFormSizeIdx(1)
     setFormSlopeIdx(0)
     setFormNotes('')
-    setFormStyle(null)
+    // Pre-fill style from URL param if present (e.g. Feature Garden "Use This Style")
+    setFormStyle(initialStyle)
     setFormGoal(null)
     setShowAreaForm(true)
   }
@@ -935,6 +954,13 @@ export default function MatchPage() {
             {/* Form body */}
             <div className="px-7 py-6 space-y-8">
 
+              {/* Pre-fill notice when arriving from Feature Garden */}
+              {initialStyle && !editingArea && (
+                <div className="bg-green-50 border border-green-100 rounded-2xl px-4 py-3 text-[11px] text-green-700 font-medium leading-snug">
+                  Style pre-filled from a Feature Garden. Set conditions and give your area a name to save it.
+                </div>
+              )}
+
               {/* Name */}
               <div>
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
@@ -1025,5 +1051,13 @@ export default function MatchPage() {
         </div>
       )}
     </main>
+  )
+}
+
+export default function MatchPage() {
+  return (
+    <Suspense>
+      <MatchPageInner />
+    </Suspense>
   )
 }
