@@ -8,6 +8,9 @@ import PlantThumbnail from '../../../components/PlantThumbnail'
 import WelcomeOverlay from '../../../components/WelcomeOverlay'
 import UpgradeButton from '../../../components/UpgradeButton'
 import LockedProFeatureCard from '../../../components/LockedProFeatureCard'
+import GardenAreaBadge from '../../../components/GardenAreaBadge'
+import GardenAreaAssignSelect from '../../../components/GardenAreaAssignSelect'
+import { resolveAreaName } from '../../../lib/gardenAreas'
 import type { UserPlant, PlantRemedy, GardenArea } from '../../../types/garden'
 
 const STOP_WORDS = new Set([
@@ -133,6 +136,26 @@ export default function MyGardenDashboard() {
   useEffect(() => { 
     getGarden(); 
   }, []);
+
+  async function handleAssignPlantArea(userPlantId: string, areaId: string | null) {
+    const { error } = await supabase
+      .from('user_plants')
+      .update({ garden_area_id: areaId })
+      .eq('id', userPlantId)
+
+    if (error) {
+      console.error('Error assigning garden area:', error)
+      return
+    }
+
+    const patch = { garden_area_id: areaId }
+    setOwnedPlants((prev) =>
+      prev.map((p) => (p.id === userPlantId ? { ...p, ...patch } : p)),
+    )
+    setProjectPlants((prev) =>
+      prev.map((p) => (p.id === userPlantId ? { ...p, ...patch } : p)),
+    )
+  }
 
   async function handleResolveIssue(logId: string | null, plantName: string, userPlantId?: string) {
     if (logId) {
@@ -470,6 +493,7 @@ export default function MyGardenDashboard() {
   }, {} as Record<string, any[]>);
 
   const sortedCategories = Object.keys(groupedByType).sort();
+  const areaMap = new Map(gardenAreas.map((a) => [a.id, a.name]));
 
   const filteredRemedies = remedies.filter((r) => {
     if (!issueSearchQuery.trim()) return true
@@ -579,7 +603,7 @@ export default function MyGardenDashboard() {
               {
                 icon: '🌿',
                 label: 'Plan My Garden',
-                desc: 'Discover plants suited to each part of your garden.',
+                desc: 'Add garden areas, set conditions, and discover plants for each part of your section.',
                 href: '/match',
               },
               {
@@ -821,6 +845,19 @@ export default function MyGardenDashboard() {
 
         {ownedPlants.length > 0 && (
           <section className="space-y-8">
+            <div className="flex items-center justify-between px-2">
+              <h2 className="text-[10px] font-black text-green-800/40 uppercase tracking-[0.2em]">
+                My Garden
+              </h2>
+              {gardenAreas.length > 0 && (
+                <Link
+                  href="/match"
+                  className="text-[8px] font-black uppercase tracking-widest text-green-700"
+                >
+                  Manage areas →
+                </Link>
+              )}
+            </div>
             <div className="pt-2 space-y-10">
               {sortedCategories.map((category) => (
                 <div key={category} className="space-y-4">
@@ -848,12 +885,20 @@ export default function MyGardenDashboard() {
                               <p className="text-[8px] text-gray-400 font-black uppercase tracking-tighter">
                                 {item.plants?.scientific_name}
                               </p>
+                              <div className="mt-1.5">
+                                <GardenAreaBadge name={resolveAreaName(item.garden_area_id, areaMap)} />
+                              </div>
                             </div>
                           </div>
                           <ArrowRight size={12} className="text-gray-300" />
                         </Link>
 
-                        <div className="mt-3 pt-3 border-t border-gray-100">
+                        <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
+                          <GardenAreaAssignSelect
+                            value={item.garden_area_id}
+                            areas={gardenAreas}
+                            onChange={(areaId) => handleAssignPlantArea(item.id, areaId)}
+                          />
   <label
     className={`flex items-center gap-2 text-[10px] uppercase tracking-wider rounded-full px-3 py-2 border transition-all active:scale-[0.98] cursor-pointer ${
       item.is_sick
@@ -905,6 +950,9 @@ export default function MyGardenDashboard() {
                             {item.current_issue}
                           </span>
                         )}
+                        <div className="mt-1.5">
+                          <GardenAreaBadge name={resolveAreaName(item.garden_area_id, areaMap)} />
+                        </div>
                       </div>
                     </div>
 
@@ -959,11 +1007,9 @@ export default function MyGardenDashboard() {
           <section className="space-y-4 pb-10">
             <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] px-2 italic">Upcoming Projects</h2>
             <div className="space-y-3">
-              {(() => {
-                const areaMap = new Map(gardenAreas.map((a) => [a.id, a.name]));
-                return projectPlants.map((item) => {
-                  const areaName = item.garden_area_id ? areaMap.get(item.garden_area_id) : null;
-                  return (
+              {projectPlants.map((item) => {
+                const areaName = resolveAreaName(item.garden_area_id, areaMap)
+                return (
                 <div key={item.id} className="flex items-center gap-3">
                   <button 
                     onClick={(e) => {
@@ -980,19 +1026,14 @@ export default function MyGardenDashboard() {
                       <h3 className="text-s font-black text-green-950 uppercase leading-none">{item.plants?.common_name || "Unknown Plant"}</h3>
                       <div className="flex items-center gap-1.5 mt-2 flex-wrap">
                         <span className="text-[8px] font-black uppercase text-amber-500 bg-amber-50 px-2 py-0.5 rounded-full">Planned</span>
-                        {areaName && (
-                          <span className="text-[8px] font-black uppercase text-green-700 bg-green-50 px-2 py-0.5 rounded-full">
-                            {areaName}
-                          </span>
-                        )}
+                        <GardenAreaBadge name={areaName} />
                       </div>
                     </div>
                     <ArrowRight size={14} className="text-green-950 ml-auto" strokeWidth={3} />
                   </Link>
                 </div>
-                  );
-                });
-              })()}
+                )
+              })}
               {selectedIds.length > 0 && (
                 <button onClick={handleBulkMove} className="w-full bg-green-900 text-amber-400 text-[11px] font-black py-5 rounded-3xl uppercase tracking-widest shadow-2xl mt-4 animate-in zoom-in-95 duration-200 flex items-center justify-center gap-2">
                   <Check size={16} strokeWidth={4} />

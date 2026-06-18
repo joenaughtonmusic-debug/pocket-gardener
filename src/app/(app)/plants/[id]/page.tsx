@@ -4,6 +4,9 @@ import { useEffect, useState, useRef, useMemo } from 'react'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import { createSupabaseBrowserClient } from '../../../lib/supabaseClient'
 import PlantThumbnail from "../../../../components/PlantThumbnail"
+import GardenAreaBadge from "../../../../components/GardenAreaBadge"
+import GardenAreaAssignSelect from "../../../../components/GardenAreaAssignSelect"
+import { resolveAreaName } from '../../../../lib/gardenAreas'
 import { Check, Search, Sparkles, Quote } from 'lucide-react'
 
 export default function PlantDetailPage() {
@@ -31,6 +34,9 @@ export default function PlantDetailPage() {
 
   const [quantity, setQuantity] = useState<number>(1)
   const [lengthMetres, setLengthMetres] = useState<string>("")
+  const [gardenAreaId, setGardenAreaId] = useState<string | null>(null)
+  const [gardenAreas, setGardenAreas] = useState<{ id: string; name: string }[]>([])
+  const [assigningArea, setAssigningArea] = useState(false)
 
   // --- SEARCH STATE ---
   const [searchQuery, setSearchQuery] = useState("")
@@ -134,18 +140,29 @@ export default function PlantDetailPage() {
 
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        const { data: userPlantRecord } = await supabase
-          .from('user_plants')
-          .select('id, personal_notes, nickname, quantity, length_metres')
-          .eq('user_id', user.id)
-          .eq('plant_id', Number(id))
-          .single()
+        const [userPlantRes, areasRes] = await Promise.all([
+          supabase
+            .from('user_plants')
+            .select('id, personal_notes, nickname, quantity, length_metres, garden_area_id')
+            .eq('user_id', user.id)
+            .eq('plant_id', Number(id))
+            .maybeSingle(),
+          supabase
+            .from('garden_areas')
+            .select('id, name')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: true }),
+        ])
 
+        if (areasRes.data) setGardenAreas(areasRes.data)
+
+        const userPlantRecord = userPlantRes.data
         if (userPlantRecord) {
           setUserPlantRecordId(userPlantRecord.id)
           setPersonalNote(userPlantRecord.personal_notes || plantData?.pro_tip || "")
           setNickname(userPlantRecord.nickname)
           setQuantity(userPlantRecord.quantity || 1)
+          setGardenAreaId(userPlantRecord.garden_area_id ?? null)
           setLengthMetres(
             userPlantRecord.length_metres !== null && userPlantRecord.length_metres !== undefined
               ? String(userPlantRecord.length_metres)
@@ -156,6 +173,7 @@ export default function PlantDetailPage() {
         } else {
           setQuantity(1)
           setLengthMetres("")
+          setGardenAreaId(null)
         }
       }
 
@@ -195,6 +213,17 @@ export default function PlantDetailPage() {
 
   setIsProcessing(false)
 }
+
+  async function handleAssignGardenArea(areaId: string | null) {
+    if (!userPlantRecordId) return
+    setAssigningArea(true)
+    const { error } = await supabase
+      .from('user_plants')
+      .update({ garden_area_id: areaId })
+      .eq('id', userPlantRecordId)
+    if (!error) setGardenAreaId(areaId)
+    setAssigningArea(false)
+  }
 
   async function handleRemove() {
     if (!userPlantRecordId || !window.confirm(`Remove ${plant.common_name}?`)) return
@@ -333,6 +362,7 @@ const { error } = await supabase.from('user_plants').insert([{
 
   const hardinessStyle = getLevelStyles(plant.hardiness_level)
   const maintenanceStyle = getLevelStyles(plant.maintenance_level)
+  const areaMap = new Map(gardenAreas.map((a) => [a.id, a.name]))
 
   return (
     <main className="min-h-screen bg-white pb-40 text-gray-900">
@@ -410,8 +440,27 @@ const { error } = await supabase.from('user_plants').insert([{
 
         <div className="mb-10 flex flex-col items-center gap-4">
           {userPlantRecordId && !mode && (
-            <div className="w-full text-center py-4 bg-green-50 rounded-2xl border border-green-100 text-[10px] font-black text-green-700 uppercase tracking-widest italic">
-              In Your Garden
+            <div className="w-full bg-green-50 rounded-2xl border border-green-100 p-5 space-y-3">
+              <div className="text-center text-[10px] font-black text-green-700 uppercase tracking-widest italic">
+                In Your Garden
+              </div>
+              <div className="flex justify-center">
+                <GardenAreaBadge name={resolveAreaName(gardenAreaId, areaMap)} />
+              </div>
+              <GardenAreaAssignSelect
+                value={gardenAreaId}
+                areas={gardenAreas}
+                onChange={handleAssignGardenArea}
+                disabled={assigningArea}
+              />
+              {gardenAreas.length === 0 && (
+                <p className="text-[10px] text-gray-400 text-center font-medium leading-snug">
+                  <a href="/match" className="text-green-700 font-black uppercase tracking-wide">
+                    Open Garden Planner
+                  </a>
+                  {' '}to add areas and organise your plants by location.
+                </p>
+              )}
             </div>
           )}
 

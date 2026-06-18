@@ -499,28 +499,28 @@ export default function MatchPage() {
         <header className="mb-8 pt-4 flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-black text-green-950 tracking-tighter italic uppercase leading-none">
-              Plant Selector
+              Garden Planner
             </h1>
             <p className="text-[10px] text-green-700/60 font-black uppercase tracking-[0.2em] mt-2">
-              Find plants suited to your garden conditions.
+              Plan each part of your garden — areas, conditions, and plant ideas.
             </p>
           </div>
           <PageHelp
-            title="Plant Selector"
-            description="Set your garden conditions and instantly see which plants are suited to your section."
+            title="Garden Planner"
+            description="Start with garden areas — name each part of your section, set conditions, and get plant suggestions. Use the plant finder below to explore more options."
             bullets={[
-              'Adjust sun, soil, drainage, size, and slope to match your garden',
-              'Results update in real time as you move each slider',
-              'Tap any result to add it to your project list',
+              'Add areas like Front Boundary, Back Fence, or Shady Corner',
+              'Set sun, soil, style, and goals for each area',
+              'Add suggested plants to your project list',
             ]}
           />
         </header>
 
         {/* ══ GARDEN AREAS ════════════════════════════════════════════════════ */}
         <section className="mb-12">
-          <div className="flex justify-between items-center mb-5">
+          <div className="flex justify-between items-center mb-2">
             <h2 className="text-[10px] font-black text-green-900 uppercase tracking-[0.2em]">
-              My Garden Areas
+              Plan My Garden
             </h2>
             <button
               onClick={openCreateForm}
@@ -529,6 +529,9 @@ export default function MatchPage() {
               <Plus size={12} strokeWidth={3} /> New Area
             </button>
           </div>
+          <p className="text-[11px] text-gray-400 font-medium leading-snug mb-5 px-1">
+            Break your garden into areas, save their conditions, and see plants suited to each spot.
+          </p>
 
           {areasLoading ? (
             <div className="py-8 text-center text-[10px] font-black uppercase tracking-widest text-gray-300 animate-pulse">
@@ -693,9 +696,14 @@ export default function MatchPage() {
 
         {/* Section divider before standalone matchmaker */}
         <div className="border-t border-green-900/5 mb-10" />
-        <p className="text-[10px] font-black text-green-900/20 uppercase tracking-[0.3em] mb-8 text-center">
-          Plant Selector
-        </p>
+        <div className="mb-8 text-center space-y-1">
+          <p className="text-[10px] font-black text-green-900/30 uppercase tracking-[0.3em]">
+            Plant Finder
+          </p>
+          <p className="text-[11px] text-gray-400 font-medium max-w-xs mx-auto leading-snug">
+            Explore plants by conditions — a quick tool alongside your garden areas.
+          </p>
+        </div>
 
         {/* ══ EXISTING MATCHMAKER SLIDERS (unchanged) ═════════════════════════ */}
         <div className="space-y-10 mb-12">
@@ -820,7 +828,7 @@ export default function MatchPage() {
         <section className="relative pt-8 border-t border-green-900/5">
           <div className="flex justify-between items-center mb-6 px-1">
             <h3 className="text-[10px] font-black text-green-900 uppercase tracking-[0.2em]">
-              Recommended ({matches.length})
+              All Matches ({matches.length})
             </h3>
             {loading && (
               <div className="w-4 h-4 border-2 border-green-900/20 border-t-green-900 rounded-full animate-spin" />
