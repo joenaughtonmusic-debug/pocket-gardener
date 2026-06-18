@@ -42,3 +42,15 @@ next-env.d.ts
 
 repomix-output.md
 *-repomix*.md
+
+# Android build artifacts
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
+android/app/release/
+android/.idea/
+android/**/*.iml
+android/capacitor-cordova-android-plugins/build/
+*.keystore
+*.jks

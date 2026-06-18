@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Allows the WebView to communicate with the live Vercel deployment over HTTPS.
+    Cleartext (HTTP) is intentionally blocked; all traffic must be HTTPS.
+    If you ever add a local dev server URL, add a <domain> entry here.
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">pocket-gardener.vercel.app</domain>
+        <!-- Supabase project domain -->
+        <domain includeSubdomains="true">sonxnuxhrivzgcevtdtc.supabase.co</domain>
+    </domain-config>
+</network-security-config>

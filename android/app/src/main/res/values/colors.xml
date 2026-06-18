@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Pocket Gardener brand palette -->
+    <color name="colorPrimary">#2d5a3f</color>
+    <color name="colorPrimaryDark">#254b34</color>
+    <color name="colorAccent">#2d5a3f</color>
+
+    <!-- Splash screen background — matches the web app's #f8fbf9 body background -->
+    <color name="splash_background">#f8fbf9</color>
+
+</resources>
