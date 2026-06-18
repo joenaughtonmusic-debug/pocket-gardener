@@ -27,6 +27,43 @@ export const GARDEN_AREA_GOAL_OPTIONS = [
 export type GardenAreaStyle = (typeof GARDEN_AREA_STYLE_OPTIONS)[number]
 export type GardenAreaGoal = (typeof GARDEN_AREA_GOAL_OPTIONS)[number]
 
+export interface StyleInfo {
+  description: string
+  useCases: string[]
+}
+
+/** Short description and suggested use cases per style, shown in the "Use This Style" journey. */
+export const STYLE_INFO: Record<string, StyleInfo> = {
+  Subtropical: {
+    description: 'Lush foliage, layered planting, year-round interest.',
+    useCases: ['Sheltered courtyards', 'North-facing beds', 'Statement focal plantings'],
+  },
+  Native: {
+    description: 'Low maintenance, supports local wildlife, suits NZ conditions.',
+    useCases: ['Boundary plantings', 'Wildlife corridors', 'Low-water areas'],
+  },
+  Formal: {
+    description: 'Structured planting, symmetry, clean lines.',
+    useCases: ['Entranceways', 'Hedging', 'Geometric borders'],
+  },
+  Coastal: {
+    description: 'Tough plants suited to exposed, windy, or salt-spray conditions.',
+    useCases: ['Exposed frontages', 'Windbreaks', 'Salt-tolerant borders'],
+  },
+  Cottage: {
+    description: 'Relaxed, romantic planting with soft colours and textures.',
+    useCases: ['Flower beds', 'Mixed borders', 'Informal spaces'],
+  },
+  'Low Maintenance': {
+    description: 'Easy-care plantings that look good with minimal intervention.',
+    useCases: ['Busy households', 'Rental gardens', 'Low-input borders'],
+  },
+  Edible: {
+    description: 'Productive plantings that combine beauty with a harvest.',
+    useCases: ['Vegetable beds', 'Fruit trees', 'Kitchen gardens'],
+  },
+}
+
 export interface RankedPlantMatch {
   plant: Plant
   /** Short label when style/goal metadata suggests a fit; null otherwise */

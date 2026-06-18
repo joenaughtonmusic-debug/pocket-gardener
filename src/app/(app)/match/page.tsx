@@ -16,6 +16,7 @@ import {
   GARDEN_AREA_STYLE_OPTIONS,
   GARDEN_AREA_GOAL_OPTIONS,
   rankPlantsForArea,
+  STYLE_INFO,
   type RankedPlantMatch,
 } from '../../../lib/gardenAreaRecommendations'
 import type { Plant } from '../../../types/plants'
@@ -240,12 +241,19 @@ function MatchPageInner() {
   const supabase      = useMemo(() => createSupabaseBrowserClient(), [])
   const searchParams  = useSearchParams()
 
-  // Pre-fill style from ?style= URL param (e.g. from Feature Garden "Use This Style")
-  const styleParam = searchParams.get('style')
+  // URL params
+  const styleParam      = searchParams.get('style')
+  const areaIdParam     = searchParams.get('areaId')
+  const editAreaParam   = searchParams.get('editArea')
+
+  // Pre-fill style from ?style= (e.g. Feature Garden "Use This Style")
   const initialStyle = useMemo(() => {
     if (!styleParam) return null
     return GARDEN_AREA_STYLE_OPTIONS.includes(styleParam as any) ? styleParam : null
   }, [styleParam])
+
+  // Highlighted area for ?areaId= deep-links
+  const [highlightedAreaId, setHighlightedAreaId] = useState<string | null>(null)
 
   // ── Shared matchmaker query helper ────────────────────────────────────────
   const fetchMatchesForConditions = useCallback(
@@ -338,7 +346,27 @@ function MatchPageInner() {
     if (initialStyle && !areasLoading) {
       openCreateForm()
     }
-    // Only runs once after areas have loaded and a style param is present
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [areasLoading])
+
+  // Deep-link to a specific area: scroll + highlight
+  useEffect(() => {
+    if (!areaIdParam || areasLoading) return
+    setHighlightedAreaId(areaIdParam)
+    setTimeout(() => {
+      const el = document.getElementById(`area-${areaIdParam}`)
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 120)
+    const clear = setTimeout(() => setHighlightedAreaId(null), 2800)
+    return () => clearTimeout(clear)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [areasLoading])
+
+  // Auto-open edit form when arriving via ?editArea=
+  useEffect(() => {
+    if (!editAreaParam || areasLoading) return
+    const target = areas.find((a) => a.id === editAreaParam)
+    if (target) openEditForm(target)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [areasLoading])
 
@@ -554,23 +582,22 @@ function MatchPageInner() {
 
           {areasLoading ? (
             <div className="py-8 text-center text-[10px] font-black uppercase tracking-widest text-gray-300 animate-pulse">
-              Loading areas...
+              Building your garden plan…
             </div>
           ) : areas.length === 0 ? (
-            <div className="bg-white rounded-[2.5rem] border border-dashed border-gray-200 p-8 text-center">
-              <p className="text-sm font-black text-green-950 uppercase tracking-tight mb-2">
-                No areas yet
+            <div className="bg-white rounded-[2.5rem] border border-dashed border-gray-200 p-8 text-center space-y-3">
+              <p className="text-sm font-black text-green-950 uppercase tracking-tight">
+                No garden areas yet
               </p>
-              <p className="text-[12px] text-gray-400 leading-relaxed font-medium max-w-xs mx-auto mb-6">
-                Start by adding an area like{' '}
-                <span className="text-green-700 font-black">Front Boundary</span>,{' '}
-                <span className="text-green-700 font-black">Back Fence</span>,{' '}
-                <span className="text-green-700 font-black">Shady Corner</span>, or{' '}
-                <span className="text-green-700 font-black">Balcony Pots</span>.
+              <p className="text-[12px] text-gray-400 leading-relaxed font-medium max-w-xs mx-auto">
+                Create your first garden area and we'll recommend suitable plants for it.
+              </p>
+              <p className="text-[11px] text-gray-300 font-medium max-w-[16rem] mx-auto leading-snug">
+                Try: Front Boundary, Back Fence, Shady Corner, or Balcony Pots.
               </p>
               <button
                 onClick={openCreateForm}
-                className="inline-flex items-center gap-2 bg-green-900 text-white text-[10px] font-black uppercase tracking-widest px-7 py-3 rounded-full shadow-sm active:scale-95 transition-all"
+                className="inline-flex items-center gap-2 bg-green-900 text-white text-[10px] font-black uppercase tracking-widest px-7 py-3 rounded-full shadow-sm active:scale-95 transition-all mt-2"
               >
                 <Plus size={14} strokeWidth={3} /> Add First Area
               </button>
@@ -584,7 +611,12 @@ function MatchPageInner() {
                 return (
                   <div
                     key={area.id}
-                    className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden"
+                    id={`area-${area.id}`}
+                    className={`bg-white rounded-[2.5rem] border shadow-sm overflow-hidden transition-all duration-700 ${
+                      highlightedAreaId === area.id
+                        ? 'border-green-400 shadow-lg shadow-green-100/80 ring-2 ring-green-300/40'
+                        : 'border-gray-100'
+                    }`}
                   >
                     {/* Area header */}
                     <div className="p-6 pb-4">
@@ -650,9 +682,20 @@ function MatchPageInner() {
                       )}
 
                       {recs.length === 0 ? (
-                        <p className="text-[11px] text-gray-300 italic">
-                          No exact matches yet. Try adjusting this area's conditions.
-                        </p>
+                        <div className="space-y-1.5">
+                          <p className="text-[11px] text-gray-400 font-medium">
+                            No exact matches for these conditions.
+                          </p>
+                          <p className="text-[10px] text-gray-300 italic leading-snug">
+                            Try changing sun exposure or soil type — e.g. Part Shade or Clay soil often returns more results.
+                          </p>
+                          <button
+                            onClick={() => openEditForm(area)}
+                            className="mt-2 inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-green-700 bg-green-50 border border-green-100 px-3 py-1.5 rounded-full active:scale-95 transition-all"
+                          >
+                            <Pencil size={9} strokeWidth={2.5} /> Adjust conditions
+                          </button>
+                        </div>
                       ) : (
                         <div className="space-y-2">
                           {recs.map(({ plant, matchLabel }) => {
@@ -853,6 +896,16 @@ function MatchPageInner() {
               <div className="w-4 h-4 border-2 border-green-900/20 border-t-green-900 rounded-full animate-spin" />
             )}
           </div>
+          {!loading && matches.length === 0 && (
+            <div className="py-6 text-center space-y-1.5">
+              <p className="text-[12px] text-gray-400 font-medium">
+                No plants match these conditions.
+              </p>
+              <p className="text-[11px] text-gray-300 italic leading-snug max-w-xs mx-auto">
+                Try adjusting sun exposure, soil type, or drainage to broaden results.
+              </p>
+            </div>
+          )}
           <div className="space-y-3">
             {matches.map((p) => (
               <button
@@ -954,12 +1007,40 @@ function MatchPageInner() {
             {/* Form body */}
             <div className="px-7 py-6 space-y-8">
 
-              {/* Pre-fill notice when arriving from Feature Garden */}
-              {initialStyle && !editingArea && (
-                <div className="bg-green-50 border border-green-100 rounded-2xl px-4 py-3 text-[11px] text-green-700 font-medium leading-snug">
-                  Style pre-filled from a Feature Garden. Set conditions and give your area a name to save it.
-                </div>
-              )}
+              {/* "Use This Style" journey — richer banner when arriving from Feature Garden */}
+              {initialStyle && !editingArea && (() => {
+                const info = STYLE_INFO[initialStyle]
+                return (
+                  <div className="bg-green-50 border border-green-100 rounded-2xl p-5 space-y-3">
+                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-green-700/70">
+                      Create a garden area inspired by this style
+                    </p>
+                    <p className="text-base font-black text-green-950 uppercase italic tracking-tight leading-none">
+                      {initialStyle}
+                    </p>
+                    {info && (
+                      <>
+                        <p className="text-[12px] text-green-800 font-medium leading-snug">
+                          {info.description}
+                        </p>
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {info.useCases.map((uc) => (
+                            <span
+                              key={uc}
+                              className="text-[9px] font-black uppercase tracking-wide bg-green-100/70 text-green-700 px-2.5 py-1 rounded-full"
+                            >
+                              {uc}
+                            </span>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                    <p className="text-[10px] text-green-700/60 font-medium pt-1">
+                      Give the area a name, set conditions below, then save.
+                    </p>
+                  </div>
+                )
+              })()}
 
               {/* Name */}
               <div>
