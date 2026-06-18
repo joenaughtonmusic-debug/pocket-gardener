@@ -7,6 +7,7 @@ import { Pencil, Camera, ArrowRight, Check, AlertCircle, Search, X } from 'lucid
 import PlantThumbnail from '../../../components/PlantThumbnail'
 import WelcomeOverlay from '../../../components/WelcomeOverlay'
 import UpgradeButton from '../../../components/UpgradeButton'
+import LockedProFeatureCard from '../../../components/LockedProFeatureCard'
 import type { UserPlant, PlantRemedy, GardenArea } from '../../../types/garden'
 
 const STOP_WORDS = new Set([
@@ -622,6 +623,45 @@ export default function MyGardenDashboard() {
           </div>
         </section>
 
+        {!isPro && (
+          <section className="space-y-3">
+            <div className="flex items-center justify-between px-1">
+              <h2 className="text-[10px] font-black text-green-900/40 uppercase tracking-[0.2em]">
+                Unlock with Pro
+              </h2>
+              <span className="text-[8px] font-black uppercase tracking-widest text-amber-600 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full">
+                Premium
+              </span>
+            </div>
+            <div className="space-y-2">
+              <LockedProFeatureCard
+                icon="🤖"
+                title="AI Garden Coach"
+                description="Planned Pro feature — personalised garden advice, on the way."
+                upgradeHref="#pro-upgrade"
+              />
+              <LockedProFeatureCard
+                icon="📊"
+                title="Monthly Garden Review"
+                description="Coming soon — a monthly snapshot of how your garden is tracking."
+                upgradeHref="#pro-upgrade"
+              />
+              <LockedProFeatureCard
+                icon="🔔"
+                title="Advanced Reminders"
+                description="Coming soon — smarter nudges when tasks matter most."
+                upgradeHref="#pro-upgrade"
+              />
+              <LockedProFeatureCard
+                icon="📋"
+                title="Planting Plan Export"
+                description="Coming soon — export your areas and planting list as a shareable plan."
+                upgradeHref="#pro-upgrade"
+              />
+            </div>
+          </section>
+        )}
+
         <section className="space-y-3">
           <p className="text-[10px] font-black text-green-800/50 uppercase tracking-[0.2em] px-1">
             🔍 Find a plant problem
@@ -701,7 +741,7 @@ export default function MyGardenDashboard() {
         </section>
 
         {!isPro && (
-          <section>
+          <section id="pro-upgrade">
             <div className="bg-green-950 rounded-[3rem] p-8 relative overflow-hidden flex flex-col items-center text-center shadow-2xl border-4 border-amber-400/20">
               <div className="relative z-10">
                 <div className="bg-amber-400 text-green-950 text-[9px] font-black uppercase tracking-widest px-4 py-1 rounded-full mx-auto w-fit mb-4">

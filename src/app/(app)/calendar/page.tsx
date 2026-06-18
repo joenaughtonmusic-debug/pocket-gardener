@@ -11,6 +11,7 @@ import {
   Clock,
 } from 'lucide-react'
 import PageHelp from '../../../components/PageHelp'
+import LockedProFeatureCard from '../../../components/LockedProFeatureCard'
 import type {
   TaskCandidate,
   PlantRow,
@@ -178,6 +179,7 @@ export default function CalendarPage() {
   const [taskRules, setTaskRules] = useState<TaskRuleRow[]>([])
   const [taskStatus, setTaskStatus] = useState<Record<string, boolean>>({})
   const [taskDoneMessage, setTaskDoneMessage] = useState<string | null>(null)
+  const [isPro, setIsPro] = useState(false)
 
   const taskDoneTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -229,7 +231,7 @@ export default function CalendarPage() {
 
       setGardenPhoto(user.user_metadata?.garden_photo || null)
 
-      const [plantsRes, careRes, rulesRes, statusRes] = await Promise.all([
+      const [plantsRes, careRes, rulesRes, statusRes, profileRes] = await Promise.all([
   supabase
     .from('user_plants')
     .select(
@@ -270,7 +272,14 @@ export default function CalendarPage() {
           .eq('week_number', activeWeek)
           .eq('month_number', currentMonthNum)
           .eq('year_number', currentYear),
+        supabase
+          .from('profiles')
+          .select('is_pro')
+          .eq('id', user.id)
+          .maybeSingle(),
       ])
+
+      if (profileRes.data) setIsPro(profileRes.data.is_pro)
 
       if (plantsRes.error) console.error('Error loading user plants:', plantsRes.error)
       if (careRes.error) console.error('Error loading monthly care:', careRes.error)
@@ -863,6 +872,16 @@ export default function CalendarPage() {
             )}
           </div>
         </section>
+
+        {!isPro && (
+          <section>
+            <LockedProFeatureCard
+              icon="🔔"
+              title="Advanced Reminders"
+              description="Coming soon — smart nudges and a monthly garden review tailored to your plants."
+            />
+          </section>
+        )}
 
         <div className="grid grid-cols-1 gap-4">
           <div className="bg-white rounded-[2.5rem] p-7 border border-white shadow-sm">

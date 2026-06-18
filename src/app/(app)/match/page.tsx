@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import PlantThumbnail from '../../../components/PlantThumbnail'
 import PageHelp from '../../../components/PageHelp'
+import LockedProFeatureCard from '../../../components/LockedProFeatureCard'
 import type { GardenArea } from '../../../types/garden'
 
 // ─── Slider option constants ──────────────────────────────────────────────────
@@ -158,6 +159,7 @@ export default function MatchPage() {
   const [editingArea,     setEditingArea]     = useState<GardenArea | null>(null)
   const [deletingAreaId,  setDeletingAreaId]  = useState<string | null>(null)
   const [addingToArea,    setAddingToArea]    = useState<string | null>(null)
+  const [isPro,           setIsPro]           = useState(false)
 
   // Area form fields
   const [formName,      setFormName]      = useState('')
@@ -201,7 +203,7 @@ export default function MatchPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setAreasLoading(false); return }
 
-    const [areasRes, projectRes] = await Promise.all([
+    const [areasRes, projectRes, profileRes] = await Promise.all([
       supabase
         .from('garden_areas')
         .select('*')
@@ -212,7 +214,14 @@ export default function MatchPage() {
         .select('plant_id')
         .eq('user_id', user.id)
         .eq('is_project', true),
+      supabase
+        .from('profiles')
+        .select('is_pro')
+        .eq('id', user.id)
+        .maybeSingle(),
     ])
+
+    if (profileRes.data) setIsPro(profileRes.data.is_pro)
 
     const loadedAreas = (areasRes.data || []) as GardenArea[]
     setAreas(loadedAreas)
@@ -588,6 +597,16 @@ export default function MatchPage() {
             </div>
           )}
         </section>
+
+        {!isPro && (
+          <section className="mb-10">
+            <LockedProFeatureCard
+              icon="📋"
+              title="Planting Plan Export"
+              description="Coming soon — export your garden areas and plans as a shareable PDF."
+            />
+          </section>
+        )}
 
         {/* Section divider before standalone matchmaker */}
         <div className="border-t border-green-900/5 mb-10" />
