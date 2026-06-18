@@ -31,4 +31,6 @@ export interface Plant {
   water_behavior?: string | string[] | null;
   mature_size?: string | string[] | null;
   slope_suitability?: string | string[] | null;
+  /** Direct style tags, e.g. ['Formal','Coastal','Low Maintenance']. Set via seed/admin. */
+  style_tags?: string[] | null;
 }

@@ -79,8 +79,16 @@ function maintenance(plant: Plant): string {
 }
 
 /**
- * Light prioritisation using existing plant fields only.
- * Condition matching remains the primary filter — this re-sorts results.
+ * Prioritise plants for a garden area using two layers:
+ *
+ * Layer 1 (strong) — direct style_tags match.
+ *   A plant tagged with the area's style gets +3 and a clear fit label.
+ *   This is the most reliable signal because it was explicitly set.
+ *
+ * Layer 2 (heuristic fallback) — inferred from existing plant metadata.
+ *   Same logic as before, but capped at +2 so direct tags always win.
+ *
+ * Goal scoring is unchanged; it runs on top of style scoring.
  */
 export function rankPlantsForArea(
   plants: Plant[],
@@ -88,7 +96,7 @@ export function rankPlantsForArea(
   goal: string | null | undefined,
 ): RankedPlantMatch[] {
   const activeStyle = style && style !== 'Not Sure' ? style : null
-  const activeGoal = goal && goal !== 'Not Sure' ? goal : null
+  const activeGoal  = goal  && goal  !== 'Not Sure' ? goal  : null
 
   const scored = plants.map((plant) => {
     let score = 0
@@ -99,28 +107,38 @@ export function rankPlantsForArea(
       if (!labels.includes(label)) labels.push(label)
     }
 
-    const type = plantType(plant)
+    const type  = plantType(plant)
     const maint = maintenance(plant)
+    const tags: string[] = Array.isArray(plant.style_tags) ? plant.style_tags : []
 
-    if (activeStyle === 'Native' && plant.is_native) add(2, 'Native fit')
-    if (activeStyle === 'Edible' && type === 'fruit') add(2, 'Edible pick')
-    if (activeStyle === 'Low Maintenance' && maint === 'low') add(2, 'Low maintenance')
-    if (activeStyle === 'Formal' && type === 'hedge') add(2, 'Formal structure')
-    if (activeStyle === 'Cottage' && type === 'flower') add(1, 'Cottage colour')
-    if (activeStyle === 'Subtropical' && (type === 'palm' || type === 'flax')) {
-      add(1, 'Subtropical feel')
+    // ── Layer 1: direct style_tags (strongest signal) ─────────────────────
+    if (activeStyle && tags.includes(activeStyle)) {
+      add(3, `${activeStyle} fit`)
     }
-    if (activeStyle === 'Coastal' && plant.is_native) add(1, 'Coastal-friendly')
 
-    if (activeGoal === 'Privacy / Screening' && type === 'hedge') add(3, 'Good for screening')
-    if (activeGoal === 'Colour' && (type === 'flower' || !!plant.flower_color)) {
-      add(2, 'Adds colour')
+    // ── Layer 2: heuristic fallbacks (only when no direct tag) ────────────
+    const hasDirectStyleTag = activeStyle ? tags.includes(activeStyle) : false
+
+    if (!hasDirectStyleTag) {
+      if (activeStyle === 'Native'          && plant.is_native)                       add(2, 'Native fit')
+      if (activeStyle === 'Edible'          && type === 'fruit')                      add(2, 'Edible pick')
+      if (activeStyle === 'Low Maintenance' && maint === 'low')                       add(2, 'Low maintenance')
+      if (activeStyle === 'Formal'          && type === 'hedge')                      add(1, 'Formal structure')
+      if (activeStyle === 'Cottage'         && type === 'flower')                     add(1, 'Cottage colour')
+      if (activeStyle === 'Subtropical'     && (type === 'palm' || type === 'flax'))  add(1, 'Subtropical feel')
+      if (activeStyle === 'Coastal'         && plant.is_native)                       add(1, 'Coastal-friendly')
     }
-    if (activeGoal === 'Low Maintenance' && maint === 'low') add(2, 'Easy care')
-    if (activeGoal === 'Native planting' && plant.is_native) add(2, 'Native species')
-    if (activeGoal === 'Edible garden' && type === 'fruit') add(2, 'Edible pick')
-    if (activeGoal === 'Pollinators' && type === 'flower') add(1, 'Pollinator-friendly')
-    if (activeGoal === 'Child friendly' && maint === 'low') add(1, 'Easy care')
+
+    // ── Goal scoring (independent of style layer) ─────────────────────────
+    if (activeGoal === 'Privacy / Screening' && (type === 'hedge' || tags.includes('Formal') || tags.includes('Coastal'))) {
+      add(3, 'Good for screening')
+    }
+    if (activeGoal === 'Colour'         && (type === 'flower' || !!plant.flower_color)) add(2, 'Adds colour')
+    if (activeGoal === 'Low Maintenance'&& (maint === 'low' || tags.includes('Low Maintenance'))) add(2, 'Easy care')
+    if (activeGoal === 'Native planting'&& (plant.is_native  || tags.includes('Native')))          add(2, 'Native species')
+    if (activeGoal === 'Edible garden'  && (type === 'fruit'  || tags.includes('Edible')))          add(2, 'Edible pick')
+    if (activeGoal === 'Pollinators'    && type === 'flower')                          add(1, 'Pollinator-friendly')
+    if (activeGoal === 'Child friendly' && (maint === 'low' || tags.includes('Low Maintenance')))   add(1, 'Easy care')
 
     return { plant, score, matchLabel: labels[0] ?? null }
   })
