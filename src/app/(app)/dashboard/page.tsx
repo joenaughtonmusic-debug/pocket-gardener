@@ -568,6 +568,60 @@ export default function MyGardenDashboard() {
 
       <div className="px-6 space-y-12">
 
+        {/* ── Journey Cards ─────────────────────────────────────────────── */}
+        <section className="space-y-4">
+          <h2 className="text-xs font-black text-green-950 uppercase tracking-tight px-1">
+            What would you like help with today?
+          </h2>
+          <div className="grid grid-cols-2 gap-3">
+            {([
+              {
+                icon: '🌿',
+                label: 'Plan My Garden',
+                desc: 'Discover plants suited to each part of your garden.',
+                href: '/match',
+              },
+              {
+                icon: '📅',
+                label: 'Maintain My Garden',
+                desc: 'See what care tasks are due this month.',
+                href: '/calendar',
+              },
+              {
+                icon: '🩺',
+                label: 'Diagnose A Problem',
+                desc: 'Get help with weeds, pests, and struggling plants.',
+                href: '/guides',
+              },
+              {
+                icon: '✨',
+                label: 'Get Inspiration',
+                desc: 'Explore feature gardens and ideas for your space.',
+                href: '/feature',
+              },
+            ] as const).map(({ icon, label, desc, href }) => (
+              <Link
+                key={href}
+                href={href}
+                className="bg-white rounded-[2rem] p-4 border border-gray-100 shadow-sm flex flex-col gap-3 active:scale-[0.97] transition-all"
+              >
+                <div className="w-9 h-9 rounded-[0.875rem] bg-[#f0f4f1] flex items-center justify-center text-lg leading-none">
+                  {icon}
+                </div>
+                <div className="flex-1">
+                  <p className="text-[10px] font-black text-green-950 uppercase tracking-tight leading-none mb-1.5">
+                    {label}
+                  </p>
+                  <p className="text-[10px] text-gray-400 font-medium leading-snug">
+                    {desc}
+                  </p>
+                </div>
+                <ArrowRight size={11} className="text-gray-200 self-end" />
+              </Link>
+            ))}
+          </div>
+        </section>
+
         <section className="space-y-3">
           <p className="text-[10px] font-black text-green-800/50 uppercase tracking-[0.2em] px-1">
             🔍 Find a plant problem
