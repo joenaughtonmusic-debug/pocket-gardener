@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { storePendingNotificationPath } from '../lib/notificationPath';
 
 /**
  * Registers this device for FCM push notifications when running inside the
@@ -11,7 +12,11 @@ import { useRouter } from 'next/navigation';
  *  1. Requests notification permission from the OS.
  *  2. Registers with FCM → receives a device token.
  *  3. POSTs the token to /api/device-tokens so the cron can reach this device.
- *  4. On notification tap, navigates to notification.data.path (or /calendar).
+ *  4. On notification tap:
+ *       a. Writes path to sessionStorage (belt) so useNotificationDeepLink can
+ *          consume it after the cold-start app initialisation race resolves.
+ *       b. Also calls router.push immediately (suspenders) — this works on
+ *          warm start where the router is already active and settled.
  *
  * Mount once via <PushNotificationInit /> in the authenticated app layout.
  * All errors are caught silently — push failures must never crash the app.
@@ -69,13 +74,27 @@ export function usePushNotifications() {
           }
         );
 
-        // Fired when the user taps a notification while the app is in background/closed.
+        // Fired when the user taps a notification (background or cold start).
+        // Capacitor replays this event to newly-registered listeners, so it
+        // fires here even after a cold start once the bridge is ready.
         const tapListener = await PushNotifications.addListener(
           'pushNotificationActionPerformed',
           ({ notification }) => {
             const path: string = notification.data?.path ?? '/calendar';
-            console.log(`🔔 Notification tapped → navigating to ${path}`);
-            routerRef.current.push(path);
+            console.log(`🔔 Notification tapped → ${path}`);
+
+            // Persist to sessionStorage FIRST so useNotificationDeepLink can
+            // pick it up if the immediate router.push below races with routing.
+            storePendingNotificationPath(path);
+
+            // Attempt immediate navigation — works reliably on warm start.
+            // On cold start the router may not be settled yet; the persisted
+            // path is the fallback consumed by useNotificationDeepLink.
+            try {
+              routerRef.current.push(path);
+            } catch {
+              // Router not ready — useNotificationDeepLink will handle it.
+            }
           }
         );
 

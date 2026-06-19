@@ -2,15 +2,19 @@
 
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { hasPendingNotificationPath } from '../lib/notificationPath'
 
 export default function WelcomeOverlay() {
   const [isVisible, setIsVisible] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
-    // Only show to brand new visitors
+    // Only show to brand new visitors — and never when the app was opened by
+    // tapping a push notification. Showing the onboarding flow over a
+    // notification deep link would block the intended destination screen.
     const hasVisited = localStorage.getItem('hasVisitedGardenApp');
-    if (!hasVisited) setIsVisible(true);
+    const comingFromNotification = hasPendingNotificationPath();
+    if (!hasVisited && !comingFromNotification) setIsVisible(true);
   }, []);
 
   const slides = [
