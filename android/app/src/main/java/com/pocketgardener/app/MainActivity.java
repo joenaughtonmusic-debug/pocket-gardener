@@ -44,16 +44,26 @@ public class MainActivity extends BridgeActivity {
                 super.onPageFinished(view, url);
                 final String path = coldStartNotificationPath;
                 if (path == null) return;
-                coldStartNotificationPath = null;
+                // Do NOT clear coldStartNotificationPath here.
+                // evaluateJavascript is posted asynchronously to the JS queue
+                // and may execute AFTER React's useEffect hooks. If we clear
+                // the field now, getColdStartPath() will return "" when called
+                // synchronously from WelcomeOverlay.useEffect.
+                // We clear it in the result callback (after JS confirms execution)
+                // so getColdStartPath() can still return the path if useEffect
+                // runs first.
                 final String safe = path.replace("\\", "\\\\").replace("'", "\\'");
                 final String js =
                     "try{" +
                     "  sessionStorage.setItem('pg:pending-notification-path','" + safe + "');" +
                     "  console.log('[PG_NATIVE_JS] onPageFinished wrote path: " + safe + "');" +
                     "}catch(e){console.error('[PG_NATIVE_JS] write failed',String(e));}";
-                view.evaluateJavascript(js, result ->
-                    Log.d(TAG, "onPageFinished injection — url=" + url + " evalResult=" + result));
-                Log.d(TAG, "onPageFinished: injected path=" + path + " url=" + url);
+                view.evaluateJavascript(js, result -> {
+                    // Clear only after JS has actually executed.
+                    coldStartNotificationPath = null;
+                    Log.d(TAG, "onPageFinished injection confirmed — url=" + url + " result=" + result);
+                });
+                Log.d(TAG, "onPageFinished: queued injection for path=" + path + " url=" + url);
             }
         });
 

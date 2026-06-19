@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { hasPendingNotificationPath } from '../lib/notificationPath'
+import { hasPendingNotificationPath, storePendingNotificationPath } from '../lib/notificationPath'
 
 export default function WelcomeOverlay() {
   const [isVisible, setIsVisible] = useState(false);
@@ -25,26 +25,39 @@ export default function WelcomeOverlay() {
       return;
     }
 
-    // ── IMMEDIATE CHECK (the fix) ─────────────────────────────────────────
-    // onPageFinished (MainActivity) writes the key to sessionStorage BEFORE
-    // React hydrates. We must snapshot it HERE — synchronously at mount —
-    // before useNotificationDeepLink's useEffect (which fires a few ms later
-    // as a shallower component) calls consumePendingNotificationPath() and
-    // removes the key. If we wait until the 800ms timer to check, the key is
-    // already gone and the overlay incorrectly shows.
-    const pendingAtMount = hasPendingNotificationPath();
-    console.log(`[PG_WELCOME] immediate check — pendingAtMount=${pendingAtMount}`);
-    if (pendingAtMount) {
-      console.log('[PG_WELCOME] notification tap detected at mount — suppressing overlay');
-      return; // useNotificationDeepLink handles navigation
+    // ── PRIMARY CHECK: sessionStorage ────────────────────────────────────
+    // If onPageFinished's evaluateJavascript ran before React hydrated, the
+    // key is already here. Check synchronously before any other useEffect
+    // (e.g. useNotificationDeepLink) can consume and delete it.
+    const sessionStoragePending = hasPendingNotificationPath();
+    console.log(`[PG_WELCOME] sessionStorage check — pending=${sessionStoragePending}`);
+    if (sessionStoragePending) {
+      console.log('[PG_WELCOME] sessionStorage has pending path — suppressing overlay');
+      return;
+    }
+
+    // ── SECONDARY CHECK: PGNative JavascriptInterface (synchronous) ───────
+    // evaluateJavascript from onPageFinished is asynchronous — it may arrive
+    // AFTER React useEffect. But getColdStartPath() is a @JavascriptInterface
+    // method: calling it from JS invokes Java synchronously and returns the
+    // stored Intent path immediately. Because we now defer clearing
+    // coldStartNotificationPath until after evaluateJavascript confirms
+    // execution, this call still returns the path when evaluateJavascript
+    // hasn't run yet. Write the result to sessionStorage so
+    // useNotificationDeepLink (which fires after this component, being
+    // shallower in the tree) can consume it and navigate.
+    const nativePath: string = (window as any).PGNative?.getColdStartPath?.() ?? '';
+    console.log(`[PG_WELCOME] PGNative.getColdStartPath() returned: "${nativePath}"`);
+    if (nativePath) {
+      console.log('[PG_WELCOME] PGNative path found — storing and suppressing overlay');
+      storePendingNotificationPath(nativePath);
+      return;
     }
 
     // ── DELAYED FALLBACK ──────────────────────────────────────────────────
-    // Covers the Capacitor pushNotificationActionPerformed replay path, where
-    // the key is written asynchronously (~300ms after mount) rather than by
-    // the synchronous onPageFinished injection. onPageFinished is the primary
-    // path; this timer is the safety net.
-    console.log('[PG_WELCOME] no immediate pending path — starting 800ms fallback timer');
+    // Neither path found at mount. Start a timer for the Capacitor
+    // pushNotificationActionPerformed replay path (async, ~300ms).
+    console.log('[PG_WELCOME] no pending path at mount — starting 800ms fallback timer');
     const timer = setTimeout(() => {
       const pendingPath = hasPendingNotificationPath();
       console.log(`[PG_WELCOME] 800ms fallback — hasPendingNotificationPath=${pendingPath}`);
