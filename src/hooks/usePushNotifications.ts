@@ -29,26 +29,29 @@ export function usePushNotifications() {
 
   useEffect(() => {
     // ── Native cold-start path (synchronous, no async required) ──────────────
-    // On Android cold start from a notification tap, MainActivity.java stores
-    // the FCM 'path' Intent extra and exposes it via window.PGNative
-    // (a @JavascriptInterface registered before the WebView page loads).
+    // On Android cold start from a notification tap, MainActivity.java:
+    //   1. Reads 'path' from the FCM launch Intent in onCreate().
+    //   2. Writes it directly to sessionStorage in onPageFinished() (native).
+    //   3. Also exposes it via window.PGNative for JS to read here (backup).
     //
-    // We read it here synchronously — before any async Capacitor calls — so
-    // storePendingNotificationPath() writes to sessionStorage within ~1 ms of
-    // this component mounting. WelcomeOverlay's 800 ms grace period then has
-    // plenty of time to see the value before it decides whether to show.
-    //
-    // This bypasses Capacitor's pushNotificationActionPerformed replay, which
-    // is unreliable on cold start in this configuration.
+    // Both paths ensure sessionStorage is populated before WelcomeOverlay's
+    // 800 ms grace period expires. The JavascriptInterface call below is the
+    // JS-side backup; MainActivity's onPageFinished injection is the primary.
+    // ── TEMPORARY LOGGING ──────────────────────────────────────────────────
+    console.log('[PG_PUSH_TAP] usePushNotifications useEffect started, ts=', Date.now());
+    console.log('[PG_PUSH_TAP] window.PGNative present:', !!(window as any).PGNative);
+    console.log('[PG_PUSH_TAP] getColdStartPath fn present:', !!(window as any).PGNative?.getColdStartPath);
+    // ────────────────────────────────────────────────────────────────────────
     const nativePath: string =
       typeof window !== 'undefined'
         ? ((window as any).PGNative?.getColdStartPath?.() ?? '')
         : '';
+    console.log('[PG_PUSH_TAP] getColdStartPath() returned:', JSON.stringify(nativePath));
     if (nativePath) {
-      console.log('[PG_PUSH_TAP] PGNative cold-start path received:', nativePath);
+      console.log('[PG_PUSH_TAP] storing PGNative path in sessionStorage:', nativePath);
       storePendingNotificationPath(nativePath);
     } else {
-      console.log('[PG_PUSH_TAP] PGNative cold-start path: none (not a cold-start tap)');
+      console.log('[PG_PUSH_TAP] no PGNative path — either onPageFinished already wrote it or not a cold-start tap');
     }
     // ─────────────────────────────────────────────────────────────────────────
 

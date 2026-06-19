@@ -4,7 +4,9 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.webkit.JavascriptInterface;
+import android.webkit.WebView;
 import com.getcapacitor.BridgeActivity;
+import com.getcapacitor.BridgeWebViewClient;
 
 public class MainActivity extends BridgeActivity {
 
@@ -29,10 +31,37 @@ public class MainActivity extends BridgeActivity {
         // Extract FCM path from the launch Intent first.
         coldStartNotificationPath = extractPath("onCreate", getIntent());
 
-        // Register the JavascriptInterface AFTER super.onCreate() so the
-        // Capacitor WebView instance already exists. The interface is available
-        // to JavaScript from the first line of the page that loads.
-        getBridge().getWebView().addJavascriptInterface(new PGNativeBridge(), "PGNative");
+        WebView webView = getBridge().getWebView();
+
+        // ── Primary path: inject sessionStorage directly after page load ──────
+        // BridgeWebViewClient extends Capacitor's own WebViewClient so all
+        // Capacitor routing behaviour is preserved via super.onPageFinished().
+        // We write the path to sessionStorage here — before React's useEffect
+        // hooks can fire — so WelcomeOverlay's 800 ms check always sees it.
+        webView.setWebViewClient(new BridgeWebViewClient(getBridge()) {
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                final String path = coldStartNotificationPath;
+                if (path == null) return;
+                coldStartNotificationPath = null;
+                final String safe = path.replace("\\", "\\\\").replace("'", "\\'");
+                final String js =
+                    "try{" +
+                    "  sessionStorage.setItem('pg:pending-notification-path','" + safe + "');" +
+                    "  console.log('[PG_NATIVE_JS] onPageFinished wrote path: " + safe + "');" +
+                    "}catch(e){console.error('[PG_NATIVE_JS] write failed',String(e));}";
+                view.evaluateJavascript(js, result ->
+                    Log.d(TAG, "onPageFinished injection — url=" + url + " evalResult=" + result));
+                Log.d(TAG, "onPageFinished: injected path=" + path + " url=" + url);
+            }
+        });
+
+        // ── Backup path: synchronous JS interface callable from React ─────────
+        // Registered before the page loads so window.PGNative is available
+        // from the first JS execution. usePushNotifications.ts calls
+        // getColdStartPath() in its useEffect as a belt-and-suspenders check.
+        webView.addJavascriptInterface(new PGNativeBridge(), "PGNative");
         Log.d(TAG, "PGNative JavascriptInterface registered — coldStartPath: "
                 + (coldStartNotificationPath != null ? coldStartNotificationPath : "null"));
     }
