@@ -25,87 +25,119 @@ export default function LoginPage() {
   )
 
   // ── Native setup: platform detection + deep-link auth handler ────────────────
-  //
-  // Two auth path problems in Android WebView:
-  //   1. Google OAuth → blocked (disallowed_useragent). Button is hidden below.
-  //   2. Magic-link HTTPS callback → App Links open the app but Capacitor fires
-  //      appUrlOpen and nothing handles it, so the session is never set.
-  //
-  // Fix for (2): on native we send redirectTo=NATIVE_REDIRECT (custom scheme).
-  // Android routes com.pocketgardener.app:// back into the app without needing
-  // assetlinks.json verification. We then exchange the code client-side here.
-  //
-  // The handler also catches HTTPS App-Links callbacks (e.g. old links already
-  // sent with the web URL) because appUrlOpen fires for both schemes.
   useEffect(() => {
     let removeListener: (() => void) | undefined
 
     async function setupNative() {
       try {
         const { Capacitor } = await import('@capacitor/core')
+        console.log('[PG-AUTH] isNativePlatform:', Capacitor.isNativePlatform())
         if (!Capacitor.isNativePlatform()) return
 
         setIsNative(true)
+        console.log('[PG-AUTH] Native detected — registering deep-link handler')
 
         const { App } = await import('@capacitor/app')
 
-        // Exchange a PKCE code (or implicit hash tokens) for a live session.
-        // Uses the browser client so the code_verifier stored in WebView
-        // localStorage by signInWithOtp() is still reachable here.
+        // ── processAuthUrl ────────────────────────────────────────────────────
+        // BUG NOTE: for custom-scheme URLs (com.pocketgardener.app://auth/callback)
+        // the URL constructor sets host="auth" and pathname="/callback".
+        // We therefore check the raw url string, not parsed.pathname, so the
+        // guard works for both the custom scheme and the HTTPS App-Links path.
         async function processAuthUrl(url: string) {
+          console.log('[PG-AUTH] processAuthUrl — raw url:', url)
           try {
-            const parsed = new URL(url)
-            if (!parsed.pathname.includes('/auth/callback')) return
+            // ── Guard: only handle auth callback URLs ────────────────────────
+            if (!url.includes('/auth/callback')) {
+              console.warn('[PG-AUTH] URL does not contain /auth/callback — ignoring:', url)
+              return
+            }
 
+            let parsed: URL
+            try {
+              parsed = new URL(url)
+            } catch (parseErr) {
+              console.error('[PG-AUTH] URL parse failed:', parseErr, '— raw url:', url)
+              setMessage('Login failed: could not parse callback URL')
+              return
+            }
+
+            console.log('[PG-AUTH] parsed — scheme:', parsed.protocol,
+              '| host:', parsed.hostname,
+              '| pathname:', parsed.pathname,
+              '| search:', parsed.search,
+              '| hash:', parsed.hash ? '(present)' : '(none)')
+
+            // ── PKCE code exchange ───────────────────────────────────────────
             const code = parsed.searchParams.get('code')
+            console.log('[PG-AUTH] code present:', !!code)
+
             if (code) {
-              const { error } = await supabase.auth.exchangeCodeForSession(code)
-              if (!error) {
-                router.push('/dashboard')
-              } else {
-                console.error('❌ exchangeCodeForSession error:', error.message)
+              console.log('[PG-AUTH] calling exchangeCodeForSession...')
+              const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+              if (error) {
+                console.error('[PG-AUTH] exchangeCodeForSession error:', error.message, '| code:', error.code)
                 setMessage(`Login failed: ${error.message}`)
+              } else {
+                console.log('[PG-AUTH] exchangeCodeForSession success — user:', data.user?.email)
+                console.log('[PG-AUTH] calling router.push(/dashboard)')
+                router.push('/dashboard')
               }
               return
             }
 
-            // Fallback: implicit flow sends tokens in the hash fragment.
+            // ── Implicit flow fallback (hash fragment tokens) ────────────────
             const hash = new URLSearchParams(parsed.hash.slice(1))
             const accessToken = hash.get('access_token')
             const refreshToken = hash.get('refresh_token')
+            console.log('[PG-AUTH] hash token present:', !!accessToken)
+
             if (accessToken && refreshToken) {
+              console.log('[PG-AUTH] calling setSession (implicit flow)...')
               const { error } = await supabase.auth.setSession({
                 access_token: accessToken,
                 refresh_token: refreshToken,
               })
-              if (!error) {
-                router.push('/dashboard')
-              } else {
-                console.error('❌ setSession error:', error.message)
+              if (error) {
+                console.error('[PG-AUTH] setSession error:', error.message)
                 setMessage(`Login failed: ${error.message}`)
+              } else {
+                console.log('[PG-AUTH] setSession success — calling router.push(/dashboard)')
+                router.push('/dashboard')
               }
+              return
             }
-          } catch (err) {
-            console.error('❌ processAuthUrl error:', err)
+
+            // Neither code nor hash tokens found.
+            console.warn('[PG-AUTH] no code and no hash tokens in callback URL')
+            setMessage('Login failed: callback URL had no auth tokens')
+          } catch (err: any) {
+            console.error('[PG-AUTH] processAuthUrl unexpected error:', err?.message ?? err)
+            setMessage(`Login failed: ${err?.message ?? 'unexpected error'}`)
           }
         }
 
-        // Cold start: app was not running when the magic link was tapped.
+        // ── Cold start ───────────────────────────────────────────────────────
+        // App was not running when the magic link was tapped.
         // getLaunchUrl() returns the URL that caused Android to open the app.
         const launch = await App.getLaunchUrl()
+        console.log('[PG-AUTH] getLaunchUrl result:', launch?.url ?? '(null)')
         if (launch?.url) {
           await processAuthUrl(launch.url)
         }
 
-        // Warm start: app was already running (on this login page).
-        // appUrlOpen fires when Android routes a matching URL into a running app.
+        // ── Warm start ───────────────────────────────────────────────────────
+        // App was already running (user is on the login page waiting).
+        // appUrlOpen fires when Android routes a matching URL into the app.
         const listener = await App.addListener('appUrlOpen', ({ url }) => {
+          console.log('[PG-AUTH] appUrlOpen fired — url:', url)
           processAuthUrl(url)
         })
 
+        console.log('[PG-AUTH] appUrlOpen listener registered')
         removeListener = () => listener.remove()
-      } catch (err) {
-        console.error('❌ Native setup error (non-fatal):', err)
+      } catch (err: any) {
+        console.error('[PG-AUTH] setupNative error (non-fatal):', err?.message ?? err)
       }
     }
 
@@ -128,15 +160,18 @@ export default function LoginPage() {
       ? NATIVE_REDIRECT
       : `${window.location.origin}/auth/callback`
 
+    console.log('[PG-AUTH] signInWithOtp — isNative:', isNative, '| emailRedirectTo:', emailRedirectTo)
+
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: { emailRedirectTo },
     })
 
     if (error) {
-      console.error('❌ Login Error:', error.message)
+      console.error('[PG-AUTH] signInWithOtp error:', error.message)
       setMessage(`Error: ${error.message}`)
     } else {
+      console.log('[PG-AUTH] signInWithOtp OK — magic link sent')
       setMessage('Check your email! Your Magic Link is on the way.')
     }
     setLoading(false)
