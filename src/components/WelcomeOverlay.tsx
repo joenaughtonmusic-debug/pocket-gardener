@@ -1,26 +1,46 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useLayoutEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { hasPendingNotificationPath } from '../lib/notificationPath'
+import { hasPendingNotificationPath, storePendingNotificationPath } from '../lib/notificationPath'
 
 export default function WelcomeOverlay() {
   const [isVisible, setIsVisible] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  useEffect(() => {
+  // useLayoutEffect fires synchronously after DOM commit, BEFORE the browser
+  // paints and BEFORE any useEffect callbacks run (including NotificationNavigator
+  // and useNotificationDeepLink). This guarantees the pending-path key is still
+  // in sessionStorage when we check — it cannot have been consumed yet.
+  useLayoutEffect(() => {
     // Returning user: skip overlay.
     const hasVisited = localStorage.getItem('hasVisitedGardenApp');
     if (hasVisited) return;
 
-    // On native: the bootstrap <script> in layout.tsx has already written the
-    // pending notification path to sessionStorage before React loaded. If a
-    // path is present, the user arrived from a notification tap — suppress the
-    // overlay. NotificationNavigator (root layout) will navigate to the path.
     const isNative = !!(window as any).Capacitor?.isNativePlatform?.();
-    if (isNative && hasPendingNotificationPath()) return;
+    if (!isNative) {
+      setIsVisible(true);
+      return;
+    }
 
-    // No notification in flight — this is a genuine first-time visit.
+    // PRIMARY: bootstrap <script> wrote the path to sessionStorage before React
+    // loaded. Check it synchronously here — no useEffect can have consumed it
+    // yet because useLayoutEffect fires first.
+    if (hasPendingNotificationPath()) return;
+
+    // FALLBACK: if the bootstrap script ran before PGNative was registered
+    // (unlikely but possible on a very fast cache hit), call the interface
+    // directly. getColdStartPath() is a @JavascriptInterface synchronous call
+    // that returns the cold-start Intent path immediately.
+    const nativePath: string = (window as any).PGNative?.getColdStartPath?.() ?? '';
+    if (nativePath) {
+      // Write to sessionStorage so NotificationNavigator (useEffect, fires later)
+      // can consume it and navigate to the correct route.
+      storePendingNotificationPath(nativePath);
+      return;
+    }
+
+    // No notification in flight — genuine first-time visit.
     setIsVisible(true);
   }, []);
 
