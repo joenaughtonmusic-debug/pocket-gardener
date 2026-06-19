@@ -28,6 +28,30 @@ export function usePushNotifications() {
   routerRef.current = router;
 
   useEffect(() => {
+    // ── Native cold-start path (synchronous, no async required) ──────────────
+    // On Android cold start from a notification tap, MainActivity.java stores
+    // the FCM 'path' Intent extra and exposes it via window.PGNative
+    // (a @JavascriptInterface registered before the WebView page loads).
+    //
+    // We read it here synchronously — before any async Capacitor calls — so
+    // storePendingNotificationPath() writes to sessionStorage within ~1 ms of
+    // this component mounting. WelcomeOverlay's 800 ms grace period then has
+    // plenty of time to see the value before it decides whether to show.
+    //
+    // This bypasses Capacitor's pushNotificationActionPerformed replay, which
+    // is unreliable on cold start in this configuration.
+    const nativePath: string =
+      typeof window !== 'undefined'
+        ? ((window as any).PGNative?.getColdStartPath?.() ?? '')
+        : '';
+    if (nativePath) {
+      console.log('[PG_PUSH_TAP] PGNative cold-start path received:', nativePath);
+      storePendingNotificationPath(nativePath);
+    } else {
+      console.log('[PG_PUSH_TAP] PGNative cold-start path: none (not a cold-start tap)');
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     let cleanup: (() => void) | undefined;
 
     async function register() {
