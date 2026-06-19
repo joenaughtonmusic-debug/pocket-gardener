@@ -6,7 +6,6 @@ import android.util.Log;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 import com.getcapacitor.BridgeActivity;
-import com.getcapacitor.BridgeWebViewClient;
 
 public class MainActivity extends BridgeActivity {
 
@@ -14,7 +13,9 @@ public class MainActivity extends BridgeActivity {
 
     /**
      * Holds the deep-link path from the FCM notification Intent that launched
-     * this cold start. Consumed once by JavaScript via PGNativeBridge.
+     * this cold start. Consumed once by the bootstrap <script> in layout.tsx
+     * via window.PGNative.getColdStartPath() — which runs synchronously when
+     * the browser parses the HTML, before React loads.
      *
      * Null when the app was not launched by a notification tap.
      */
@@ -28,51 +29,17 @@ public class MainActivity extends BridgeActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Extract FCM path from the launch Intent first.
+        // Extract FCM path from the launch Intent.
         coldStartNotificationPath = extractPath("onCreate", getIntent());
 
+        // Register the JavascriptInterface before the page starts loading so
+        // window.PGNative is available from the very first script execution.
+        // The bootstrap <script> in layout.tsx calls getColdStartPath() during
+        // HTML parsing — before React hydrates — and writes the result to
+        // sessionStorage. No evaluateJavascript or onPageFinished needed.
         WebView webView = getBridge().getWebView();
-
-        // ── Primary path: inject sessionStorage directly after page load ──────
-        // BridgeWebViewClient extends Capacitor's own WebViewClient so all
-        // Capacitor routing behaviour is preserved via super.onPageFinished().
-        // We write the path to sessionStorage here — before React's useEffect
-        // hooks can fire — so WelcomeOverlay's 800 ms check always sees it.
-        webView.setWebViewClient(new BridgeWebViewClient(getBridge()) {
-            @Override
-            public void onPageFinished(WebView view, String url) {
-                super.onPageFinished(view, url);
-                final String path = coldStartNotificationPath;
-                if (path == null) return;
-                // Do NOT clear coldStartNotificationPath here.
-                // evaluateJavascript is posted asynchronously to the JS queue
-                // and may execute AFTER React's useEffect hooks. If we clear
-                // the field now, getColdStartPath() will return "" when called
-                // synchronously from WelcomeOverlay.useEffect.
-                // We clear it in the result callback (after JS confirms execution)
-                // so getColdStartPath() can still return the path if useEffect
-                // runs first.
-                final String safe = path.replace("\\", "\\\\").replace("'", "\\'");
-                final String js =
-                    "try{" +
-                    "  sessionStorage.setItem('pg:pending-notification-path','" + safe + "');" +
-                    "  console.log('[PG_NATIVE_JS] onPageFinished wrote path: " + safe + "');" +
-                    "}catch(e){console.error('[PG_NATIVE_JS] write failed',String(e));}";
-                view.evaluateJavascript(js, result -> {
-                    // Clear only after JS has actually executed.
-                    coldStartNotificationPath = null;
-                    Log.d(TAG, "onPageFinished injection confirmed — url=" + url + " result=" + result);
-                });
-                Log.d(TAG, "onPageFinished: queued injection for path=" + path + " url=" + url);
-            }
-        });
-
-        // ── Backup path: synchronous JS interface callable from React ─────────
-        // Registered before the page loads so window.PGNative is available
-        // from the first JS execution. usePushNotifications.ts calls
-        // getColdStartPath() in its useEffect as a belt-and-suspenders check.
         webView.addJavascriptInterface(new PGNativeBridge(), "PGNative");
-        Log.d(TAG, "PGNative JavascriptInterface registered — coldStartPath: "
+        Log.d(TAG, "PGNative registered — coldStartPath: "
                 + (coldStartNotificationPath != null ? coldStartNotificationPath : "null"));
     }
 

@@ -2,74 +2,26 @@
 
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { hasPendingNotificationPath, storePendingNotificationPath } from '../lib/notificationPath'
+import { hasPendingNotificationPath } from '../lib/notificationPath'
 
 export default function WelcomeOverlay() {
   const [isVisible, setIsVisible] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
+    // Returning user: skip overlay.
     const hasVisited = localStorage.getItem('hasVisitedGardenApp');
-    if (hasVisited) {
-      console.log('[PG_WELCOME] hasVisited=true — overlay suppressed (returning user)');
-      return;
-    }
+    if (hasVisited) return;
 
-    // window.Capacitor is injected by the native bridge before any JS runs.
+    // On native: the bootstrap <script> in layout.tsx has already written the
+    // pending notification path to sessionStorage before React loaded. If a
+    // path is present, the user arrived from a notification tap — suppress the
+    // overlay. NotificationNavigator (root layout) will navigate to the path.
     const isNative = !!(window as any).Capacitor?.isNativePlatform?.();
-    console.log(`[PG_WELCOME] isNative=${isNative} | hasVisited=${hasVisited}`);
+    if (isNative && hasPendingNotificationPath()) return;
 
-    if (!isNative) {
-      console.log('[PG_WELCOME] web — showing overlay immediately');
-      setIsVisible(true);
-      return;
-    }
-
-    // ── PRIMARY CHECK: sessionStorage ────────────────────────────────────
-    // If onPageFinished's evaluateJavascript ran before React hydrated, the
-    // key is already here. Check synchronously before any other useEffect
-    // (e.g. useNotificationDeepLink) can consume and delete it.
-    const sessionStoragePending = hasPendingNotificationPath();
-    console.log(`[PG_WELCOME] sessionStorage check — pending=${sessionStoragePending}`);
-    if (sessionStoragePending) {
-      console.log('[PG_WELCOME] sessionStorage has pending path — suppressing overlay');
-      return;
-    }
-
-    // ── SECONDARY CHECK: PGNative JavascriptInterface (synchronous) ───────
-    // evaluateJavascript from onPageFinished is asynchronous — it may arrive
-    // AFTER React useEffect. But getColdStartPath() is a @JavascriptInterface
-    // method: calling it from JS invokes Java synchronously and returns the
-    // stored Intent path immediately. Because we now defer clearing
-    // coldStartNotificationPath until after evaluateJavascript confirms
-    // execution, this call still returns the path when evaluateJavascript
-    // hasn't run yet. Write the result to sessionStorage so
-    // useNotificationDeepLink (which fires after this component, being
-    // shallower in the tree) can consume it and navigate.
-    const nativePath: string = (window as any).PGNative?.getColdStartPath?.() ?? '';
-    console.log(`[PG_WELCOME] PGNative.getColdStartPath() returned: "${nativePath}"`);
-    if (nativePath) {
-      console.log('[PG_WELCOME] PGNative path found — storing and suppressing overlay');
-      storePendingNotificationPath(nativePath);
-      return;
-    }
-
-    // ── DELAYED FALLBACK ──────────────────────────────────────────────────
-    // Neither path found at mount. Start a timer for the Capacitor
-    // pushNotificationActionPerformed replay path (async, ~300ms).
-    console.log('[PG_WELCOME] no pending path at mount — starting 800ms fallback timer');
-    const timer = setTimeout(() => {
-      const pendingPath = hasPendingNotificationPath();
-      console.log(`[PG_WELCOME] 800ms fallback — hasPendingNotificationPath=${pendingPath}`);
-      if (!pendingPath) {
-        console.log('[PG_WELCOME] no pending notification — showing overlay');
-        setIsVisible(true);
-      } else {
-        console.log('[PG_WELCOME] pending notification found at 800ms — suppressing overlay');
-      }
-    }, 800);
-
-    return () => clearTimeout(timer);
+    // No notification in flight — this is a genuine first-time visit.
+    setIsVisible(true);
   }, []);
 
   const slides = [
