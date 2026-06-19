@@ -33,13 +33,18 @@ function initFirebase() {
 }
 
 export async function POST(req: Request) {
-  // Auth — same CRON_SECRET used by the production cron routes.
-  const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret) {
-    const auth = req.headers.get('authorization');
-    if (auth !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+  // Auth — checked against DEV_PUSH_TEST_SECRET (a dedicated dev-only secret).
+  // If the env var is not set the route is locked to prevent accidental exposure.
+  const devSecret = process.env.DEV_PUSH_TEST_SECRET;
+  if (!devSecret) {
+    return NextResponse.json(
+      { error: 'DEV_PUSH_TEST_SECRET is not configured on this deployment' },
+      { status: 503 }
+    );
+  }
+  const auth = req.headers.get('authorization');
+  if (auth !== `Bearer ${devSecret}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   let body: { token?: string; path?: string };
