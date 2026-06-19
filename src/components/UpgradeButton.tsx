@@ -2,31 +2,47 @@
 
 import { useState } from 'react';
 
+// Opens a URL in Chrome Custom Tabs on Android (Capacitor native) so that
+// Stripe Checkout runs in a real browser process, not inside the WebView.
+// On web the normal window.location redirect is used unchanged.
+async function openUrl(url: string): Promise<void> {
+  try {
+    // Dynamic import keeps @capacitor/browser out of the web bundle entirely;
+    // it only resolves when running inside a Capacitor native context.
+    const { Capacitor } = await import('@capacitor/core');
+    if (Capacitor.isNativePlatform()) {
+      const { Browser } = await import('@capacitor/browser');
+      await Browser.open({ url, presentationStyle: 'fullscreen' });
+      return;
+    }
+  } catch {
+    // Not a Capacitor environment — fall through to web redirect.
+  }
+  window.location.href = url;
+}
+
 export default function UpgradeButton() {
   const [loading, setLoading] = useState(false);
 
   const handleCheckout = async () => {
     setLoading(true);
     try {
-      // 1. Call your internal Next.js API route
       const response = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
 
       const data = await response.json();
-      
+
       if (!response.ok || data.error) {
         throw new Error(data.error || 'Failed to create checkout session');
       }
 
-      // 2. Redirect to the Stripe URL provided by your API
       if (data.url) {
-        window.location.href = data.url;
+        await openUrl(data.url);
       } else {
         throw new Error('No checkout URL received');
       }
-
     } catch (error: any) {
       console.error('Stripe Error:', error);
       alert(error.message || 'Something went wrong with the payment.');

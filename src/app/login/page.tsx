@@ -1,14 +1,29 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
+  const [isNative, setIsNative] = useState(false)
 
-  // This client handles the "Send" part of the Magic Link
+  // Detect Capacitor native at runtime.
+  // Google OAuth is blocked inside Android WebView (disallowed_useragent).
+  // On native, hide the button entirely — magic link is the primary flow.
+  useEffect(() => {
+    async function detectNative() {
+      try {
+        const { Capacitor } = await import('@capacitor/core')
+        setIsNative(Capacitor.isNativePlatform())
+      } catch {
+        // Not a Capacitor environment.
+      }
+    }
+    detectNative()
+  }, [])
+
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -19,8 +34,6 @@ export default function LoginPage() {
     setLoading(true)
     setMessage('')
 
-    // CLEAN REDIRECT: We send them to /auth/callback and let the 
-    // route handler deal with the final destination to avoid loops.
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
@@ -29,7 +42,7 @@ export default function LoginPage() {
     })
 
     if (error) {
-      console.error("❌ Login Error:", error.message)
+      console.error('❌ Login Error:', error.message)
       setMessage(`Error: ${error.message}`)
     } else {
       setMessage('Check your email! Your Magic Link is on the way.')
@@ -44,7 +57,7 @@ export default function LoginPage() {
         redirectTo: `${window.location.origin}/auth/callback`,
       },
     })
-    if (error) console.error("❌ Google Error:", error.message)
+    if (error) console.error('❌ Google Error:', error.message)
   }
 
   return (
@@ -54,7 +67,7 @@ export default function LoginPage() {
         <div className="text-5xl mb-8">🌿</div>
         <h1 className="text-3xl font-black text-green-900 mb-2 tracking-tight">Pocket Gardener</h1>
         <p className="text-gray-400 text-sm mb-10 font-medium italic">Save your Auckland garden</p>
-        
+
         {/* Magic Link Form */}
         <form onSubmit={handleLogin} className="space-y-4">
           <input
@@ -74,29 +87,32 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* Divider */}
-        <div className="relative my-10">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-100"></div>
-          </div>
-          <div className="relative flex justify-center text-[10px] uppercase font-black text-gray-300 italic bg-white px-4">
-            or
-          </div>
-        </div>
+        {/* Google login — hidden on Capacitor native (disallowed_useragent in WebView) */}
+        {!isNative && (
+          <>
+            <div className="relative my-10">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-100" />
+              </div>
+              <div className="relative flex justify-center text-[10px] uppercase font-black text-gray-300 italic bg-white px-4">
+                or
+              </div>
+            </div>
 
-        {/* Social Login */}
-        <button
-          onClick={handleGoogleLogin}
-          type="button"
-          className="w-full bg-white border border-gray-100 hover:border-green-200 text-gray-700 font-bold py-5 rounded-[1.5rem] uppercase tracking-widest text-[11px] shadow-sm active:scale-95 transition-all flex items-center justify-center gap-3"
-        >
-          <img 
-            src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
-            alt="Google" 
-            className="w-4 h-4"
-          />
-          Continue with Google
-        </button>
+            <button
+              onClick={handleGoogleLogin}
+              type="button"
+              className="w-full bg-white border border-gray-100 hover:border-green-200 text-gray-700 font-bold py-5 rounded-[1.5rem] uppercase tracking-widest text-[11px] shadow-sm active:scale-95 transition-all flex items-center justify-center gap-3"
+            >
+              <img
+                src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                alt="Google"
+                className="w-4 h-4"
+              />
+              Continue with Google
+            </button>
+          </>
+        )}
 
         {/* Feedback Message */}
         {message && (

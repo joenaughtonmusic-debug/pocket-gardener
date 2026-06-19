@@ -11,7 +11,7 @@ import LockedProFeatureCard from '../../../components/LockedProFeatureCard'
 import GardenAreaBadge from '../../../components/GardenAreaBadge'
 import GardenAreaAssignSelect from '../../../components/GardenAreaAssignSelect'
 import GardenAreaSummaryCard from '../../../components/GardenAreaSummaryCard'
-import { resolveAreaName } from '../../../lib/gardenAreas'
+import { resolveAreaName, GENERAL_GARDEN_LABEL } from '../../../lib/gardenAreas'
 import type { UserPlant, PlantRemedy, GardenArea } from '../../../types/garden'
 
 const STOP_WORDS = new Set([
@@ -486,15 +486,43 @@ export default function MyGardenDashboard() {
     </div>
   )
 
-  const groupedByType = ownedPlants.reduce((acc, item) => {
-    const type = item.plants?.plant_type || 'Other';
-    if (!acc[type]) acc[type] = [];
-    acc[type].push(item);
-    return acc;
-  }, {} as Record<string, any[]>);
-
-  const sortedCategories = Object.keys(groupedByType).sort();
   const areaMap = new Map(gardenAreas.map((a) => [a.id, a.name]));
+
+  // Group owned plants by Garden Area.
+  // When areas exist: one group per area (plants-only, skipping empty areas),
+  // then a "General Garden" group for any unassigned plants.
+  // When no areas: single flat group so the render path stays uniform.
+  interface AreaGroup { areaId: string | null; areaName: string; plants: typeof ownedPlants }
+  const plantsByArea: AreaGroup[] = gardenAreas.length > 0
+    ? [
+        ...gardenAreas
+          .map(area => ({
+            areaId: area.id,
+            areaName: area.name,
+            plants: ownedPlants.filter(p => p.garden_area_id === area.id),
+          }))
+          .filter(g => g.plants.length > 0),
+        ...(ownedPlants.some(p => !p.garden_area_id)
+          ? [{ areaId: null, areaName: GENERAL_GARDEN_LABEL, plants: ownedPlants.filter(p => !p.garden_area_id) }]
+          : []),
+      ]
+    : [{ areaId: null, areaName: GENERAL_GARDEN_LABEL, plants: ownedPlants }];
+
+  // Same grouping for project plants.
+  const projectsByArea: AreaGroup[] = gardenAreas.length > 0
+    ? [
+        ...gardenAreas
+          .map(area => ({
+            areaId: area.id,
+            areaName: area.name,
+            plants: projectPlants.filter(p => p.garden_area_id === area.id),
+          }))
+          .filter(g => g.plants.length > 0),
+        ...(projectPlants.some(p => !p.garden_area_id)
+          ? [{ areaId: null, areaName: GENERAL_GARDEN_LABEL, plants: projectPlants.filter(p => !p.garden_area_id) }]
+          : []),
+      ]
+    : [{ areaId: null, areaName: GENERAL_GARDEN_LABEL, plants: projectPlants }];
 
   const filteredRemedies = remedies.filter((r) => {
     if (!issueSearchQuery.trim()) return true
@@ -521,16 +549,16 @@ export default function MyGardenDashboard() {
     <main className="min-h-screen bg-[#f0f4f1] pb-40 text-gray-900">
       <WelcomeOverlay />
 
-      <section className="relative h-[55vh] w-full overflow-hidden rounded-b-[4rem] shadow-2xl shadow-green-900/20 mb-10">
+      <section className="relative h-[47vh] w-full overflow-hidden rounded-b-[4rem] shadow-2xl shadow-green-900/20 mb-6">
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/10 z-10" />
-        
-        <img 
-          src={gardenPhoto || "https://pristinegardens.co.nz/wp-content/uploads/2022/07/20220115_152342.jpg"} 
+
+        <img
+          src={gardenPhoto || "https://pristinegardens.co.nz/wp-content/uploads/2022/07/20220115_152342.jpg"}
           alt="My Garden"
           className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
         />
 
-        <div className="absolute inset-0 z-20 flex flex-col justify-between p-8 pt-12">
+        <div className="absolute inset-0 z-20 flex flex-col justify-between p-6 pt-10">
           <div className="flex justify-end">
             <Link href="/about" className="group flex flex-col items-center gap-1.5 active:scale-95 transition-all">
               <div className="w-12 h-12 bg-white rounded-2xl border-2 border-white/50 shadow-lg flex items-center justify-center overflow-hidden transition-transform group-hover:scale-105">
@@ -547,7 +575,7 @@ export default function MyGardenDashboard() {
           </div>
 
           <div className="pb-4">
-            <h1 className="text-5xl font-black text-white tracking-tighter italic uppercase leading-none mb-4 [text-shadow:_0_2px_10px_rgb(0_0_0_/_30%)]">
+            <h1 className="text-4xl font-black text-white tracking-tighter italic uppercase leading-none mb-3 [text-shadow:_0_2px_10px_rgb(0_0_0_/_30%)]">
               My Garden
             </h1>
             
@@ -592,152 +620,329 @@ export default function MyGardenDashboard() {
         )}
       </section>
 
-      <div className="px-6 space-y-12">
+      <div className="px-6 space-y-8">
 
-        {/* ── Journey Cards ─────────────────────────────────────────────── */}
-        <section className="space-y-4">
-          <h2 className="text-xs font-black text-green-950 uppercase tracking-tight px-1">
-            What would you like help with today?
-          </h2>
-          <div className="grid grid-cols-2 gap-3">
-            {([
-              {
-                icon: '🌿',
-                label: 'Plan My Garden',
-                desc: 'Add garden areas, set conditions, and discover plants for each part of your section.',
-                href: '/match',
-              },
-              {
-                icon: '📅',
-                label: 'Maintain My Garden',
-                desc: 'See what care tasks are due this month.',
-                href: '/calendar',
-              },
-              {
-                icon: '🩺',
-                label: 'Diagnose A Problem',
-                desc: 'Get help with weeds, pests, and struggling plants.',
-                href: '/guides',
-              },
-              {
-                icon: '✨',
-                label: 'Get Inspiration',
-                desc: 'Explore feature gardens and ideas for your space.',
-                href: '/feature',
-              },
-            ] as const).map(({ icon, label, desc, href }) => (
-              <Link
-                key={href}
-                href={href}
-                className="bg-white rounded-[2rem] p-4 border border-gray-100 shadow-sm flex flex-col gap-3 active:scale-[0.97] transition-all"
-              >
-                <div className="w-9 h-9 rounded-[0.875rem] bg-[#f0f4f1] flex items-center justify-center text-lg leading-none">
-                  {icon}
-                </div>
-                <div className="flex-1">
-                  <p className="text-[10px] font-black text-green-950 uppercase tracking-tight leading-none mb-1.5">
-                    {label}
-                  </p>
-                  <p className="text-[10px] text-gray-400 font-medium leading-snug">
-                    {desc}
-                  </p>
-                </div>
-                <ArrowRight size={11} className="text-gray-200 self-end" />
-              </Link>
-            ))}
-          </div>
-        </section>
+        {/* ── 1. Quick Actions row ─────────────────────────────────────── */}
+        <nav aria-label="Quick actions" className="flex items-start gap-3">
+          {([
+            { icon: '🌿', label: 'Plan',     href: '/match' },
+            { icon: '📅', label: 'Maintain', href: '/calendar' },
+            { icon: '📚', label: 'Learn',    href: '/guides' },
+            { icon: '✨', label: 'Inspire',  href: '/feature' },
+          ] as const).map(({ icon, label, href }) => (
+            <Link
+              key={href}
+              href={href}
+              className="flex-1 flex flex-col items-center gap-2 active:scale-90 transition-all"
+            >
+              <div className="w-full rounded-[1.125rem] bg-white shadow-sm border border-gray-100 py-4 flex items-center justify-center text-2xl">
+                {icon}
+              </div>
+              <span className="text-[9px] font-black text-green-900/70 uppercase tracking-widest leading-none">
+                {label}
+              </span>
+            </Link>
+          ))}
+        </nav>
 
-        {/* ── My Garden Areas overview ──────────────────────────────────── */}
-        {!loading && (
-          <section className="space-y-3">
-            <div className="flex items-center justify-between px-1">
-              <h2 className="text-xs font-black text-green-950 uppercase tracking-tight">
-                My Garden Areas
-              </h2>
-              {gardenAreas.length > 0 && (
-                <Link
-                  href="/match"
-                  className="text-[8px] font-black uppercase tracking-widest text-green-700"
-                >
-                  Manage →
-                </Link>
+        {/* ── 2. Empty state — no plants yet ────────────────────────────── */}
+        {ownedPlants.length === 0 && !loading && (
+          <section>
+            <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm text-center space-y-3">
+              <p className="text-2xl">🌱</p>
+              <h3 className="text-sm font-black text-green-950 uppercase tracking-tight">
+                Your garden starts here
+              </h3>
+              {gardenAreas.length === 0 ? (
+                <>
+                  <p className="text-[12px] text-gray-400 leading-relaxed font-medium max-w-xs mx-auto">
+                    Start by adding the parts of your garden — like Front Boundary, Back Fence, Deck Pots, or Veggie Patch. Then add plants to each area.
+                  </p>
+                  <Link
+                    href="/match"
+                    className="inline-block mt-2 bg-green-900 text-white text-[10px] font-black uppercase tracking-widest px-8 py-3 rounded-full shadow-sm active:scale-95 transition-all"
+                  >
+                    Create My First Garden Area
+                  </Link>
+                  <p className="text-[9px] text-gray-300 font-bold uppercase tracking-widest pt-1">
+                    or{' '}
+                    <Link href="/plants" className="underline underline-offset-2">
+                      browse the plant library
+                    </Link>
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-[12px] text-gray-400 leading-relaxed font-medium max-w-xs mx-auto">
+                    You have {gardenAreas.length} garden {gardenAreas.length === 1 ? 'area' : 'areas'} set up. Now add the plants you already have — or browse the Library to find what suits each spot.
+                  </p>
+                  <Link
+                    href="/plants"
+                    className="inline-block mt-2 bg-green-900 text-white text-[10px] font-black uppercase tracking-widest px-8 py-3 rounded-full shadow-sm active:scale-95 transition-all"
+                  >
+                    Browse the Plant Library
+                  </Link>
+                </>
               )}
             </div>
-
-            {gardenAreas.length === 0 ? (
-              <div className="bg-white rounded-[2rem] border border-dashed border-gray-200 p-6 text-center space-y-3">
-                <p className="text-[12px] text-gray-400 font-medium leading-relaxed">
-                  Create your first Garden Area to organise plants and get recommendations.
-                </p>
-                <Link
-                  href="/match"
-                  className="inline-block bg-green-900 text-white text-[10px] font-black uppercase tracking-widest px-7 py-3 rounded-full shadow-sm active:scale-95 transition-all"
-                >
-                  Plan My Garden
-                </Link>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {gardenAreas.map((area) => {
-                  const ownedInArea    = ownedPlants.filter(p => p.garden_area_id === area.id).length
-                  const plannedInArea  = projectPlants.filter(p => p.garden_area_id === area.id).length
-                  return (
-                    <GardenAreaSummaryCard
-                      key={area.id}
-                      area={area}
-                      ownedCount={ownedInArea}
-                      plannedCount={plannedInArea}
-                    />
-                  )
-                })}
-              </div>
-            )}
           </section>
         )}
 
-        {!isPro && (
-          <section className="space-y-3">
-            <div className="flex items-center justify-between px-1">
-              <h2 className="text-[10px] font-black text-green-900/40 uppercase tracking-[0.2em]">
-                Unlock with Pro
+        {/* ── 4. My Garden — area-grouped plant list ────────────────────── */}
+        {ownedPlants.length > 0 && (
+          <section className="space-y-8">
+            <div className="flex items-center justify-between px-2">
+              <h2 className="text-[10px] font-black text-green-800/40 uppercase tracking-[0.2em]">
+                My Garden
               </h2>
-              <span className="text-[8px] font-black uppercase tracking-widest text-amber-600 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full">
-                Premium
-              </span>
+              <Link
+                href="/match"
+                className="text-[8px] font-black uppercase tracking-widest text-green-700"
+              >
+                {gardenAreas.length > 0 ? 'Manage areas →' : 'Add areas →'}
+              </Link>
             </div>
-            <div className="space-y-2">
-              <LockedProFeatureCard
-                icon="🤖"
-                title="AI Garden Coach"
-                description="Planned Pro feature — personalised garden advice, on the way."
-                upgradeHref="#pro-upgrade"
-              />
-              <LockedProFeatureCard
-                icon="📊"
-                title="Monthly Garden Review"
-                description="Coming soon — a monthly snapshot of how your garden is tracking."
-                upgradeHref="#pro-upgrade"
-              />
-              <LockedProFeatureCard
-                icon="🔔"
-                title="Advanced Reminders"
-                description="Coming soon — smarter nudges when tasks matter most."
-                upgradeHref="#pro-upgrade"
-              />
-              <LockedProFeatureCard
-                icon="📋"
-                title="Planting Plan Export"
-                description="Coming soon — export your areas and planting list as a shareable plan."
-                upgradeHref="#pro-upgrade"
-              />
+
+            <div className="pt-2 space-y-10">
+              {plantsByArea.map((group) => (
+                <div key={group.areaId ?? 'general'} className="space-y-4">
+                  <h3 className="text-[12px] font-black text-green-800/40 uppercase tracking-[0.3em] px-2 flex items-center gap-3">
+                    <span>{group.areaName}</span>
+                    <span className="h-[1px] bg-green-200 flex-grow" />
+                  </h3>
+
+                  <div className="grid grid-cols-1 gap-3">
+                    {group.plants.map((item) => (
+                      <div
+                        key={item.id}
+                        className="bg-white/60 p-4 rounded-[2rem] border border-white shadow-sm"
+                      >
+                        <Link
+                          href={`/plants/${item.plants?.id}?mode=my-garden`}
+                          className="flex items-center justify-between hover:bg-white transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <PlantThumbnail plant={item.plants} size="sm" />
+                            <div className="flex-1 min-w-0">
+                              <h4 className="text-s font-black text-green-950 uppercase leading-none truncate">
+                                {item.nickname || item.plants?.common_name || 'Unknown Plant'}
+                              </h4>
+                              {item.plants?.plant_type && (
+                                <p className="text-[8px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">
+                                  {item.plants.plant_type}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <ArrowRight size={12} className="text-gray-300" />
+                        </Link>
+
+                        <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
+                          <GardenAreaAssignSelect
+                            value={item.garden_area_id}
+                            areas={gardenAreas}
+                            onChange={(areaId) => handleAssignPlantArea(item.id, areaId)}
+                          />
+                          <label
+                            className={`flex items-center gap-2 text-[10px] uppercase tracking-wider rounded-full px-3 py-2 border transition-all active:scale-[0.98] cursor-pointer ${
+                              item.is_sick
+                                ? 'bg-red-50 border-red-100 text-red-600 font-black'
+                                : 'bg-gray-50 border-gray-100 text-gray-400 font-bold active:bg-red-50 active:text-red-500'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={item.is_sick || false}
+                              onChange={(e) => handleToggleUnhealthy(item, e.target.checked)}
+                              className="accent-red-500"
+                            />
+                            Plant is unhealthy
+                          </label>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           </section>
         )}
 
+        {/* ── 5. Infirmary — sick plants ────────────────────────────────── */}
+        {ownedPlants.some(p => p.is_sick) && (
+          <section className="space-y-4">
+            <h2 className="text-[10px] font-black text-red-400 uppercase tracking-[0.2em] px-2 flex items-center gap-2">
+              <span>Infirmary</span>
+              <span className="text-gray-300 font-normal">—</span>
+              <span className="text-gray-400">{ownedPlants.filter(p => p.is_sick).length} plants</span>
+            </h2>
+            <div className="space-y-3">
+              {ownedPlants.filter(p => p.is_sick).map((item) => (
+                <div key={item.id} className="bg-white rounded-[2.5rem] border-2 border-red-50 overflow-hidden">
+                  <div className="h-1 w-full bg-red-300" />
+                  <div className="p-5 space-y-4">
+                    <div className="flex items-center gap-3">
+                      <PlantThumbnail plant={item.plants} size="sm" />
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-black text-green-950 uppercase leading-none truncate">
+                          {item.nickname || item.plants?.common_name || 'Unknown Plant'}
+                        </h3>
+                        {item.current_issue && (
+                          <span className="mt-1.5 inline-block text-[9px] font-black uppercase tracking-widest text-red-500 bg-red-50 border border-red-100 px-2.5 py-0.5 rounded-full">
+                            {item.current_issue}
+                          </span>
+                        )}
+                        <div className="mt-1.5">
+                          <GardenAreaBadge name={resolveAreaName(item.garden_area_id, areaMap)} />
+                        </div>
+                      </div>
+                    </div>
+
+                    {item.current_remedy && (
+                      <p className="text-[11px] text-gray-600 leading-relaxed font-medium border-l-2 border-red-100 pl-3">
+                        {item.current_remedy}
+                      </p>
+                    )}
+
+                    {item.current_shopping_tags && item.current_shopping_tags.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {item.current_shopping_tags.map((tag) => (
+                          <span key={tag} className="text-[8px] font-black uppercase tracking-widest bg-green-50 text-green-700 px-2.5 py-1 rounded-full border border-green-100">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="flex gap-2 pt-1">
+                      <button
+                        onClick={() => {
+                          const matchingAlert = followUpAlerts.find(a => a.user_plant_id === item.id)
+                          handleResolveIssue(
+                            matchingAlert?.id ?? null,
+                            item.plants?.common_name || 'plant',
+                            item.id
+                          )
+                        }}
+                        className="flex-1 bg-green-800 py-3 rounded-2xl text-[9px] font-black uppercase text-white shadow-sm active:scale-95 transition-all"
+                      >
+                        Recovered
+                      </button>
+                      <Link
+                        href={`/plants/${item.plants?.id}?mode=my-garden`}
+                        className="flex-1 bg-red-50 border border-red-100 py-3 rounded-2xl text-[9px] font-black uppercase text-red-600 text-center active:scale-95 transition-all"
+                      >
+                        Remedies
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* ── 5b. Priority Follow-up — overdue issue check-ins ─────────── */}
+        {followUpAlerts.length > 0 && (
+          <section className="space-y-4">
+            <div className="flex items-center gap-2 px-2">
+              <AlertCircle size={14} className="text-amber-500" strokeWidth={3} />
+              <h2 className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em]">Priority Follow-up</h2>
+            </div>
+            {followUpAlerts.map((alert) => (
+              <div key={alert.id} className="bg-white p-6 rounded-[2.5rem] border-2 border-amber-100 shadow-xl shadow-amber-900/5 relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-amber-400" />
+                <div className="flex gap-4 mb-4">
+                  <PlantThumbnail plant={alert.user_plants?.plants} size="sm" />
+                  <div>
+                    <h3 className="text-sm font-black text-green-950 uppercase leading-tight">{alert.user_plants?.plants?.common_name}</h3>
+                    <p className="text-[10px] text-amber-600 mt-1 font-black uppercase tracking-widest italic">{alert.issue_type} check-in</p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => handleResolveIssue(alert.id, alert.user_plants?.plants?.common_name, alert.user_plant_id)} className="flex-1 bg-green-800 py-3 rounded-2xl text-[9px] font-black uppercase text-white shadow-lg active:scale-95 transition-all">
+                    Recovered!
+                  </button>
+                  <Link href={`/plants/${alert.user_plants?.plants?.id}?mode=my-garden`} className="flex-1 bg-amber-400 py-3 rounded-2xl text-[9px] font-black uppercase text-green-950 text-center active:scale-95 shadow-lg transition-all">
+                    Remedies
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </section>
+        )}
+
+        {/* ── 6. Upcoming Projects ──────────────────────────────────────── */}
+        {projectPlants.length > 0 && (
+          <section className="space-y-4">
+            <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] px-2 italic">
+              Upcoming Projects
+            </h2>
+            <div className="space-y-6">
+              {projectsByArea.map((group) => (
+                <div key={group.areaId ?? 'general'} className="space-y-3">
+                  {projectsByArea.length > 1 && (
+                    <h3 className="text-[11px] font-black text-amber-600/60 uppercase tracking-[0.25em] px-1 flex items-center gap-2">
+                      <span>{group.areaName}</span>
+                      <span className="h-[1px] bg-amber-100 flex-grow" />
+                    </h3>
+                  )}
+                  {group.plants.map((item) => (
+                    <div key={item.id} className="flex items-center gap-3">
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setSelectedIds(prev =>
+                            prev.includes(item.id) ? prev.filter(i => i !== item.id) : [...prev, item.id]
+                          );
+                        }}
+                        className={`w-12 h-12 rounded-[1rem] border-2 flex items-center justify-center transition-all z-10 ${
+                          selectedIds.includes(item.id)
+                            ? 'bg-amber-400 border-amber-400 text-green-950'
+                            : 'bg-white border-gray-200 text-transparent'
+                        }`}
+                      >
+                        <Check size={24} strokeWidth={4} />
+                      </button>
+                      <Link
+                        href={`/plants/${item.plants?.id}?mode=my-garden`}
+                        className="flex-grow bg-white p-4 rounded-[1.5rem] border border-white flex items-center gap-4 active:scale-95 shadow-sm"
+                      >
+                        <PlantThumbnail plant={item.plants} size="sm" />
+                        <div className="flex-grow">
+                          <h3 className="text-s font-black text-green-950 uppercase leading-none">
+                            {item.plants?.common_name || 'Unknown Plant'}
+                          </h3>
+                          <div className="flex items-center gap-1.5 mt-2">
+                            <span className="text-[8px] font-black uppercase text-amber-500 bg-amber-50 px-2 py-0.5 rounded-full">
+                              Planned
+                            </span>
+                          </div>
+                        </div>
+                        <ArrowRight size={14} className="text-green-950 ml-auto" strokeWidth={3} />
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              ))}
+
+              {selectedIds.length > 0 && (
+                <button
+                  onClick={handleBulkMove}
+                  className="w-full bg-green-900 text-amber-400 text-[11px] font-black py-5 rounded-3xl uppercase tracking-widest shadow-2xl mt-4 animate-in zoom-in-95 duration-200 flex items-center justify-center gap-2"
+                >
+                  <Check size={16} strokeWidth={4} />
+                  Confirm {selectedIds.length} Plants are Planted
+                </button>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* ── 7. Symptom search ─────────────────────────────────────────── */}
         <section className="space-y-3">
           <p className="text-[10px] font-black text-green-800/50 uppercase tracking-[0.2em] px-1">
-            🔍 Find a plant problem
+            🔍 Search plant problems
           </p>
           <div className="relative">
             <input
@@ -813,50 +1018,7 @@ export default function MyGardenDashboard() {
           )}
         </section>
 
-        {!isPro && (
-          <section id="pro-upgrade">
-            <div className="bg-green-950 rounded-[3rem] p-8 relative overflow-hidden flex flex-col items-center text-center shadow-2xl border-4 border-amber-400/20">
-              <div className="relative z-10">
-                <div className="bg-amber-400 text-green-950 text-[9px] font-black uppercase tracking-widest px-4 py-1 rounded-full mx-auto w-fit mb-4">
-                  Pro Membership
-                </div>
-                <h2 className="text-xl font-black mb-2 uppercase tracking-tighter text-white italic leading-none">Unlimited Growth</h2>
-                <p className="text-[10px] text-green-200/60 font-medium italic mb-6 px-4">Unlock identification, expert guides, and custom garden photos.</p>
-                <UpgradeButton />
-              </div>
-            </div>
-          </section>
-        )}
-
-        {followUpAlerts.length > 0 && (
-          <section className="space-y-4">
-            <div className="flex items-center gap-2 px-2">
-              <AlertCircle size={14} className="text-amber-500" strokeWidth={3} />
-              <h2 className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em]">Priority Follow-up</h2>
-            </div>
-            {followUpAlerts.map((alert) => (
-              <div key={alert.id} className="bg-white p-6 rounded-[2.5rem] border-2 border-amber-100 shadow-xl shadow-amber-900/5 relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1 bg-amber-400"></div>
-                <div className="flex gap-4 mb-4">
-                  <PlantThumbnail plant={alert.user_plants?.plants} size="sm" />
-                  <div>
-                    <h3 className="text-sm font-black text-green-950 uppercase leading-tight">{alert.user_plants?.plants?.common_name}</h3>
-                    <p className="text-[10px] text-amber-600 mt-1 font-black uppercase tracking-widest italic">{alert.issue_type} check-in</p>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <button onClick={() => handleResolveIssue(alert.id, alert.user_plants?.plants?.common_name, alert.user_plant_id)} className="flex-1 bg-green-800 py-3 rounded-2xl text-[9px] font-black uppercase text-white shadow-lg active:scale-95 transition-all">
-                    Recovered!
-                  </button>
-                  <Link href={`/plants/${alert.user_plants?.plants?.id}?mode=my-garden`} className="flex-1 bg-amber-400 py-3 rounded-2xl text-[9px] font-black uppercase text-green-950 text-center active:scale-95 shadow-lg transition-all">
-                    Remedies
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </section>
-        )}
-
+        {/* ── 8. Season Insight ─────────────────────────────────────────── */}
         {featuredTip && (
           <section>
             <div className="bg-green-900 rounded-[2.5rem] shadow-2xl p-8 border-b-4 border-amber-400">
@@ -872,223 +1034,113 @@ export default function MyGardenDashboard() {
           </section>
         )}
 
-        {ownedPlants.length === 0 && !loading && (
-          <section>
-            <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm text-center space-y-3">
-              <p className="text-2xl">🌱</p>
-              <h3 className="text-sm font-black text-green-950 uppercase tracking-tight">
-                Your garden starts here
-              </h3>
-              <p className="text-[12px] text-gray-400 leading-relaxed font-medium max-w-xs mx-auto">
-                Add the plants you already have — or browse the Library to find what suits your section. Your care plan builds itself from there.
-              </p>
-              <Link
-                href="/plants"
-                className="inline-block mt-2 bg-green-900 text-white text-[10px] font-black uppercase tracking-widest px-8 py-3 rounded-full shadow-sm active:scale-95 transition-all"
-              >
-                Browse the Plant Library
-              </Link>
-            </div>
-          </section>
-        )}
-
-        {ownedPlants.length > 0 && (
-          <section className="space-y-8">
-            <div className="flex items-center justify-between px-2">
-              <h2 className="text-[10px] font-black text-green-800/40 uppercase tracking-[0.2em]">
-                My Garden
+        {/* ── 9. My Garden Areas ────────────────────────────────────────── */}
+        {!loading && (
+          <section className="space-y-3">
+            <div className="flex items-center justify-between px-1">
+              <h2 className="text-xs font-black text-green-950 uppercase tracking-tight">
+                My Garden Areas
               </h2>
               {gardenAreas.length > 0 && (
                 <Link
                   href="/match"
                   className="text-[8px] font-black uppercase tracking-widest text-green-700"
                 >
-                  Manage areas →
+                  Manage →
                 </Link>
               )}
             </div>
-            <div className="pt-2 space-y-10">
-              {sortedCategories.map((category) => (
-                <div key={category} className="space-y-4">
-                  <h3 className="text-[12px] font-black text-green-800/40 uppercase tracking-[0.3em] px-2 flex items-center gap-3">
-                    <span>{category}s</span>
-                    <span className="h-[1px] bg-green-200 flex-grow"></span>
-                  </h3>
-                  
-                  <div className="grid grid-cols-1 gap-3">
-                    {groupedByType[category].map((item) => (
-                      <div
-                        key={item.id}
-                        className="bg-white/60 p-4 rounded-[2rem] border border-white shadow-sm"
-                      >
-                        <Link 
-                          href={`/plants/${item.plants?.id}?mode=my-garden`} 
-                          className="flex items-center justify-between hover:bg-white transition-colors"
-                        >
-                          <div className="flex items-center gap-3">
-                            <PlantThumbnail plant={item.plants} size="sm" />
-                            <div className="flex-1 min-w-0">
-                              <h4 className="text-s font-black text-green-950 uppercase leading-none truncate">
-                                {item.nickname || item.plants?.common_name || "Unknown Plant"}
-                              </h4>
-                              <div className="mt-1.5">
-                                <GardenAreaBadge name={resolveAreaName(item.garden_area_id, areaMap)} />
-                              </div>
-                            </div>
-                          </div>
-                          <ArrowRight size={12} className="text-gray-300" />
-                        </Link>
 
-                        <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
-                          <GardenAreaAssignSelect
-                            value={item.garden_area_id}
-                            areas={gardenAreas}
-                            onChange={(areaId) => handleAssignPlantArea(item.id, areaId)}
-                          />
-  <label
-    className={`flex items-center gap-2 text-[10px] uppercase tracking-wider rounded-full px-3 py-2 border transition-all active:scale-[0.98] cursor-pointer ${
-      item.is_sick
-        ? 'bg-red-50 border-red-100 text-red-600 font-black'
-        : 'bg-gray-50 border-gray-100 text-gray-400 font-bold active:bg-red-50 active:text-red-500'
-    }`}
-  >
-    <input
-      type="checkbox"
-      checked={item.is_sick || false}
-      onChange={(e) =>
-        handleToggleUnhealthy(item, e.target.checked)
-      }
-      className="accent-red-500"
-    />
-    Plant is unhealthy
-  </label>
-</div>
-                      </div>
-                    ))}
+            {gardenAreas.length === 0 ? (
+              <div className="bg-white rounded-[2rem] border border-dashed border-gray-200 p-6 text-center space-y-3">
+                <p className="text-2xl">🗺️</p>
+                <p className="text-[12px] text-gray-500 font-black uppercase tracking-tight">
+                  No garden areas yet
+                </p>
+                <p className="text-[11px] text-gray-400 font-medium leading-relaxed max-w-xs mx-auto">
+                  Add the parts of your garden — Front Boundary, Deck Pots, Back Fence — then assign plants and get tailored recommendations for each spot.
+                </p>
+                <Link
+                  href="/match"
+                  className="inline-block bg-green-900 text-white text-[10px] font-black uppercase tracking-widest px-7 py-3 rounded-full shadow-sm active:scale-95 transition-all"
+                >
+                  Add My First Area
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {gardenAreas.map((area) => {
+                  const ownedInArea   = ownedPlants.filter(p => p.garden_area_id === area.id).length
+                  const plannedInArea = projectPlants.filter(p => p.garden_area_id === area.id).length
+                  return (
+                    <GardenAreaSummaryCard
+                      key={area.id}
+                      area={area}
+                      ownedCount={ownedInArea}
+                      plannedCount={plannedInArea}
+                    />
+                  )
+                })}
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* ── 10. Pro section (locked previews + upgrade CTA) ───────────── */}
+        {!isPro && (
+          <>
+            <section className="space-y-3">
+              <div className="flex items-center justify-between px-1">
+                <h2 className="text-[10px] font-black text-green-900/40 uppercase tracking-[0.2em]">
+                  Unlock with Pro
+                </h2>
+                <span className="text-[8px] font-black uppercase tracking-widest text-amber-600 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full">
+                  Premium
+                </span>
+              </div>
+              <div className="space-y-2">
+                <LockedProFeatureCard
+                  icon="🤖"
+                  title="AI Garden Coach"
+                  description="Planned Pro feature — personalised garden advice, on the way."
+                  upgradeHref="#pro-upgrade"
+                />
+                <LockedProFeatureCard
+                  icon="📊"
+                  title="Monthly Garden Review"
+                  description="Coming soon — a monthly snapshot of how your garden is tracking."
+                  upgradeHref="#pro-upgrade"
+                />
+                <LockedProFeatureCard
+                  icon="🔔"
+                  title="Advanced Reminders"
+                  description="Coming soon — smarter nudges when tasks matter most."
+                  upgradeHref="#pro-upgrade"
+                />
+                <LockedProFeatureCard
+                  icon="📋"
+                  title="Planting Plan Export"
+                  description="Coming soon — export your areas and planting list as a shareable plan."
+                  upgradeHref="#pro-upgrade"
+                />
+              </div>
+            </section>
+
+            <section id="pro-upgrade" className="pb-4">
+              <div className="bg-green-950 rounded-[3rem] p-8 relative overflow-hidden flex flex-col items-center text-center shadow-2xl border-4 border-amber-400/20">
+                <div className="relative z-10">
+                  <div className="bg-amber-400 text-green-950 text-[9px] font-black uppercase tracking-widest px-4 py-1 rounded-full mx-auto w-fit mb-4">
+                    Pro Membership
                   </div>
+                  <h2 className="text-xl font-black mb-2 uppercase tracking-tighter text-white italic leading-none">Unlimited Growth</h2>
+                  <p className="text-[10px] text-green-200/60 font-medium italic mb-6 px-4">Unlock identification, expert guides, and custom garden photos.</p>
+                  <UpgradeButton />
                 </div>
-              ))}
-            </div>
-          </section>
+              </div>
+            </section>
+          </>
         )}
 
-        {ownedPlants.some(p => p.is_sick) && (
-          <section className="space-y-4">
-            <h2 className="text-[10px] font-black text-red-400 uppercase tracking-[0.2em] px-2 flex items-center gap-2">
-              <span>Infirmary</span>
-              <span className="text-gray-300 font-normal">—</span>
-              <span className="text-gray-400">{ownedPlants.filter(p => p.is_sick).length} plants</span>
-            </h2>
-            <div className="space-y-3">
-              {ownedPlants.filter(p => p.is_sick).map((item) => (
-                <div key={item.id} className="bg-white rounded-[2.5rem] border-2 border-red-50 overflow-hidden">
-                  <div className="h-1 w-full bg-red-300" />
-                  <div className="p-5 space-y-4">
-                    {/* Plant name + issue badge */}
-                    <div className="flex items-center gap-3">
-                      <PlantThumbnail plant={item.plants} size="sm" />
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-black text-green-950 uppercase leading-none truncate">
-                          {item.nickname || item.plants?.common_name || 'Unknown Plant'}
-                        </h3>
-                        {item.current_issue && (
-                          <span className="mt-1.5 inline-block text-[9px] font-black uppercase tracking-widest text-red-500 bg-red-50 border border-red-100 px-2.5 py-0.5 rounded-full">
-                            {item.current_issue}
-                          </span>
-                        )}
-                        <div className="mt-1.5">
-                          <GardenAreaBadge name={resolveAreaName(item.garden_area_id, areaMap)} />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Remedy */}
-                    {item.current_remedy && (
-                      <p className="text-[11px] text-gray-600 leading-relaxed font-medium border-l-2 border-red-100 pl-3">
-                        {item.current_remedy}
-                      </p>
-                    )}
-
-                    {/* Shopping tags */}
-                    {item.current_shopping_tags && item.current_shopping_tags.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {item.current_shopping_tags.map((tag) => (
-                          <span key={tag} className="text-[8px] font-black uppercase tracking-widest bg-green-50 text-green-700 px-2.5 py-1 rounded-full border border-green-100">
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Actions */}
-                    <div className="flex gap-2 pt-1">
-                      <button
-                        onClick={() => {
-                          const matchingAlert = followUpAlerts.find(a => a.user_plant_id === item.id)
-                          handleResolveIssue(
-                            matchingAlert?.id ?? null,
-                            item.plants?.common_name || 'plant',
-                            item.id
-                          )
-                        }}
-                        className="flex-1 bg-green-800 py-3 rounded-2xl text-[9px] font-black uppercase text-white shadow-sm active:scale-95 transition-all"
-                      >
-                        Recovered
-                      </button>
-                      <Link
-                        href={`/plants/${item.plants?.id}?mode=my-garden`}
-                        className="flex-1 bg-red-50 border border-red-100 py-3 rounded-2xl text-[9px] font-black uppercase text-red-600 text-center active:scale-95 transition-all"
-                      >
-                        Remedies
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {projectPlants.length > 0 && (
-          <section className="space-y-4 pb-10">
-            <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] px-2 italic">Upcoming Projects</h2>
-            <div className="space-y-3">
-              {projectPlants.map((item) => {
-                const areaName = resolveAreaName(item.garden_area_id, areaMap)
-                return (
-                <div key={item.id} className="flex items-center gap-3">
-                  <button 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setSelectedIds(prev => prev.includes(item.id) ? prev.filter(i => i !== item.id) : [...prev, item.id]);
-                    }} 
-                    className={`w-12 h-12 rounded-[1rem] border-2 flex items-center justify-center transition-all z-10 ${selectedIds.includes(item.id) ? 'bg-amber-400 border-amber-400 text-green-950' : 'bg-white border-gray-200 text-transparent'}`}
-                  >
-                    <Check size={24} strokeWidth={4} />
-                  </button>
-                  <Link href={`/plants/${item.plants?.id}?mode=my-garden`} className="flex-grow bg-white p-4 rounded-[1.5rem] border border-white flex items-center gap-4 active:scale-95 shadow-sm">
-                    <PlantThumbnail plant={item.plants} size="sm" />
-                    <div className="flex-grow">
-                      <h3 className="text-s font-black text-green-950 uppercase leading-none">{item.plants?.common_name || "Unknown Plant"}</h3>
-                      <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                        <span className="text-[8px] font-black uppercase text-amber-500 bg-amber-50 px-2 py-0.5 rounded-full">Planned</span>
-                        <GardenAreaBadge name={areaName} />
-                      </div>
-                    </div>
-                    <ArrowRight size={14} className="text-green-950 ml-auto" strokeWidth={3} />
-                  </Link>
-                </div>
-                )
-              })}
-              {selectedIds.length > 0 && (
-                <button onClick={handleBulkMove} className="w-full bg-green-900 text-amber-400 text-[11px] font-black py-5 rounded-3xl uppercase tracking-widest shadow-2xl mt-4 animate-in zoom-in-95 duration-200 flex items-center justify-center gap-2">
-                  <Check size={16} strokeWidth={4} />
-                  Confirm {selectedIds.length} Plants are Planted
-                </button>
-              )}
-            </div>
-          </section>
-        )}
       </div>
 
       {showIssueModal && selectedUnhealthyPlant && (

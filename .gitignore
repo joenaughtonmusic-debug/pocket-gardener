@@ -54,3 +54,6 @@ android/**/*.iml
 android/capacitor-cordova-android-plugins/build/
 *.keystore
 *.jks
+
+# Firebase — contains API keys, never commit
+android/app/google-services.json

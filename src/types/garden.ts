@@ -55,9 +55,16 @@ export interface PlantRemedy {
 
 /**
  * User subscription profile — a row from `profiles`.
+ * pro_source values:    'stripe' | 'revenuecat_apple' | 'revenuecat_google' | 'manual'
+ * subscription_status:  'free' | 'active' | 'canceled' | 'past_due' | 'expired'
+ *   'canceled' → user cancelled but is still within the paid period (is_pro stays true)
+ *   'expired'  → paid period ended; is_pro is false
  */
 export interface Profile {
   id: string;
   is_pro: boolean;
   stripe_customer_id?: string | null;
+  pro_source?: 'stripe' | 'revenuecat_apple' | 'revenuecat_google' | 'manual' | null;
+  pro_expires_at?: string | null;
+  subscription_status?: 'free' | 'active' | 'canceled' | 'past_due' | 'expired';
 }

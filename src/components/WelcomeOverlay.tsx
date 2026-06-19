@@ -14,26 +14,26 @@ export default function WelcomeOverlay() {
   }, []);
 
   const slides = [
-    { 
-      title: "Your Garden, Sorted", 
-      desc: "Whether you're starting from scratch or keeping an established garden going, Pocket Gardener gives you a clear monthly plan — built around your plants and Auckland's seasons.", 
-      icon: "🏡" 
+    {
+      title: "Your Garden, Sorted",
+      desc: "Whether you're starting from scratch or keeping an established garden going, Pocket Gardener gives you a clear monthly plan — built around your plants and Auckland's seasons.",
+      icon: "🏡",
     },
-    { 
-      title: "Find the Right Plants", 
-      desc: "Not sure what will grow in your conditions? Adjust the sliders for your sun, soil, and slope — and see exactly what thrives in your section.", 
-      icon: "🌱" 
+    {
+      title: "Map Out Your Garden",
+      desc: "Start by adding the parts of your garden — like Front Boundary, Back Fence, Deck Pots, or Veggie Patch. You can add plants to each area now or come back later.",
+      icon: "🗺️",
     },
-    { 
-      title: "Local Guides", 
-      desc: "Practical help with weeds, pests, feeding, and what to plant this month — written for Auckland conditions, not a gardening textbook.", 
-      icon: "📖" 
+    {
+      title: "Find the Right Plants",
+      desc: "Not sure what will grow in your conditions? Set your sun, soil, and slope for each area — and see exactly what thrives in your section.",
+      icon: "🌱",
     },
-    { 
-      title: "Quick Tip", 
-      desc: "Tap the 'i' icon at the top of any page for a quick explanation of what that section does.", 
-      icon: "ℹ️" 
-    }
+    {
+      title: "Local Guides",
+      desc: "Practical help with weeds, pests, feeding, and what to plant this month — written for Auckland conditions, not a gardening textbook.",
+      icon: "📖",
+    },
   ];
 
   const handleNext = () => {
