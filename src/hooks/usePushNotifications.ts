@@ -37,14 +37,52 @@ export function usePushNotifications() {
 
         const { PushNotifications } = await import('@capacitor/push-notifications');
 
-        // Ask the OS for permission. On Android 13+ this triggers a system dialog.
+        // ── Tap listener registered FIRST ────────────────────────────────────
+        // Capacitor replays a stored cold-start tap event as soon as this
+        // listener is registered — no need to call register() beforehand.
+        // Registering here (before requestPermissions / register) minimises the
+        // gap between component mount and sessionStorage write, giving
+        // WelcomeOverlay's grace-period check the best chance of seeing it.
+        const tapListener = await PushNotifications.addListener(
+          'pushNotificationActionPerformed',
+          (action) => {
+            // ── TEMPORARY LOGGING ─────────────────────────────────────────────
+            console.log('[PG_PUSH_TAP] pushNotificationActionPerformed fired');
+            console.log('[PG_PUSH_TAP] full action payload:', JSON.stringify(action));
+            console.log('[PG_PUSH_TAP] action.notification:', JSON.stringify(action.notification));
+            console.log('[PG_PUSH_TAP] action.notification.data:', JSON.stringify(action.notification?.data));
+            // ─────────────────────────────────────────────────────────────────
+
+            const { notification } = action;
+            const path: string = notification.data?.path ?? '/calendar';
+            console.log(`[PG_PUSH_TAP] resolved path → "${path}" (data.path was: ${JSON.stringify(notification.data?.path)})`);
+
+            // Persist path so useNotificationDeepLink can consume it after the
+            // cold-start routing race resolves (belt).
+            storePendingNotificationPath(path);
+
+            // Also attempt immediate navigation — reliable on warm start
+            // where the router is already settled (suspenders).
+            try {
+              routerRef.current.push(path);
+              console.log('[PG_PUSH_TAP] router.push called successfully');
+            } catch (err) {
+              console.log('[PG_PUSH_TAP] router.push threw (cold start expected):', err);
+            }
+          }
+        );
+
+        // ── Permission + FCM registration ────────────────────────────────────
+        // Ask the OS for permission. On Android 13+ this triggers a system
+        // dialog on first call; subsequent calls resolve immediately.
         const { receive } = await PushNotifications.requestPermissions();
         if (receive !== 'granted') {
           console.log('🔔 Push permission denied');
+          tapListener.remove();
           return;
         }
 
-        // Register with FCM. The token arrives via the 'registration' listener below.
+        // Register with FCM. The token arrives via the 'registration' listener.
         await PushNotifications.register();
 
         const registrationListener = await PushNotifications.addListener(
@@ -74,34 +112,10 @@ export function usePushNotifications() {
           }
         );
 
-        // Fired when the user taps a notification (background or cold start).
-        // Capacitor replays this event to newly-registered listeners, so it
-        // fires here even after a cold start once the bridge is ready.
-        const tapListener = await PushNotifications.addListener(
-          'pushNotificationActionPerformed',
-          ({ notification }) => {
-            const path: string = notification.data?.path ?? '/calendar';
-            console.log(`🔔 Notification tapped → ${path}`);
-
-            // Persist to sessionStorage FIRST so useNotificationDeepLink can
-            // pick it up if the immediate router.push below races with routing.
-            storePendingNotificationPath(path);
-
-            // Attempt immediate navigation — works reliably on warm start.
-            // On cold start the router may not be settled yet; the persisted
-            // path is the fallback consumed by useNotificationDeepLink.
-            try {
-              routerRef.current.push(path);
-            } catch {
-              // Router not ready — useNotificationDeepLink will handle it.
-            }
-          }
-        );
-
         cleanup = () => {
+          tapListener.remove();
           registrationListener.remove();
           errorListener.remove();
-          tapListener.remove();
         };
       } catch (err) {
         // Dynamic import failure or non-Capacitor environment — ignore.

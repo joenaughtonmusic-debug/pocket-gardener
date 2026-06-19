@@ -9,12 +9,45 @@ export default function WelcomeOverlay() {
   const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
-    // Only show to brand new visitors — and never when the app was opened by
-    // tapping a push notification. Showing the onboarding flow over a
-    // notification deep link would block the intended destination screen.
     const hasVisited = localStorage.getItem('hasVisitedGardenApp');
-    const comingFromNotification = hasPendingNotificationPath();
-    if (!hasVisited && !comingFromNotification) setIsVisible(true);
+    if (hasVisited) {
+      // ── TEMPORARY LOGGING ─────────────────────────────────────────────
+      console.log('[PG_WELCOME] hasVisited=true — overlay suppressed (returning user)');
+      // ────────────────────────────────────────────────────────────────────
+      return;
+    }
+
+    // window.Capacitor is injected by the native bridge synchronously before
+    // any JavaScript executes, so this check requires no async import.
+    const isNative = !!(window as any).Capacitor?.isNativePlatform?.();
+    // ── TEMPORARY LOGGING ───────────────────────────────────────────────
+    console.log(`[PG_WELCOME] isNative=${isNative} | hasVisited=${hasVisited}`);
+    // ────────────────────────────────────────────────────────────────────
+
+    if (!isNative) {
+      // Web: no push notifications in play — show immediately.
+      console.log('[PG_WELCOME] web platform — showing overlay immediately');
+      setIsVisible(true);
+      return;
+    }
+
+    // Native Android cold start: wait for the tap listener async chain to
+    // write to sessionStorage before deciding whether to show.
+    console.log('[PG_WELCOME] native platform, new user — starting 800ms grace period');
+    const timer = setTimeout(() => {
+      const pendingPath = hasPendingNotificationPath();
+      // ── TEMPORARY LOGGING ─────────────────────────────────────────────
+      console.log(`[PG_WELCOME] 800ms check — hasPendingNotificationPath=${pendingPath}`);
+      // ────────────────────────────────────────────────────────────────────
+      if (!pendingPath) {
+        console.log('[PG_WELCOME] no pending notification — showing overlay');
+        setIsVisible(true);
+      } else {
+        console.log('[PG_WELCOME] pending notification detected — suppressing overlay');
+      }
+    }, 800);
+
+    return () => clearTimeout(timer);
   }, []);
 
   const slides = [

@@ -17,14 +17,22 @@ const KEY = 'pg:pending-notification-path';
 export function storePendingNotificationPath(path: string): void {
   try {
     sessionStorage.setItem(KEY, path);
-  } catch {
+    // ── TEMPORARY LOGGING ───────────────────────────────────────────────────
+    console.log(`[PG_PENDING_PATH] storePendingNotificationPath called — path: "${path}"`);
+    console.log('[PG_PENDING_PATH] sessionStorage after write:', sessionStorage.getItem(KEY));
+    // ────────────────────────────────────────────────────────────────────────
+  } catch (err) {
     // sessionStorage unavailable (e.g. private browsing with storage blocked).
+    console.warn('[PG_PENDING_PATH] storePendingNotificationPath failed — sessionStorage unavailable:', err);
   }
 }
 
 export function consumePendingNotificationPath(): string | null {
   try {
     const path = sessionStorage.getItem(KEY);
+    // ── TEMPORARY LOGGING ───────────────────────────────────────────────────
+    console.log(`[PG_PENDING_PATH] consumePendingNotificationPath → "${path ?? 'null'}"`);
+    // ────────────────────────────────────────────────────────────────────────
     if (path) sessionStorage.removeItem(KEY);
     return path;
   } catch {
@@ -34,7 +42,11 @@ export function consumePendingNotificationPath(): string | null {
 
 export function hasPendingNotificationPath(): boolean {
   try {
-    return !!sessionStorage.getItem(KEY);
+    const result = !!sessionStorage.getItem(KEY);
+    // ── TEMPORARY LOGGING ───────────────────────────────────────────────────
+    console.log(`[PG_PENDING_PATH] hasPendingNotificationPath → ${result}`);
+    // ────────────────────────────────────────────────────────────────────────
+    return result;
   } catch {
     return false;
   }

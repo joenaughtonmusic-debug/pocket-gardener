@@ -25,10 +25,18 @@ export function useNotificationDeepLink(): void {
   const router = useRouter();
 
   useEffect(() => {
+    // ── TEMPORARY LOGGING ─────────────────────────────────────────────────
+    console.log('[PG_DEEPLINK] useNotificationDeepLink mounted');
+    // ──────────────────────────────────────────────────────────────────────
+
     // Check immediately for a path written before this component mounted
     // (e.g. the tap handler fired before hydration completed on the remote URL).
     const immediate = consumePendingNotificationPath();
+    // ── TEMPORARY LOGGING ─────────────────────────────────────────────────
+    console.log(`[PG_DEEPLINK] immediate check → "${immediate ?? 'null'}"`);
+    // ──────────────────────────────────────────────────────────────────────
     if (immediate) {
+      console.log(`[PG_DEEPLINK] navigating immediately to "${immediate}"`);
       router.push(immediate);
       return;
     }
@@ -37,10 +45,15 @@ export function useNotificationDeepLink(): void {
     // complete and for the tap event replay to write to sessionStorage.
     // 600 ms is conservative — the chain typically takes 200–400 ms on device.
     const timer = setTimeout(() => {
+      // ── TEMPORARY LOGGING ───────────────────────────────────────────────
+      console.log('[PG_DEEPLINK] 600ms delayed check firing');
+      // ────────────────────────────────────────────────────────────────────
       const path = consumePendingNotificationPath();
       if (path) {
-        console.log(`🔔 useNotificationDeepLink → navigating to ${path}`);
+        console.log(`[PG_DEEPLINK] navigating after delay to "${path}"`);
         router.push(path);
+      } else {
+        console.log('[PG_DEEPLINK] no pending path found after 600ms — not navigating');
       }
     }, 600);
 
