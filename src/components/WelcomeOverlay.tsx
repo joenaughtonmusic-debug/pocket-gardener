@@ -11,39 +11,48 @@ export default function WelcomeOverlay() {
   useEffect(() => {
     const hasVisited = localStorage.getItem('hasVisitedGardenApp');
     if (hasVisited) {
-      // ── TEMPORARY LOGGING ─────────────────────────────────────────────
       console.log('[PG_WELCOME] hasVisited=true — overlay suppressed (returning user)');
-      // ────────────────────────────────────────────────────────────────────
       return;
     }
 
-    // window.Capacitor is injected by the native bridge synchronously before
-    // any JavaScript executes, so this check requires no async import.
+    // window.Capacitor is injected by the native bridge before any JS runs.
     const isNative = !!(window as any).Capacitor?.isNativePlatform?.();
-    // ── TEMPORARY LOGGING ───────────────────────────────────────────────
     console.log(`[PG_WELCOME] isNative=${isNative} | hasVisited=${hasVisited}`);
-    // ────────────────────────────────────────────────────────────────────
 
     if (!isNative) {
-      // Web: no push notifications in play — show immediately.
-      console.log('[PG_WELCOME] web platform — showing overlay immediately');
+      console.log('[PG_WELCOME] web — showing overlay immediately');
       setIsVisible(true);
       return;
     }
 
-    // Native Android cold start: wait for the tap listener async chain to
-    // write to sessionStorage before deciding whether to show.
-    console.log('[PG_WELCOME] native platform, new user — starting 800ms grace period');
+    // ── IMMEDIATE CHECK (the fix) ─────────────────────────────────────────
+    // onPageFinished (MainActivity) writes the key to sessionStorage BEFORE
+    // React hydrates. We must snapshot it HERE — synchronously at mount —
+    // before useNotificationDeepLink's useEffect (which fires a few ms later
+    // as a shallower component) calls consumePendingNotificationPath() and
+    // removes the key. If we wait until the 800ms timer to check, the key is
+    // already gone and the overlay incorrectly shows.
+    const pendingAtMount = hasPendingNotificationPath();
+    console.log(`[PG_WELCOME] immediate check — pendingAtMount=${pendingAtMount}`);
+    if (pendingAtMount) {
+      console.log('[PG_WELCOME] notification tap detected at mount — suppressing overlay');
+      return; // useNotificationDeepLink handles navigation
+    }
+
+    // ── DELAYED FALLBACK ──────────────────────────────────────────────────
+    // Covers the Capacitor pushNotificationActionPerformed replay path, where
+    // the key is written asynchronously (~300ms after mount) rather than by
+    // the synchronous onPageFinished injection. onPageFinished is the primary
+    // path; this timer is the safety net.
+    console.log('[PG_WELCOME] no immediate pending path — starting 800ms fallback timer');
     const timer = setTimeout(() => {
       const pendingPath = hasPendingNotificationPath();
-      // ── TEMPORARY LOGGING ─────────────────────────────────────────────
-      console.log(`[PG_WELCOME] 800ms check — hasPendingNotificationPath=${pendingPath}`);
-      // ────────────────────────────────────────────────────────────────────
+      console.log(`[PG_WELCOME] 800ms fallback — hasPendingNotificationPath=${pendingPath}`);
       if (!pendingPath) {
         console.log('[PG_WELCOME] no pending notification — showing overlay');
         setIsVisible(true);
       } else {
-        console.log('[PG_WELCOME] pending notification detected — suppressing overlay');
+        console.log('[PG_WELCOME] pending notification found at 800ms — suppressing overlay');
       }
     }, 800);
 
