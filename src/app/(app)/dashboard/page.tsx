@@ -645,6 +645,30 @@ export default function MyGardenDashboard() {
           ))}
         </nav>
 
+        {/* ── Visual Ideas CTA ──────────────────────────────────────────── */}
+        <Link
+          href="/visualise"
+          className="block bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden active:scale-[0.98] transition-all"
+        >
+          <div className="flex items-center gap-4 p-5">
+            <div className="w-12 h-12 rounded-[1rem] bg-green-50 flex items-center justify-center text-2xl shrink-0">
+              🎨
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-black uppercase tracking-widest text-green-800/50 mb-0.5">
+                New feature
+              </p>
+              <h3 className="text-sm font-black text-green-950 uppercase leading-none">
+                Visual Ideas
+              </h3>
+              <p className="text-[11px] text-gray-400 font-medium mt-0.5">
+                Upload a photo and see planting options.
+              </p>
+            </div>
+            <ArrowRight size={14} className="text-gray-300 shrink-0" strokeWidth={2.5} />
+          </div>
+        </Link>
+
         {/* ── 2. Empty state — no plants yet ────────────────────────────── */}
         {ownedPlants.length === 0 && !loading && (
           <section>

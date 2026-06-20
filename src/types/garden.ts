@@ -54,6 +54,39 @@ export interface PlantRemedy {
 }
 
 /**
+ * A single plant species suggested by the Visual Ideas feature.
+ */
+export interface SuggestedSpecies {
+  name: string;
+  description: string;
+  notes: string;
+}
+
+/**
+ * A saved visual concept — a row from `garden_visual_concepts`.
+ * Tracks the uploaded photo, goal, detected intent, species suggestions,
+ * selected species, hedge form preference, and generated concept image.
+ */
+export interface VisualConcept {
+  id: string;
+  user_id: string;
+  garden_area_id: string | null;
+  name: string;
+  original_photo_url: string | null;
+  generated_image_url: string | null;
+  goal_text: string | null;
+  detected_intent: string | null;
+  selected_species: string[];
+  suggested_species: SuggestedSpecies[];
+  hedge_form: string | null;
+  style: string | null;
+  status: 'draft' | 'generating' | 'complete' | 'error';
+  error_message: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
  * User subscription profile — a row from `profiles`.
  * pro_source values:    'stripe' | 'revenuecat_apple' | 'revenuecat_google' | 'manual'
  * subscription_status:  'free' | 'active' | 'canceled' | 'past_due' | 'expired'
