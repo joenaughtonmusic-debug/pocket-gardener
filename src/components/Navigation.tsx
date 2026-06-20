@@ -43,7 +43,7 @@ export default function Navigation() {
 
   {/* PLAN & VISUALISE */}
   <Link href="/match" className="flex flex-col items-center group">
-    <span className={`text-lg transition-transform ${pathname === '/match' || pathname.startsWith('/visualise') ? 'scale-125 mb-1' : 'opacity-70'}`}>🌿</span>
+    <span className={`text-lg transition-transform ${pathname === '/match' || pathname.startsWith('/visualise') ? 'scale-125 mb-1' : 'opacity-70'}`}>🌱</span>
     <span className={`text-[8px] font-black uppercase tracking-tighter transition-colors ${pathname === '/match' || pathname.startsWith('/visualise') ? 'text-green-950' : 'text-gray-400'}`}>Visualise</span>
   </Link>
         

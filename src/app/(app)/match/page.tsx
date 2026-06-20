@@ -455,7 +455,7 @@ function MatchPageInner() {
       status:     'Planning',
     }])
 
-    if (!error) { alert('Added to your Future Ideas!'); setSelectedPlant(null) }
+    if (!error) { alert('Saved as a Future Plant!'); setSelectedPlant(null) }
   }
 
   // ── Plant Finder live query (unchanged) ──────────────────────────────────
@@ -503,27 +503,53 @@ function MatchPageInner() {
           />
         </header>
 
-        {/* ── Visual Ideas entry point ─────────────────────────────────────── */}
+        {/* ── Create a Visual Idea — primary CTA ──────────────────────────── */}
+        <Link
+          href="/visualise/new"
+          className="block bg-amber-400 rounded-[2rem] p-6 shadow-xl active:scale-[0.98] transition-all"
+        >
+          <p className="text-[9px] font-black uppercase tracking-widest text-amber-900/50 mb-1">
+            New
+          </p>
+          <h2 className="text-xl font-black text-green-950 uppercase tracking-tighter italic leading-none mb-2">
+            Create a Visual Idea
+          </h2>
+          <p className="text-[11px] text-green-900/70 font-medium leading-relaxed mb-4">
+            Upload a garden photo, pick a plant, and see how it could look in your space.
+          </p>
+          <div className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-green-950 bg-green-950/10 px-4 py-2 rounded-full">
+            <Sparkles size={11} strokeWidth={2.5} />
+            Get started
+          </div>
+        </Link>
+
+        {/* ── Saved Visual Ideas — secondary link ──────────────────────────── */}
         <Link
           href="/visualise"
-          className="flex items-center gap-4 bg-green-900 rounded-[2rem] p-5 mb-8 shadow-xl active:scale-[0.98] transition-all"
+          className="flex items-center gap-3 bg-white rounded-[1.5rem] px-5 py-4 border border-gray-100 shadow-sm active:scale-[0.98] transition-all"
         >
-          <div className="w-10 h-10 bg-white/10 rounded-[0.875rem] flex items-center justify-center text-xl shrink-0">
+          <div className="w-8 h-8 bg-green-50 rounded-[0.75rem] flex items-center justify-center text-base shrink-0">
             🎨
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[9px] font-black uppercase tracking-widest text-green-400 mb-0.5">
-              Saved visual ideas
+            <p className="text-[10px] font-black uppercase tracking-widest text-green-900 leading-none">
+              Saved Visual Ideas
             </p>
-            <p className="text-sm font-black text-white uppercase leading-none">
-              View Visual Concepts
-            </p>
-            <p className="text-[10px] text-green-200/60 font-medium mt-0.5">
-              Upload a photo · get planting ideas · see how it could look
+            <p className="text-[10px] text-gray-400 font-medium mt-0.5">
+              View and re-edit your saved concepts
             </p>
           </div>
-          <ArrowRight size={16} className="text-green-400 shrink-0" strokeWidth={2.5} />
+          <ArrowRight size={14} className="text-gray-300 shrink-0" strokeWidth={2.5} />
         </Link>
+
+        {/* ── Section divider ──────────────────────────────────────────────── */}
+        <div className="flex items-center gap-3 pt-2">
+          <div className="h-px bg-gray-100 flex-1" />
+          <p className="text-[9px] font-black uppercase tracking-widest text-gray-300 whitespace-nowrap">
+            Garden spaces &amp; plant ideas
+          </p>
+          <div className="h-px bg-gray-100 flex-1" />
+        </div>
 
         {/* ══ GARDEN SPACES ════════════════════════════════════════════════════ */}
         <section className="mb-12">
@@ -642,7 +668,7 @@ function MatchPageInner() {
                       </Link>
                     </div>
 
-                    {/* Suggested plants / Future Ideas for this space */}
+                    {/* Suggested plants / Future Plants for this space */}
                     <div className="border-t border-gray-50 px-6 pb-6 pt-4">
                       <p className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400 mb-1">
                         Plant ideas for this space{recs.length > 0 ? ` · ${recs.length} suggestions` : ''}
@@ -693,7 +719,7 @@ function MatchPageInner() {
 
                                 {inPlan ? (
                                   <span className="text-[8px] font-black uppercase tracking-widest text-green-700 bg-green-50 border border-green-100 px-2.5 py-1 rounded-full shrink-0">
-                                    Future Idea ✓
+                                    Saved ✓
                                   </span>
                                 ) : (
                                   <button
@@ -701,7 +727,7 @@ function MatchPageInner() {
                                     disabled={isAdding}
                                     className="flex items-center gap-1 text-[8px] font-black uppercase tracking-widest text-white bg-green-800 px-3 py-1.5 rounded-full shrink-0 active:scale-95 transition-all disabled:opacity-50"
                                   >
-                                    {isAdding ? '…' : <><Plus size={9} strokeWidth={3} /> Add idea</>}
+                                    {isAdding ? '…' : <><Plus size={9} strokeWidth={3} /> Save plant</>}
                                   </button>
                                 )}
                               </div>
@@ -947,7 +973,7 @@ function MatchPageInner() {
               onClick={() => handleAddToProject(selectedPlant.id)}
               className="w-full bg-amber-400 text-green-950 font-black uppercase py-4 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-transform"
             >
-              <Plus size={16} strokeWidth={3} /> Add to Future Ideas
+              <Plus size={16} strokeWidth={3} /> Save as Future Plant
             </button>
           </div>
         </div>

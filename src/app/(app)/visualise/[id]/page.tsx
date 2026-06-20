@@ -165,8 +165,8 @@ export default function VisualConceptDetailPage() {
       const existing = json.results?.filter((r: any) => r.status === 'already_planned').length ?? 0
       const nf       = json.notFound?.length ?? 0
       const parts    = []
-      if (added    > 0) parts.push(`${added} added to Future Ideas`)
-      if (existing > 0) parts.push(`${existing} already there`)
+      if (added    > 0) parts.push(`${added} saved as Future Plants`)
+      if (existing > 0) parts.push(`${existing} already saved`)
       if (nf       > 0) parts.push(`${nf} not found in plant library`)
       setAddPlantsResult(parts.join(' · ') || 'Done.')
     }
@@ -212,7 +212,7 @@ export default function VisualConceptDetailPage() {
           className="inline-flex items-center gap-2 text-green-300 text-[10px] font-black uppercase tracking-widest mb-5 active:opacity-70"
         >
           <ArrowLeft size={12} strokeWidth={3} />
-          Visual Ideas
+          Saved Visual Ideas
         </Link>
         <h1 className="text-2xl font-black text-white uppercase tracking-tighter italic leading-none mb-1">
           {concept.name}
@@ -467,7 +467,7 @@ export default function VisualConceptDetailPage() {
           </section>
         )}
 
-        {/* Add to Future Ideas (planned plants) */}
+        {/* Save as Future Plants (planned plants) */}
         {selectedSpecies.length > 0 && (
           <section className="space-y-3">
             <button
@@ -480,7 +480,7 @@ export default function VisualConceptDetailPage() {
               ) : (
                 <>
                   <Leaf size={15} strokeWidth={3} />
-                  Add selected plants to Future Ideas
+                  Save selected plants as Future Plants
                 </>
               )}
             </button>

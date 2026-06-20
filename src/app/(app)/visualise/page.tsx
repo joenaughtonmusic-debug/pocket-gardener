@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { createSupabaseBrowserClient } from '../../lib/supabaseClient'
 import Link from 'next/link'
-import { ArrowRight, Plus, ImageOff } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Plus, ImageOff } from 'lucide-react'
 import type { VisualConcept } from '../../../types/garden'
 
 const STATUS_LABELS: Record<string, string> = {
@@ -57,21 +57,25 @@ export default function VisualisePage() {
     <main className="min-h-screen bg-[#f0f4f1] pb-40">
       {/* Header */}
       <section className="bg-green-900 px-6 pt-14 pb-10 rounded-b-[3rem] shadow-2xl shadow-green-900/20 mb-8">
-        <p className="text-[10px] font-black uppercase tracking-[0.25em] text-green-400 mb-2">
-          Pocket Gardener
-        </p>
+        <Link
+          href="/match"
+          className="inline-flex items-center gap-2 text-green-300 text-[10px] font-black uppercase tracking-widest mb-5 active:opacity-70"
+        >
+          <ArrowLeft size={12} strokeWidth={3} />
+          Plan &amp; Visualise
+        </Link>
         <h1 className="text-3xl font-black text-white uppercase tracking-tighter italic leading-none mb-3">
-          Visual Ideas
+          Saved Visual Ideas
         </h1>
         <p className="text-green-200/70 text-[12px] font-medium leading-relaxed mb-6">
-          Upload a garden photo and see how planting ideas could look.
+          Your saved garden photo concepts — tap to view or re-edit.
         </p>
         <Link
           href="/visualise/new"
           className="inline-flex items-center gap-2 bg-amber-400 text-green-950 text-[10px] font-black uppercase tracking-widest px-6 py-3 rounded-full shadow-lg active:scale-95 transition-all"
         >
           <Plus size={14} strokeWidth={3} />
-          Create Visual Idea
+          Create New Idea
         </Link>
       </section>
 

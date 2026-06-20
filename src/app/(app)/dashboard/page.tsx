@@ -900,7 +900,7 @@ export default function MyGardenDashboard() {
         {projectPlants.length > 0 && (
           <section className="space-y-4">
             <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] px-2 italic">
-              Future Ideas — Planting you're considering
+              Future Plants — Planting you're considering
             </h2>
             <div className="space-y-6">
               {projectsByArea.map((group) => (
@@ -939,7 +939,7 @@ export default function MyGardenDashboard() {
                           </h3>
                           <div className="flex items-center gap-1.5 mt-2">
                             <span className="text-[8px] font-black uppercase text-amber-500 bg-amber-50 px-2 py-0.5 rounded-full">
-                              Future idea
+                              Future plant
                             </span>
                           </div>
                         </div>
