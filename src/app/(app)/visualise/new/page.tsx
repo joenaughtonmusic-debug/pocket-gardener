@@ -1,16 +1,80 @@
 'use client'
 
-import { useState, useRef, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useRef, useMemo, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createSupabaseBrowserClient } from '../../../lib/supabaseClient'
 import { ArrowLeft, Upload, Loader2, Leaf } from 'lucide-react'
 import Link from 'next/link'
 import type { GardenArea } from '../../../../types/garden'
 
+// Structured input options
+const PLANTING_TYPES = [
+  'Hedge',
+  'Screening',
+  'Border planting',
+  'Feature tree',
+  'Shrubs',
+  'Groundcovers',
+] as const
+
+const PLACEMENT_OPTIONS = [
+  'Left boundary',
+  'Right boundary',
+  'Along fence',
+  'Along path',
+  'Around existing tree',
+  'Around deck',
+  'Front entrance',
+  'Other',
+] as const
+
 type Step = 'form' | 'uploading' | 'suggesting'
 
-export default function NewVisualIdeaPage() {
+function ChipSelector<T extends string>({
+  label,
+  options,
+  value,
+  onChange,
+  required,
+}: {
+  label: string
+  options: readonly T[]
+  value: T | null
+  onChange: (v: T | null) => void
+  required?: boolean
+}) {
+  return (
+    <div>
+      <label className="block text-[9px] font-black uppercase tracking-widest text-green-800/50 mb-2 px-1">
+        {label}
+        {required && <span className="text-red-400 ml-1">*</span>}
+      </label>
+      <div className="flex flex-wrap gap-2">
+        {options.map((opt) => {
+          const selected = value === opt
+          return (
+            <button
+              key={opt}
+              type="button"
+              onClick={() => onChange(selected ? null : opt)}
+              className={`text-[10px] font-black uppercase tracking-wide px-3.5 py-2 rounded-full border transition-all active:scale-95 ${
+                selected
+                  ? 'bg-green-900 text-white border-green-900'
+                  : 'bg-white text-gray-500 border-gray-100 shadow-sm'
+              }`}
+            >
+              {opt}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function NewVisualIdeaPageInner() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = useMemo(() => createSupabaseBrowserClient(), [])
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -18,13 +82,18 @@ export default function NewVisualIdeaPage() {
   const [photo, setPhoto] = useState<File | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [name, setName] = useState('')
-  const [goalText, setGoalText] = useState('')
+  const [plantingType, setPlantingType] = useState<typeof PLANTING_TYPES[number] | null>(null)
+  const [placementArea, setPlacementArea] = useState<typeof PLACEMENT_OPTIONS[number] | null>(null)
+  const [extraNotes, setExtraNotes] = useState('')
   const [gardenAreas, setGardenAreas] = useState<GardenArea[]>([])
   const [selectedAreaId, setSelectedAreaId] = useState<string>('')
   const [areasLoaded, setAreasLoaded] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  useMemo(() => {
+  // Pre-fill area from ?areaId= URL param (e.g. coming from Plan & Visualise)
+  const areaIdParam = searchParams.get('areaId')
+
+  useEffect(() => {
     async function loadAreas() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
@@ -33,11 +102,16 @@ export default function NewVisualIdeaPage() {
         .select('id, name')
         .eq('user_id', user.id)
         .order('name')
-      setGardenAreas((data as GardenArea[]) ?? [])
+      const loaded = (data as GardenArea[]) ?? []
+      setGardenAreas(loaded)
       setAreasLoaded(true)
+      // Pre-select area from URL param
+      if (areaIdParam && loaded.find((a) => a.id === areaIdParam)) {
+        setSelectedAreaId(areaIdParam)
+      }
     }
     loadAreas()
-  }, [supabase])
+  }, [supabase, areaIdParam])
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -47,19 +121,28 @@ export default function NewVisualIdeaPage() {
     setError(null)
   }
 
+  // Build goal text from structured inputs for suggestions + image prompt
+  function buildGoalText(): string {
+    const parts: string[] = []
+    if (plantingType) parts.push(plantingType)
+    if (placementArea) parts.push(`along/near: ${placementArea}`)
+    if (extraNotes.trim()) parts.push(extraNotes.trim())
+    return parts.join('. ')
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
 
-    if (!photo) { setError('Please select a photo.'); return }
-    if (!name.trim()) { setError('Please enter a name for this area.'); return }
-    if (!goalText.trim()) { setError('Please describe your goal.'); return }
+    if (!photo) { setError('Please select a photo of your garden.'); return }
+    if (!name.trim()) { setError('Please enter a name for this space.'); return }
+    if (!plantingType) { setError('Please choose what you want to add.'); return }
 
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { setError('You need to be logged in.'); return }
 
-      // 1. Upload photo to Supabase storage
+      // 1. Upload photo
       setStep('uploading')
       const ext = photo.name.split('.').pop() ?? 'jpg'
       const uploadPath = `visual-ideas/uploads/${user.id}-${Date.now()}.${ext}`
@@ -74,30 +157,38 @@ export default function NewVisualIdeaPage() {
         .from('weed-images')
         .getPublicUrl(uploadPath)
 
-      // 2. Fetch suggestions
+      const goalText = buildGoalText()
+
+      // 2. Fetch plant suggestions using structured inputs
       setStep('suggesting')
       const suggestRes = await fetch('/api/visual-ideas/suggest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ goalText }),
+        body: JSON.stringify({
+          goalText,
+          plantingType,
+          placementArea: placementArea ?? null,
+        }),
       })
 
       if (!suggestRes.ok) throw new Error('Could not fetch suggestions. Please try again.')
       const suggestions = await suggestRes.json()
 
-      // 3. Create concept record in Supabase
+      // 3. Create the concept record
       const { data: concept, error: insertError } = await supabase
         .from('garden_visual_concepts')
         .insert({
-          user_id: user.id,
-          name: name.trim(),
-          goal_text: goalText.trim(),
+          user_id:           user.id,
+          name:              name.trim(),
+          goal_text:         goalText,
           original_photo_url: publicUrl,
-          garden_area_id: selectedAreaId || null,
-          detected_intent: suggestions.detectedIntent,
+          garden_area_id:    selectedAreaId || null,
+          detected_intent:   suggestions.detectedIntent,
           suggested_species: suggestions.suggestedSpecies,
-          selected_species: [],
-          status: 'draft',
+          selected_species:  [],
+          // Store planting type in the style column for use in image prompts
+          style:             plantingType,
+          status:            'draft',
         })
         .select()
         .single()
@@ -128,16 +219,16 @@ export default function NewVisualIdeaPage() {
           New Visual Idea
         </h1>
         <p className="text-green-200/60 text-[11px] font-medium">
-          Upload a photo and describe what you want — we'll suggest plants.
+          Upload a photo, choose what to add, and we'll suggest plants.
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="px-6 space-y-5">
+      <form onSubmit={handleSubmit} className="px-6 space-y-6">
 
         {/* Photo Upload */}
         <div>
           <p className="text-[9px] font-black uppercase tracking-widest text-green-800/50 mb-2 px-1">
-            Garden Photo
+            Garden photo <span className="text-red-400">*</span>
           </p>
           <button
             type="button"
@@ -170,7 +261,7 @@ export default function NewVisualIdeaPage() {
                     Upload garden photo
                   </p>
                   <p className="text-[10px] text-gray-300 font-medium mt-0.5">
-                    JPG, PNG, HEIC
+                    JPG, PNG, HEIC — the AI will edit this photo
                   </p>
                 </div>
               </div>
@@ -185,44 +276,58 @@ export default function NewVisualIdeaPage() {
           />
         </div>
 
-        {/* Area Name */}
+        {/* Space / Area Name */}
         <div>
           <label className="block text-[9px] font-black uppercase tracking-widest text-green-800/50 mb-2 px-1">
-            Area Name
+            Name this idea <span className="text-red-400">*</span>
           </label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder='e.g. "Driveway border" or "Back fence"'
+            placeholder='e.g. "Driveway border" or "Back fence hedge"'
             disabled={isBusy}
             className="w-full bg-white border border-gray-100 rounded-2xl px-5 py-4 text-sm font-bold text-gray-800 placeholder:text-gray-300 outline-none focus:border-green-300 shadow-sm transition-colors disabled:opacity-60"
           />
         </div>
 
-        {/* Goal text */}
+        {/* What to add — planting type */}
+        <ChipSelector
+          label="What do you want to add?"
+          options={PLANTING_TYPES}
+          value={plantingType}
+          onChange={setPlantingType}
+          required
+        />
+
+        {/* Where — placement */}
+        <ChipSelector
+          label="Where?"
+          options={PLACEMENT_OPTIONS}
+          value={placementArea}
+          onChange={setPlacementArea}
+        />
+
+        {/* Extra notes */}
         <div>
           <label className="block text-[9px] font-black uppercase tracking-widest text-green-800/50 mb-2 px-1">
-            What do you want to achieve?
+            Extra notes <span className="text-gray-300 font-medium normal-case tracking-normal">(optional)</span>
           </label>
           <textarea
-            value={goalText}
-            onChange={(e) => setGoalText(e.target.value)}
-            placeholder='e.g. "I want a 2m hedge along this boundary for privacy"'
+            value={extraNotes}
+            onChange={(e) => setExtraNotes(e.target.value)}
+            placeholder='e.g. "Prefer native species, about 2m tall, needs to block noise from road"'
             rows={3}
             disabled={isBusy}
             className="w-full bg-white border border-gray-100 rounded-2xl px-5 py-4 text-sm font-medium text-gray-800 placeholder:text-gray-300 outline-none focus:border-green-300 shadow-sm transition-colors resize-none disabled:opacity-60"
           />
-          <p className="text-[9px] text-gray-300 font-medium mt-1.5 px-1">
-            Mention hedge, native, subtropical, colour, low maintenance, etc.
-          </p>
         </div>
 
-        {/* Garden area selector */}
+        {/* Link to garden space */}
         {areasLoaded && gardenAreas.length > 0 && (
           <div>
             <label className="block text-[9px] font-black uppercase tracking-widest text-green-800/50 mb-2 px-1">
-              Link to Garden Area <span className="font-normal normal-case tracking-normal">(optional)</span>
+              Link to garden space <span className="text-gray-300 font-medium normal-case tracking-normal">(optional)</span>
             </label>
             <select
               value={selectedAreaId}
@@ -230,7 +335,7 @@ export default function NewVisualIdeaPage() {
               disabled={isBusy}
               className="w-full bg-white border border-gray-100 rounded-2xl px-5 py-4 text-sm font-bold text-gray-800 outline-none focus:border-green-300 shadow-sm transition-colors disabled:opacity-60 appearance-none"
             >
-              <option value="">No area selected</option>
+              <option value="">No space selected</option>
               {gardenAreas.map((area) => (
                 <option key={area.id} value={area.id}>{area.name}</option>
               ))}
@@ -270,5 +375,13 @@ export default function NewVisualIdeaPage() {
         </p>
       </form>
     </main>
+  )
+}
+
+export default function NewVisualIdeaPage() {
+  return (
+    <Suspense>
+      <NewVisualIdeaPageInner />
+    </Suspense>
   )
 }

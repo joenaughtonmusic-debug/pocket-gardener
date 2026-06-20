@@ -19,11 +19,15 @@ export async function POST(req: Request) {
 
     const body = await req.json()
     const goalText: string = body.goalText ?? ''
-    if (!goalText.trim()) {
-      return NextResponse.json({ error: 'goalText is required' }, { status: 400 })
+    const plantingType: string | null = body.plantingType ?? null
+    const placementArea: string | null = body.placementArea ?? null
+
+    // Allow goalText to be empty when structured inputs are provided
+    if (!goalText.trim() && !plantingType) {
+      return NextResponse.json({ error: 'goalText or plantingType is required' }, { status: 400 })
     }
 
-    const result = suggestPlants(goalText)
+    const result = suggestPlants(goalText, plantingType, placementArea)
     return NextResponse.json(result)
   } catch (err: any) {
     console.error('Suggest error:', err)

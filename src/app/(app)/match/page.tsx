@@ -5,9 +5,10 @@ import type { ReactNode } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createSupabaseBrowserClient } from '../../lib/supabaseClient'
 import {
-  Sun, Droplets, Ruler, ChevronRight, Plus, X,
-  Shovel, TrendingUp, Pencil, Trash2,
+  Sun, Droplets, Shovel, ChevronRight, Plus, X,
+  Ruler, TrendingUp, Pencil, Trash2, ChevronDown, ChevronUp, Sparkles, ArrowRight,
 } from 'lucide-react'
+import Link from 'next/link'
 import PlantThumbnail from '../../../components/PlantThumbnail'
 import PageHelp from '../../../components/PageHelp'
 import LockedProFeatureCard from '../../../components/LockedProFeatureCard'
@@ -21,7 +22,7 @@ import {
 } from '../../../lib/gardenAreaRecommendations'
 import type { Plant } from '../../../types/plants'
 
-// ─── Slider option constants ──────────────────────────────────────────────────
+// ─── Plant Finder slider option constants (unchanged — match plants table values) ─
 const SUN_OPTIONS   = ['Full Sun', 'Part Shade', 'Full Shade']
 const SOIL_OPTIONS  = ['Healthy/loam', 'Clay', 'Sandy', 'Potting Mix']
 const WATER_OPTIONS = ['Holds Water', 'Drains Well', 'Dry', 'Under a Roof']
@@ -29,7 +30,7 @@ const SIZE_OPTIONS  = ['<1m', '1-2m', '2-4m', '4m+']
 const SLOPE_OPTIONS = ['flat', 'gentle', 'moderate', 'steep']
 const SLOPE_LABELS  = ['Flat', 'Gentle Slope', 'Moderate Slope', 'Steep Slope']
 
-// ─── Image assets (unchanged) ────────────────────────────────────────────────
+// ─── Image assets for Plant Finder sliders (unchanged) ───────────────────────
 const SUN_IMAGES = [
   'https://img.freepik.com/free-photo/penang-malaysia-march-25-2024_58702-16918.jpg?semt=ais_incoming&w=740&q=80',
   'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80',
@@ -60,75 +61,63 @@ const SLOPE_IMAGES = [
   'https://sonxnuxhrivzgcevtdtc.supabase.co/storage/v1/object/public/garden%20assets/Slope%20files/slope_steep%20v1.png',
 ]
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-/** Return the array index for a stored condition string, defaulting to 0. */
-function idxFromOption(options: string[], value: string | null | undefined): number {
-  if (!value) return 0
-  const i = options.indexOf(value)
-  return i >= 0 ? i : 0
+// ─── Friendly display maps for condition pills ────────────────────────────────
+const WATER_DISPLAY: Record<string, string> = {
+  'Holds Water': 'Poor drainage',
+  'Drains Well': 'Well drained',
+  'Dry': 'Dry',
+  'Under a Roof': 'Under cover',
+}
+const SOIL_DISPLAY: Record<string, string> = {
+  'Healthy/loam': 'Rich / loam',
+  'Clay': 'Clay',
+  'Sandy': 'Sandy',
+  'Potting Mix': 'Potting mix',
+}
+const SLOPE_DISPLAY: Record<string, string> = {
+  flat: 'Flat', gentle: 'Gentle slope', moderate: 'Moderate slope', steep: 'Steep slope',
 }
 
-// ─── Reusable slider for the area creation/edit form ─────────────────────────
-// Only used inside the form overlay — does NOT replace the existing matchmaker sliders.
-function FormSlider({
+// ─── Simple dropdown field for area form ─────────────────────────────────────
+function FormDropdown({
   label,
-  icon,
-  options,
-  optionLabels,
-  images,
+  hint,
   value,
   onChange,
-  imgContain = false,
+  options,
 }: {
   label: string
-  icon: ReactNode
-  options: string[]
-  optionLabels?: string[]
-  images: string[]
-  value: number
-  onChange: (v: number) => void
-  imgContain?: boolean
+  hint?: string
+  value: string
+  onChange: (v: string) => void
+  options: { value: string; label: string }[]
 }) {
-  const display = optionLabels ? optionLabels[value] : options[value]
   return (
-    <div className="space-y-2">
-      <div className="flex justify-between items-end px-1">
-        <label className="text-[10px] font-black uppercase tracking-widest text-green-900/40 flex items-center gap-2">
-          {icon} {label}
+    <div className="space-y-1.5">
+      <div className="flex items-baseline justify-between">
+        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">
+          {label}
         </label>
-        <span className="text-xs font-black italic uppercase text-green-950">{display}</span>
+        {hint && (
+          <span className="text-[9px] text-gray-300 font-medium italic">{hint}</span>
+        )}
       </div>
-      <div
-        className={`relative h-36 w-full rounded-[2rem] overflow-hidden border-4 border-white ${
-          imgContain ? 'bg-white' : 'bg-gray-100'
-        }`}
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-3.5 text-sm font-bold text-gray-700 outline-none focus:border-green-200 appearance-none transition-colors"
       >
-        {images.map((url, i) => (
-          <div
-            key={i}
-            className={`absolute inset-0 ${
-              imgContain ? 'bg-contain bg-no-repeat' : 'bg-cover'
-            } bg-center transition-opacity duration-500`}
-            style={{ backgroundImage: `url("${url}")`, opacity: value === i ? 1 : 0 }}
-          />
+        {options.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
         ))}
-        <div className="absolute bottom-0 left-0 right-0 h-14 bg-gradient-to-t from-black/30 to-transparent pointer-events-none z-[5]" />
-        <input
-          type="range"
-          min="0"
-          max={options.length - 1}
-          step="1"
-          value={value}
-          onChange={(e) => onChange(parseInt(e.target.value))}
-          className="absolute bottom-5 left-1/2 -translate-x-1/2 w-[80%] h-1.5 bg-white/30 backdrop-blur-md rounded-full appearance-none cursor-pointer accent-white z-10"
-        />
-      </div>
+      </select>
     </div>
   )
 }
 
-// ─── Condition pill ───────────────────────────────────────────────────────────
+// ─── Condition pill (display only, unchanged logic) ───────────────────────────
 function ConditionPill({
   icon,
   value,
@@ -153,6 +142,7 @@ function ConditionPill({
   )
 }
 
+// ─── Option chips for style/goal ──────────────────────────────────────────────
 function OptionChips({
   label,
   optional,
@@ -198,14 +188,16 @@ function OptionChips({
 }
 
 function areaPlanningHint(area: GardenArea): string | null {
-  const parts = [area.style, area.goal].filter((v) => v && v !== 'Not Sure') as string[]
+  const parts = [area.style, area.goal].filter(
+    (v) => v && v.toLowerCase() !== 'not sure',
+  ) as string[]
   if (parts.length === 0) return null
-  return `Matched to conditions, prioritised for ${parts.join(' · ').toLowerCase()}.`
+  return `Prioritised for ${parts.join(' · ').toLowerCase()}.`
 }
 
-// ─── Main page component ──────────────────────────────────────────────────────
+// ─── Main page ────────────────────────────────────────────────────────────────
 function MatchPageInner() {
-  // ── Existing matchmaker state ──────────────────────────────────────────────
+  // ── Plant Finder (legacy) slider state ────────────────────────────────────
   const [sunIdx,        setSunIdx]        = useState(0)
   const [soilIdx,       setSoilIdx]       = useState(0)
   const [waterIdx,      setWaterIdx]      = useState(1)
@@ -215,7 +207,7 @@ function MatchPageInner() {
   const [loading,       setLoading]       = useState(false)
   const [selectedPlant, setSelectedPlant] = useState<any | null>(null)
 
-  // ── Garden Areas state ────────────────────────────────────────────────────
+  // ── Garden Spaces state ───────────────────────────────────────────────────
   const [areas,           setAreas]           = useState<GardenArea[]>([])
   const [areaMatches,     setAreaMatches]     = useState<Record<string, RankedPlantMatch[]>>({})
   const [areasLoading,    setAreasLoading]    = useState(true)
@@ -226,52 +218,48 @@ function MatchPageInner() {
   const [addingToArea,    setAddingToArea]    = useState<string | null>(null)
   const [isPro,           setIsPro]           = useState(false)
 
-  // Area form fields
-  const [formName,      setFormName]      = useState('')
-  const [formSunIdx,    setFormSunIdx]    = useState(0)
-  const [formSoilIdx,   setFormSoilIdx]   = useState(0)
-  const [formWaterIdx,  setFormWaterIdx]  = useState(1)
-  const [formSizeIdx,   setFormSizeIdx]   = useState(1)
-  const [formSlopeIdx,  setFormSlopeIdx]  = useState(0)
-  const [formNotes,     setFormNotes]     = useState('')
-  const [formStyle,     setFormStyle]     = useState<string | null>(null)
-  const [formGoal,      setFormGoal]      = useState<string | null>(null)
-  const [savingArea,    setSavingArea]    = useState(false)
+  // Area form fields — string-based, not index-based
+  const [formName,        setFormName]        = useState('')
+  const [formSun,         setFormSun]         = useState('')
+  const [formSoil,        setFormSoil]        = useState('')
+  const [formWater,       setFormWater]       = useState('')
+  const [formNotes,       setFormNotes]       = useState('')
+  const [formStyle,       setFormStyle]       = useState<string | null>(null)
+  const [formGoal,        setFormGoal]        = useState<string | null>(null)
+  const [savingArea,      setSavingArea]      = useState(false)
+  const [showConditions,  setShowConditions]  = useState(false)
 
-  const supabase      = useMemo(() => createSupabaseBrowserClient(), [])
-  const searchParams  = useSearchParams()
+  const supabase     = useMemo(() => createSupabaseBrowserClient(), [])
+  const searchParams = useSearchParams()
 
-  // URL params
-  const styleParam      = searchParams.get('style')
-  const areaIdParam     = searchParams.get('areaId')
-  const editAreaParam   = searchParams.get('editArea')
+  const styleParam    = searchParams.get('style')
+  const areaIdParam   = searchParams.get('areaId')
+  const editAreaParam = searchParams.get('editArea')
 
-  // Pre-fill style from ?style= (e.g. Feature Garden "Use This Style")
   const initialStyle = useMemo(() => {
     if (!styleParam) return null
     return GARDEN_AREA_STYLE_OPTIONS.includes(styleParam as any) ? styleParam : null
   }, [styleParam])
 
-  // Highlighted area for ?areaId= deep-links
   const [highlightedAreaId, setHighlightedAreaId] = useState<string | null>(null)
 
-  // ── Shared matchmaker query helper ────────────────────────────────────────
+  // ── Null-safe matchmaker query ────────────────────────────────────────────
+  // Only applies conditions that are actually set, so partial conditions work.
   const fetchMatchesForConditions = useCallback(
     async (
-      sun: string,
-      soil: string,
-      water: string,
-      size: string,
-      slope: string,
+      sun:   string | null,
+      soil:  string | null,
+      water: string | null,
+      size:  string | null,
+      slope: string | null,
     ): Promise<any[]> => {
-      const { data } = await supabase
-        .from('plants')
-        .select('*')
-        .contains('sun_requirement',   [sun])
-        .contains('soil_type',         [soil])
-        .contains('water_behavior',    [water])
-        .contains('mature_size',       [size])
-        .contains('slope_suitability', [slope])
+      let query = supabase.from('plants').select('*')
+      if (sun)   query = query.contains('sun_requirement',   [sun])
+      if (soil)  query = query.contains('soil_type',         [soil])
+      if (water) query = query.contains('water_behavior',    [water])
+      if (size)  query = query.contains('mature_size',       [size])
+      if (slope) query = query.contains('slope_suitability', [slope])
+      const { data } = await query
       return (data || []).sort((a, b) =>
         (a.common_name || '').localeCompare(b.common_name || ''),
       )
@@ -279,49 +267,32 @@ function MatchPageInner() {
     [supabase],
   )
 
-  // ── Load areas + their recommendations ───────────────────────────────────
+  // ── Load areas + recommendations ──────────────────────────────────────────
   const loadAreas = useCallback(async () => {
     setAreasLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setAreasLoading(false); return }
 
     const [areasRes, projectRes, profileRes] = await Promise.all([
-      supabase
-        .from('garden_areas')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: true }),
-      supabase
-        .from('user_plants')
-        .select('plant_id')
-        .eq('user_id', user.id)
-        .eq('is_project', true),
-      supabase
-        .from('profiles')
-        .select('is_pro')
-        .eq('id', user.id)
-        .maybeSingle(),
+      supabase.from('garden_areas').select('*').eq('user_id', user.id).order('created_at', { ascending: true }),
+      supabase.from('user_plants').select('plant_id').eq('user_id', user.id).eq('is_project', true),
+      supabase.from('profiles').select('is_pro').eq('id', user.id).maybeSingle(),
     ])
 
     if (profileRes.data) setIsPro(profileRes.data.is_pro)
 
     const loadedAreas = (areasRes.data || []) as GardenArea[]
     setAreas(loadedAreas)
-    setProjectPlantIds(
-      (projectRes.data || []).map((p: any) => Number(p.plant_id)),
-    )
+    setProjectPlantIds((projectRes.data || []).map((p: any) => Number(p.plant_id)))
 
-    // Fetch up to 5 recommendations per area in parallel
+    // Fetch recommendations if any condition or style/goal is set
     const matchMap: Record<string, RankedPlantMatch[]> = {}
     await Promise.all(
       loadedAreas.map(async (area) => {
-        if (
-          area.sun_condition &&
-          area.soil_condition &&
-          area.water_condition &&
-          area.size_condition &&
-          area.slope_condition
-        ) {
+        const hasAnyCondition =
+          area.sun_condition || area.soil_condition || area.water_condition ||
+          area.size_condition || area.slope_condition || area.style || area.goal
+        if (hasAnyCondition) {
           const all = await fetchMatchesForConditions(
             area.sun_condition,
             area.soil_condition,
@@ -341,15 +312,11 @@ function MatchPageInner() {
 
   useEffect(() => { loadAreas() }, [loadAreas])
 
-  // Auto-open the create form when arriving via ?style= from Feature Garden
   useEffect(() => {
-    if (initialStyle && !areasLoading) {
-      openCreateForm()
-    }
+    if (initialStyle && !areasLoading) openCreateForm()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [areasLoading])
 
-  // Deep-link to a specific area: scroll + highlight
   useEffect(() => {
     if (!areaIdParam || areasLoading) return
     setHighlightedAreaId(areaIdParam)
@@ -362,7 +329,6 @@ function MatchPageInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [areasLoading])
 
-  // Auto-open edit form when arriving via ?editArea=
   useEffect(() => {
     if (!editAreaParam || areasLoading) return
     const target = areas.find((a) => a.id === editAreaParam)
@@ -370,33 +336,30 @@ function MatchPageInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [areasLoading])
 
-  // ── Area form helpers ──────────────────────────────────────────────────────
+  // ── Form helpers ───────────────────────────────────────────────────────────
   function openCreateForm() {
     setEditingArea(null)
     setFormName('')
-    setFormSunIdx(0)
-    setFormSoilIdx(0)
-    setFormWaterIdx(1)
-    setFormSizeIdx(1)
-    setFormSlopeIdx(0)
+    setFormSun('')
+    setFormSoil('')
+    setFormWater('')
     setFormNotes('')
-    // Pre-fill style from URL param if present (e.g. Feature Garden "Use This Style")
     setFormStyle(initialStyle)
     setFormGoal(null)
+    setShowConditions(false)
     setShowAreaForm(true)
   }
 
   function openEditForm(area: GardenArea) {
     setEditingArea(area)
     setFormName(area.name)
-    setFormSunIdx(idxFromOption(SUN_OPTIONS,   area.sun_condition))
-    setFormSoilIdx(idxFromOption(SOIL_OPTIONS,  area.soil_condition))
-    setFormWaterIdx(idxFromOption(WATER_OPTIONS, area.water_condition))
-    setFormSizeIdx(idxFromOption(SIZE_OPTIONS,  area.size_condition))
-    setFormSlopeIdx(idxFromOption(SLOPE_OPTIONS, area.slope_condition))
+    setFormSun(area.sun_condition || '')
+    setFormSoil(area.soil_condition || '')
+    setFormWater(area.water_condition || '')
     setFormNotes(area.notes || '')
     setFormStyle(area.style || null)
     setFormGoal(area.goal || null)
+    setShowConditions(!!(area.sun_condition || area.soil_condition || area.water_condition))
     setShowAreaForm(true)
   }
 
@@ -407,22 +370,27 @@ function MatchPageInner() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setSavingArea(false); return }
 
-    const conditions = {
+    const areaData: Record<string, string | null> = {
       name:            formName.trim(),
-      sun_condition:   SUN_OPTIONS[formSunIdx],
-      soil_condition:  SOIL_OPTIONS[formSoilIdx],
-      water_condition: WATER_OPTIONS[formWaterIdx],
-      size_condition:  SIZE_OPTIONS[formSizeIdx],
-      slope_condition: SLOPE_OPTIONS[formSlopeIdx],
+      sun_condition:   formSun  || null,
+      soil_condition:  formSoil || null,
+      water_condition: formWater || null,
       notes:           formNotes.trim() || null,
       style:           formStyle || null,
-      goal:            formGoal || null,
+      goal:            formGoal  || null,
+    }
+
+    // When creating, explicitly null the fields not in the simplified form.
+    // When editing, preserve existing size_condition and slope_condition.
+    if (!editingArea) {
+      areaData.size_condition  = null
+      areaData.slope_condition = null
     }
 
     if (editingArea) {
-      await supabase.from('garden_areas').update(conditions).eq('id', editingArea.id)
+      await supabase.from('garden_areas').update(areaData).eq('id', editingArea.id)
     } else {
-      await supabase.from('garden_areas').insert([{ user_id: user.id, ...conditions }])
+      await supabase.from('garden_areas').insert([{ user_id: user.id, ...areaData }])
     }
 
     setSavingArea(false)
@@ -431,24 +399,16 @@ function MatchPageInner() {
   }
 
   async function handleDeleteArea(areaId: string, areaName: string) {
-    if (
-      !window.confirm(
-        `Delete "${areaName}"?\n\nPlants already added to your projects will not be removed.`,
-      )
-    ) return
-
+    if (!window.confirm(
+      `Delete "${areaName}"?\n\nPlants already added to your planting ideas will not be removed.`,
+    )) return
     setDeletingAreaId(areaId)
     await supabase.from('garden_areas').delete().eq('id', areaId)
     setDeletingAreaId(null)
     setAreas((prev) => prev.filter((a) => a.id !== areaId))
-    setAreaMatches((prev) => {
-      const next = { ...prev }
-      delete next[areaId]
-      return next
-    })
+    setAreaMatches((prev) => { const next = { ...prev }; delete next[areaId]; return next })
   }
 
-  // ── Add a recommended plant to plan with area linkage ────────────────────
   async function handleAddToAreaPlan(plantId: number, areaId: string) {
     const key = `${plantId}-${areaId}`
     setAddingToArea(key)
@@ -456,13 +416,9 @@ function MatchPageInner() {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session?.user) { setAddingToArea(null); return }
 
-    // Only insert if not already in any project
     const { data: existing } = await supabase
-      .from('user_plants')
-      .select('id')
-      .eq('user_id', session.user.id)
-      .eq('plant_id', plantId)
-      .eq('is_project', true)
+      .from('user_plants').select('id')
+      .eq('user_id', session.user.id).eq('plant_id', plantId).eq('is_project', true)
       .maybeSingle()
 
     if (!existing) {
@@ -473,37 +429,24 @@ function MatchPageInner() {
         status:         'Planning',
         garden_area_id: areaId,
       }])
-      if (!error) {
-        setProjectPlantIds((prev) => [...prev, plantId])
-      }
+      if (!error) setProjectPlantIds((prev) => [...prev, plantId])
     } else {
-      // Reflect existing state without a second DB trip
       setProjectPlantIds((prev) => (prev.includes(plantId) ? prev : [...prev, plantId]))
     }
 
     setAddingToArea(null)
   }
 
-  // ── Existing matchmaker: add to project (no area) ─────────────────────────
   const handleAddToProject = async (plantId: string) => {
     const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-    if (sessionError || !session?.user) {
-      alert('Please log in first!')
-      return
-    }
+    if (sessionError || !session?.user) { alert('Please log in first!'); return }
 
     const { data: existingProject } = await supabase
-      .from('user_plants')
-      .select('id')
-      .eq('user_id', session.user.id)
-      .eq('plant_id', Number(plantId))
-      .eq('is_project', true)
+      .from('user_plants').select('id')
+      .eq('user_id', session.user.id).eq('plant_id', Number(plantId)).eq('is_project', true)
       .maybeSingle()
 
-    if (existingProject) {
-      alert('Already in your project list.')
-      return
-    }
+    if (existingProject) { alert('Already in your planting ideas.'); return }
 
     const { error } = await supabase.from('user_plants').insert([{
       user_id:    session.user.id,
@@ -512,32 +455,29 @@ function MatchPageInner() {
       status:     'Planning',
     }])
 
-    if (!error) { alert('Added to your project!'); setSelectedPlant(null) }
+    if (!error) { alert('Added to your Future Ideas!'); setSelectedPlant(null) }
   }
 
-  // ── Existing matchmaker: live query (unchanged) ───────────────────────────
+  // ── Plant Finder live query (unchanged) ──────────────────────────────────
   useEffect(() => {
     async function getLiveMatches() {
       setLoading(true)
       const { data } = await supabase
-        .from('plants')
-        .select('*')
+        .from('plants').select('*')
         .contains('sun_requirement',   [SUN_OPTIONS[sunIdx]])
         .contains('soil_type',         [SOIL_OPTIONS[soilIdx]])
         .contains('water_behavior',    [WATER_OPTIONS[waterIdx]])
         .contains('mature_size',       [SIZE_OPTIONS[sizeIdx]])
         .contains('slope_suitability', [SLOPE_OPTIONS[slopeIdx]])
       if (data) {
-        setMatches(
-          [...data].sort((a, b) => (a.common_name || '').localeCompare(b.common_name || '')),
-        )
+        setMatches([...data].sort((a, b) => (a.common_name || '').localeCompare(b.common_name || '')))
       }
       setLoading(false)
     }
     getLiveMatches()
   }, [sunIdx, soilIdx, waterIdx, sizeIdx, slopeIdx, supabase])
 
-  // ─────────────────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────
   return (
     <main className="min-h-screen bg-[#f0f4f1] text-gray-900 pb-40">
       <div className="max-w-2xl mx-auto p-6">
@@ -546,51 +486,73 @@ function MatchPageInner() {
         <header className="mb-8 pt-4 flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-black text-green-950 tracking-tighter italic uppercase leading-none">
-              Garden Planner
+              Plan & Visualise
             </h1>
             <p className="text-[10px] text-green-700/60 font-black uppercase tracking-[0.2em] mt-2">
-              Plan each part of your garden — areas, conditions, and plant ideas.
+              Choose a garden space, get plant ideas, and visualise them.
             </p>
           </div>
           <PageHelp
-            title="Garden Planner"
-            description="Start with garden areas — name each part of your section, set conditions, and get plant suggestions. Use the plant finder below to explore more options."
+            title="Plan & Visualise"
+            description="Create garden spaces, choose a style and goal, get plant suggestions, then create a visual idea from your own photo."
             bullets={[
-              'Add areas like Front Boundary, Back Fence, or Shady Corner',
-              'Set sun, soil, style, and goals for each area',
-              'Add suggested plants to your project list',
+              'Add spaces like Front Boundary, Back Fence, or Shady Corner',
+              'Set style and goals to get relevant plant ideas',
+              'Tap Create Visual Idea on any space to see how planting could look',
             ]}
           />
         </header>
 
-        {/* ══ GARDEN AREAS ════════════════════════════════════════════════════ */}
+        {/* ── Visual Ideas entry point ─────────────────────────────────────── */}
+        <Link
+          href="/visualise"
+          className="flex items-center gap-4 bg-green-900 rounded-[2rem] p-5 mb-8 shadow-xl active:scale-[0.98] transition-all"
+        >
+          <div className="w-10 h-10 bg-white/10 rounded-[0.875rem] flex items-center justify-center text-xl shrink-0">
+            🎨
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[9px] font-black uppercase tracking-widest text-green-400 mb-0.5">
+              Saved visual ideas
+            </p>
+            <p className="text-sm font-black text-white uppercase leading-none">
+              View Visual Concepts
+            </p>
+            <p className="text-[10px] text-green-200/60 font-medium mt-0.5">
+              Upload a photo · get planting ideas · see how it could look
+            </p>
+          </div>
+          <ArrowRight size={16} className="text-green-400 shrink-0" strokeWidth={2.5} />
+        </Link>
+
+        {/* ══ GARDEN SPACES ════════════════════════════════════════════════════ */}
         <section className="mb-12">
           <div className="flex justify-between items-center mb-2">
             <h2 className="text-[10px] font-black text-green-900 uppercase tracking-[0.2em]">
-              Plan My Garden
+              My Garden Spaces
             </h2>
             <button
               onClick={openCreateForm}
               className="flex items-center gap-1.5 bg-green-900 text-white text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-full shadow-sm active:scale-95 transition-all"
             >
-              <Plus size={12} strokeWidth={3} /> New Area
+              <Plus size={12} strokeWidth={3} /> New Space
             </button>
           </div>
           <p className="text-[11px] text-gray-400 font-medium leading-snug mb-5 px-1">
-            Break your garden into areas, save their conditions, and see plants suited to each spot.
+            Name each part of your garden. Add style and goal to get plant ideas, then create a visual idea to see how it could look.
           </p>
 
           {areasLoading ? (
             <div className="py-8 text-center text-[10px] font-black uppercase tracking-widest text-gray-300 animate-pulse">
-              Building your garden plan…
+              Loading your garden spaces…
             </div>
           ) : areas.length === 0 ? (
             <div className="bg-white rounded-[2.5rem] border border-dashed border-gray-200 p-8 text-center space-y-3">
               <p className="text-sm font-black text-green-950 uppercase tracking-tight">
-                No garden areas yet
+                No garden spaces yet
               </p>
               <p className="text-[12px] text-gray-400 leading-relaxed font-medium max-w-xs mx-auto">
-                Create your first garden area and we'll recommend suitable plants for it.
+                Add a space and we'll suggest plants and let you visualise how it could look.
               </p>
               <p className="text-[11px] text-gray-300 font-medium max-w-[16rem] mx-auto leading-snug">
                 Try: Front Boundary, Back Fence, Shady Corner, or Balcony Pots.
@@ -599,14 +561,14 @@ function MatchPageInner() {
                 onClick={openCreateForm}
                 className="inline-flex items-center gap-2 bg-green-900 text-white text-[10px] font-black uppercase tracking-widest px-7 py-3 rounded-full shadow-sm active:scale-95 transition-all mt-2"
               >
-                <Plus size={14} strokeWidth={3} /> Add First Area
+                <Plus size={14} strokeWidth={3} /> Add First Space
               </button>
             </div>
           ) : (
             <div className="space-y-5">
               {areas.map((area) => {
-                const recs = areaMatches[area.id] ?? []
-                const isDeleting = deletingAreaId === area.id
+                const recs        = areaMatches[area.id] ?? []
+                const isDeleting  = deletingAreaId === area.id
 
                 return (
                   <div
@@ -627,7 +589,7 @@ function MatchPageInner() {
                         <div className="flex items-center gap-2 shrink-0">
                           <button
                             onClick={() => openEditForm(area)}
-                            title="Edit area"
+                            title="Edit space"
                             className="w-8 h-8 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 active:scale-90 transition-all"
                           >
                             <Pencil size={13} />
@@ -635,7 +597,7 @@ function MatchPageInner() {
                           <button
                             onClick={() => handleDeleteArea(area.id, area.name)}
                             disabled={isDeleting}
-                            title="Delete area"
+                            title="Delete space"
                             className="w-8 h-8 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 active:scale-90 transition-all disabled:opacity-40"
                           >
                             <Trash2 size={13} />
@@ -646,13 +608,14 @@ function MatchPageInner() {
                       {/* Condition pills */}
                       <div className="flex flex-wrap gap-1.5">
                         <ConditionPill icon={<Sun size={9} />} value={area.sun_condition} />
-                        <ConditionPill icon={<Shovel size={9} />} value={area.soil_condition} />
-                        <ConditionPill icon={<Droplets size={9} />} value={area.water_condition} />
+                        <ConditionPill icon={<Droplets size={9} />} value={area.water_condition} displayMap={WATER_DISPLAY} />
+                        <ConditionPill icon={<Shovel size={9} />} value={area.soil_condition} displayMap={SOIL_DISPLAY} />
+                        {/* Show size/slope only if saved from legacy form */}
                         <ConditionPill icon={<Ruler size={9} />} value={area.size_condition} />
                         <ConditionPill
                           icon={<TrendingUp size={9} />}
                           value={area.slope_condition}
-                          displayMap={{ flat: 'Flat', gentle: 'Gentle', moderate: 'Moderate', steep: 'Steep' }}
+                          displayMap={SLOPE_DISPLAY}
                         />
                       </div>
 
@@ -668,39 +631,47 @@ function MatchPageInner() {
                           {area.notes}
                         </p>
                       )}
+
+                      {/* Create Visual Idea for this space */}
+                      <Link
+                        href={`/visualise/new?areaId=${area.id}`}
+                        className="mt-4 inline-flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-green-700 bg-green-50 border border-green-100 px-4 py-2.5 rounded-full active:scale-95 transition-all"
+                      >
+                        <Sparkles size={10} strokeWidth={2.5} />
+                        Create Visual Idea
+                      </Link>
                     </div>
 
-                    {/* Recommendations */}
+                    {/* Suggested plants / Future Ideas for this space */}
                     <div className="border-t border-gray-50 px-6 pb-6 pt-4">
-                      <p className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400 mb-3">
-                        Suggested Plants{recs.length > 0 ? ` (${recs.length})` : ''}
+                      <p className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400 mb-1">
+                        Plant ideas for this space{recs.length > 0 ? ` · ${recs.length} suggestions` : ''}
                       </p>
                       {areaPlanningHint(area) && (
-                        <p className="text-[10px] text-gray-400 font-medium italic leading-snug -mt-2 mb-3">
+                        <p className="text-[10px] text-gray-400 font-medium italic leading-snug mb-3">
                           {areaPlanningHint(area)}
                         </p>
                       )}
 
                       {recs.length === 0 ? (
-                        <div className="space-y-1.5">
-                          <p className="text-[11px] text-gray-400 font-medium">
-                            No exact matches for these conditions.
-                          </p>
-                          <p className="text-[10px] text-gray-300 italic leading-snug">
-                            Try changing sun exposure or soil type — e.g. Part Shade or Clay soil often returns more results.
+                        <div className="space-y-2">
+                          <p className="text-[11px] text-gray-400 font-medium leading-snug">
+                            {area.style || area.goal
+                              ? 'No matched plants found. Try a different style or goal.'
+                              : 'Add a style or goal to get plant suggestions for this space.'}
                           </p>
                           <button
                             onClick={() => openEditForm(area)}
-                            className="mt-2 inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-green-700 bg-green-50 border border-green-100 px-3 py-1.5 rounded-full active:scale-95 transition-all"
+                            className="inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-green-700 bg-green-50 border border-green-100 px-3 py-1.5 rounded-full active:scale-95 transition-all"
                           >
-                            <Pencil size={9} strokeWidth={2.5} /> Adjust conditions
+                            <Pencil size={9} strokeWidth={2.5} /> Edit space details
                           </button>
                         </div>
                       ) : (
                         <div className="space-y-2">
                           {recs.map(({ plant, matchLabel }) => {
-                            const inPlan  = projectPlantIds.includes(plant.id)
-                            const addKey  = `${plant.id}-${area.id}`
+                            const inPlan   = projectPlantIds.includes(plant.id)
+                            const addKey   = `${plant.id}-${area.id}`
                             const isAdding = addingToArea === addKey
 
                             return (
@@ -722,7 +693,7 @@ function MatchPageInner() {
 
                                 {inPlan ? (
                                   <span className="text-[8px] font-black uppercase tracking-widest text-green-700 bg-green-50 border border-green-100 px-2.5 py-1 rounded-full shrink-0">
-                                    In Plan
+                                    Future Idea ✓
                                   </span>
                                 ) : (
                                   <button
@@ -730,7 +701,7 @@ function MatchPageInner() {
                                     disabled={isAdding}
                                     className="flex items-center gap-1 text-[8px] font-black uppercase tracking-widest text-white bg-green-800 px-3 py-1.5 rounded-full shrink-0 active:scale-95 transition-all disabled:opacity-50"
                                   >
-                                    {isAdding ? '…' : <><Plus size={9} strokeWidth={3} /> Plan</>}
+                                    {isAdding ? '…' : <><Plus size={9} strokeWidth={3} /> Add idea</>}
                                   </button>
                                 )}
                               </div>
@@ -751,23 +722,23 @@ function MatchPageInner() {
             <LockedProFeatureCard
               icon="📋"
               title="Planting Plan Export"
-              description="Coming soon — export your garden areas and plans as a shareable PDF."
+              description="Coming soon — export your garden spaces and planting ideas as a shareable PDF."
             />
           </section>
         )}
 
-        {/* Section divider before standalone matchmaker */}
+        {/* ── Section divider before Plant Finder ─────────────────────────── */}
         <div className="border-t border-green-900/5 mb-10" />
         <div className="mb-8 text-center space-y-1">
           <p className="text-[10px] font-black text-green-900/30 uppercase tracking-[0.3em]">
             Plant Finder
           </p>
           <p className="text-[11px] text-gray-400 font-medium max-w-xs mx-auto leading-snug">
-            Explore plants by conditions — a quick tool alongside your garden areas.
+            Explore plants by conditions — a quick tool to discover what works in each spot.
           </p>
         </div>
 
-        {/* ══ EXISTING MATCHMAKER SLIDERS (unchanged) ═════════════════════════ */}
+        {/* ══ PLANT FINDER SLIDERS (unchanged) ═════════════════════════════════ */}
         <div className="space-y-10 mb-12">
 
           {/* SUN */}
@@ -886,7 +857,7 @@ function MatchPageInner() {
           </div>
         </div>
 
-        {/* ── Results list (unchanged) ─────────────────────────────────────── */}
+        {/* ── Plant Finder results (unchanged) ────────────────────────────── */}
         <section className="relative pt-8 border-t border-green-900/5">
           <div className="flex justify-between items-center mb-6 px-1">
             <h3 className="text-[10px] font-black text-green-900 uppercase tracking-[0.2em]">
@@ -933,7 +904,7 @@ function MatchPageInner() {
         </section>
       </div>
 
-      {/* ── Existing plant detail modal (unchanged) ──────────────────────────── */}
+      {/* ── Plant detail modal (unchanged) ──────────────────────────────────── */}
       {selectedPlant && (
         <div className="fixed inset-0 z-[60] flex items-end justify-center p-4 sm:items-center">
           <div
@@ -976,13 +947,13 @@ function MatchPageInner() {
               onClick={() => handleAddToProject(selectedPlant.id)}
               className="w-full bg-amber-400 text-green-950 font-black uppercase py-4 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-transform"
             >
-              <Plus size={16} strokeWidth={3} /> Add to Project
+              <Plus size={16} strokeWidth={3} /> Add to Future Ideas
             </button>
           </div>
         </div>
       )}
 
-      {/* ── Garden Area form overlay ─────────────────────────────────────────── */}
+      {/* ── Garden Space form overlay ────────────────────────────────────────── */}
       {showAreaForm && (
         <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center sm:p-4">
           <div
@@ -994,7 +965,7 @@ function MatchPageInner() {
             {/* Sticky header */}
             <div className="sticky top-0 bg-white z-10 px-7 pt-7 pb-4 border-b border-gray-50 flex items-center justify-between">
               <h2 className="text-xl font-black text-green-950 uppercase italic tracking-tight">
-                {editingArea ? 'Edit Area' : 'New Garden Area'}
+                {editingArea ? 'Edit Space' : 'New Garden Space'}
               </h2>
               <button
                 onClick={() => { if (!savingArea) setShowAreaForm(false) }}
@@ -1004,16 +975,15 @@ function MatchPageInner() {
               </button>
             </div>
 
-            {/* Form body */}
-            <div className="px-7 py-6 space-y-8">
+            <div className="px-7 py-6 space-y-6">
 
-              {/* "Use This Style" journey — richer banner when arriving from Feature Garden */}
+              {/* "Use This Style" journey banner */}
               {initialStyle && !editingArea && (() => {
                 const info = STYLE_INFO[initialStyle]
                 return (
                   <div className="bg-green-50 border border-green-100 rounded-2xl p-5 space-y-3">
                     <p className="text-[9px] font-black uppercase tracking-[0.2em] text-green-700/70">
-                      Create a garden area inspired by this style
+                      Create a garden space inspired by this style
                     </p>
                     <p className="text-base font-black text-green-950 uppercase italic tracking-tight leading-none">
                       {initialStyle}
@@ -1036,54 +1006,30 @@ function MatchPageInner() {
                       </>
                     )}
                     <p className="text-[10px] text-green-700/60 font-medium pt-1">
-                      Give the area a name, set conditions below, then save.
+                      Give the space a name, choose a goal, then save.
                     </p>
                   </div>
                 )
               })()}
 
-              {/* Name */}
+              {/* Space name — required */}
               <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
-                  Area Name
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
+                  Space name
                 </label>
+                <p className="text-[10px] text-gray-300 font-medium mb-2">
+                  This is the only required field.
+                </p>
                 <input
                   type="text"
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
-                  placeholder="e.g. Back Fence, Shady Corner, Balcony Pots"
+                  placeholder="e.g. Front boundary, Back fence, Balcony pots"
                   className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-sm font-bold text-gray-800 placeholder:text-gray-300 outline-none focus:border-green-200 transition-colors"
                 />
               </div>
 
-              {/* Condition sliders */}
-              <FormSlider
-                label="Sun Exposure" icon={<Sun size={12} />}
-                options={SUN_OPTIONS} images={SUN_IMAGES}
-                value={formSunIdx} onChange={setFormSunIdx}
-              />
-              <FormSlider
-                label="Soil Type" icon={<Shovel size={12} />}
-                options={SOIL_OPTIONS} images={SOIL_IMAGES}
-                value={formSoilIdx} onChange={setFormSoilIdx}
-              />
-              <FormSlider
-                label="Drainage" icon={<Droplets size={12} />}
-                options={WATER_OPTIONS} images={WATER_IMAGES}
-                value={formWaterIdx} onChange={setFormWaterIdx}
-              />
-              <FormSlider
-                label="Mature Size" icon={<Ruler size={12} />}
-                options={SIZE_OPTIONS} images={SIZE_IMAGES}
-                value={formSizeIdx} onChange={setFormSizeIdx}
-                imgContain
-              />
-              <FormSlider
-                label="Slope" icon={<TrendingUp size={12} />}
-                options={SLOPE_OPTIONS} optionLabels={SLOPE_LABELS} images={SLOPE_IMAGES}
-                value={formSlopeIdx} onChange={setFormSlopeIdx}
-              />
-
+              {/* Style */}
               <OptionChips
                 label="Style"
                 optional
@@ -1092,6 +1038,7 @@ function MatchPageInner() {
                 onChange={setFormStyle}
               />
 
+              {/* Goal */}
               <OptionChips
                 label="Goal"
                 optional
@@ -1099,6 +1046,63 @@ function MatchPageInner() {
                 value={formGoal}
                 onChange={setFormGoal}
               />
+
+              {/* Optional conditions toggle */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setShowConditions((v) => !v)}
+                  className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-green-800/60 active:scale-95 transition-all"
+                >
+                  {showConditions ? <ChevronUp size={12} strokeWidth={3} /> : <ChevronDown size={12} strokeWidth={3} />}
+                  {showConditions ? 'Hide conditions' : 'Add conditions (optional)'}
+                </button>
+                <p className="text-[10px] text-gray-300 font-medium mt-1 pl-5">
+                  Sun, drainage, and soil help find more precise plants.
+                </p>
+              </div>
+
+              {showConditions && (
+                <div className="space-y-4 bg-gray-50/60 rounded-2xl p-4 border border-gray-100">
+                  <FormDropdown
+                    label="Sun exposure"
+                    hint="Full sun = 6+ hrs direct"
+                    value={formSun}
+                    onChange={setFormSun}
+                    options={[
+                      { value: '',           label: 'Not sure' },
+                      { value: 'Full Sun',   label: 'Full sun — 6+ hours direct' },
+                      { value: 'Part Shade', label: 'Part shade — morning sun or filtered light' },
+                      { value: 'Full Shade', label: 'Full shade — little direct sun' },
+                    ]}
+                  />
+                  <FormDropdown
+                    label="Drainage"
+                    hint="Well drained = water moves through quickly"
+                    value={formWater}
+                    onChange={setFormWater}
+                    options={[
+                      { value: '',             label: 'Not sure' },
+                      { value: 'Holds Water',  label: 'Poor / stays wet after rain' },
+                      { value: 'Drains Well',  label: 'Well drained — water does not sit' },
+                      { value: 'Dry',          label: 'Dry — rarely holds moisture' },
+                      { value: 'Under a Roof', label: 'Under cover / roof overhang' },
+                    ]}
+                  />
+                  <FormDropdown
+                    label="Soil"
+                    value={formSoil}
+                    onChange={setFormSoil}
+                    options={[
+                      { value: '',              label: 'Not sure' },
+                      { value: 'Healthy/loam',  label: 'Rich / loam — good garden soil' },
+                      { value: 'Clay',          label: 'Clay — heavy, holds water' },
+                      { value: 'Sandy',         label: 'Sandy — free-draining, poor nutrients' },
+                      { value: 'Potting Mix',   label: 'Potting mix / raised bed' },
+                    ]}
+                  />
+                </div>
+              )}
 
               {/* Notes */}
               <div>
@@ -1121,11 +1125,7 @@ function MatchPageInner() {
                 disabled={savingArea || !formName.trim()}
                 className="w-full bg-green-900 text-white font-black uppercase py-5 rounded-2xl text-[11px] tracking-widest shadow-lg active:scale-95 transition-all disabled:opacity-50"
               >
-                {savingArea
-                  ? 'Saving…'
-                  : editingArea
-                  ? 'Save Changes'
-                  : 'Create Area'}
+                {savingArea ? 'Saving…' : editingArea ? 'Save Changes' : 'Create Space'}
               </button>
             </div>
           </div>

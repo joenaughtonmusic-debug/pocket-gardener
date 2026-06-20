@@ -14,14 +14,13 @@ export const GARDEN_AREA_STYLE_OPTIONS = [
 
 /** Goal choices saved on garden_areas.goal */
 export const GARDEN_AREA_GOAL_OPTIONS = [
-  'Privacy / Screening',
-  'Colour',
-  'Low Maintenance',
+  'Privacy / screening',
+  'Add colour',
+  'Low maintenance',
   'Native planting',
-  'Edible garden',
-  'Child friendly',
-  'Pollinators',
-  'Not Sure',
+  'Fill a bare area',
+  'Improve entrance',
+  'Not sure',
 ] as const
 
 export type GardenAreaStyle = (typeof GARDEN_AREA_STYLE_OPTIONS)[number]
@@ -130,15 +129,21 @@ export function rankPlantsForArea(
     }
 
     // ── Goal scoring (independent of style layer) ─────────────────────────
+    if (activeGoal === 'Privacy / screening' && (type === 'hedge' || tags.includes('Formal') || tags.includes('Coastal'))) {
+      add(3, 'Good for screening')
+    }
+    if (activeGoal === 'Add colour'      && (type === 'flower' || !!plant.flower_color))            add(2, 'Adds colour')
+    if (activeGoal === 'Low maintenance' && (maint === 'low' || tags.includes('Low Maintenance'))) add(2, 'Easy care')
+    if (activeGoal === 'Native planting' && (plant.is_native  || tags.includes('Native')))          add(2, 'Native species')
+    if (activeGoal === 'Fill a bare area'&& (maint === 'low' || type === 'groundcover'))             add(2, 'Good ground cover')
+    if (activeGoal === 'Improve entrance'&& (type === 'hedge' || type === 'flower' || tags.includes('Formal'))) add(2, 'Entrance planting')
+    // Legacy goal values — support data saved before the rename
     if (activeGoal === 'Privacy / Screening' && (type === 'hedge' || tags.includes('Formal') || tags.includes('Coastal'))) {
       add(3, 'Good for screening')
     }
     if (activeGoal === 'Colour'         && (type === 'flower' || !!plant.flower_color)) add(2, 'Adds colour')
     if (activeGoal === 'Low Maintenance'&& (maint === 'low' || tags.includes('Low Maintenance'))) add(2, 'Easy care')
-    if (activeGoal === 'Native planting'&& (plant.is_native  || tags.includes('Native')))          add(2, 'Native species')
     if (activeGoal === 'Edible garden'  && (type === 'fruit'  || tags.includes('Edible')))          add(2, 'Edible pick')
-    if (activeGoal === 'Pollinators'    && type === 'flower')                          add(1, 'Pollinator-friendly')
-    if (activeGoal === 'Child friendly' && (maint === 'low' || tags.includes('Low Maintenance')))   add(1, 'Easy care')
 
     return { plant, score, matchLabel: labels[0] ?? null }
   })
