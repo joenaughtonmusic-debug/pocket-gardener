@@ -1,9 +1,34 @@
-import { createFalClient } from '@fal-ai/client'
+import { createFalClient, ApiError } from '@fal-ai/client'
 import { createPlacementMask, createCentralMask, normalizePlantingType } from '../createPlacementMask'
 import { describeSpeciesListForImage } from '../describePlantForImage'
 import type { ImageProvider, ImageProviderInput, ImageProviderResult } from './types'
 
 const FAL_ENDPOINT = 'fal-ai/flux-pro/v1/fill'
+
+// ---------------------------------------------------------------------------
+// Error helpers
+// ---------------------------------------------------------------------------
+
+interface FalErrorDetail {
+  isApiError: boolean
+  status?: number
+  detail?: unknown
+  message: string
+}
+
+function extractFalError(err: unknown): FalErrorDetail {
+  if (err instanceof ApiError) {
+    const body = err.body as Record<string, unknown> | null | undefined
+    return {
+      isApiError: true,
+      status: err.status,
+      detail: body?.detail ?? body ?? null,
+      message: String(body?.detail ?? err.status ?? 'fal ApiError'),
+    }
+  }
+  const message = err instanceof Error ? err.message : String(err)
+  return { isApiError: false, message }
+}
 
 // ---------------------------------------------------------------------------
 // Prompt builder — inpainting-specific wording
@@ -54,7 +79,16 @@ function buildFalPrompt(input: ImageProviderInput): string {
 export class FalProvider implements ImageProvider {
   async generate(input: ImageProviderInput): Promise<ImageProviderResult> {
     const falKey = process.env.FAL_KEY
+    const falKeyPresent = !!falKey
+
+    console.log('[fal] Starting generation', {
+      provider: 'fal',
+      endpoint: FAL_ENDPOINT,
+      falKeyPresent,
+    })
+
     if (!falKey) {
+      console.error('[fal] FAL_KEY is missing — cannot proceed')
       return {
         imageBuffer: null,
         error: 'FAL_KEY environment variable is not set. Add it to enable fal.ai image generation.',
@@ -68,14 +102,17 @@ export class FalProvider implements ImageProvider {
     try {
       const res = await fetch(input.originalPhotoUrl)
       if (!res.ok) {
+        console.error('[fal] Original photo download failed', { httpStatus: res.status })
         return {
           imageBuffer: null,
           error: `Could not download original photo (HTTP ${res.status}).`,
         }
       }
       originalBuffer = Buffer.from(await res.arrayBuffer())
+      console.log('[fal] Original photo downloaded', { bytes: originalBuffer.byteLength })
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
+      console.error('[fal] Original photo download threw', { message: msg })
       return { imageBuffer: null, error: `Could not download original photo: ${msg}` }
     }
 
@@ -101,28 +138,29 @@ export class FalProvider implements ImageProvider {
         console.log('[fal] Mask generated from placement point', {
           maskType,
           placementPoint: input.placementPoint,
+          bytes: maskBuffer.byteLength,
         })
       } else {
-        console.warn(
-          '[fal] No placement point provided — using central fallback mask. ' +
-          'Ask the user to mark a placement point for better results.',
-        )
+        console.warn('[fal] No placement point — using central fallback mask')
         maskBuffer = await createCentralMask(originalBuffer, rawPlantingType)
+        console.log('[fal] Central fallback mask generated', { maskType, bytes: maskBuffer.byteLength })
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
+      console.error('[fal] Mask generation failed', { message: msg })
       return { imageBuffer: null, error: `Mask generation failed: ${msg}` }
     }
 
     // 3. Build prompt
     const prompt = buildFalPrompt(input)
 
-    // 4. Configure fal client and upload files
+    // 4. Upload image and mask to fal storage
     const falClient = createFalClient({ credentials: falKey })
 
     let imageUrl: string
     let maskUrl: string
     try {
+      console.log('[fal] Uploading image and mask to fal storage...')
       const imageFile = new File([new Uint8Array(originalBuffer)], 'garden-photo.png', { type: 'image/png' })
       const maskFile = new File([new Uint8Array(maskBuffer)], 'mask.png', { type: 'image/png' })
 
@@ -130,17 +168,32 @@ export class FalProvider implements ImageProvider {
         falClient.storage.upload(imageFile),
         falClient.storage.upload(maskFile),
       ])
+      console.log('[fal] Storage upload succeeded', {
+        imageUrl: imageUrl.slice(0, 60) + '…',
+        maskUrl: maskUrl.slice(0, 60) + '…',
+      })
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err)
-      return { imageBuffer: null, error: `Failed to upload images to fal storage: ${msg}` }
+      const detail = extractFalError(err)
+      console.error('[fal] Storage upload FAILED', {
+        stage: 'storage_upload',
+        isApiError: detail.isApiError,
+        status: detail.status,
+        detail: detail.detail,
+        message: detail.message,
+      })
+      return {
+        imageBuffer: null,
+        error: `Failed to upload images to fal storage: ${detail.message}`,
+      }
     }
 
     // 5. Call Flux Pro Fill inpainting endpoint
     let resultImageUrl: string
     try {
-      console.log('[fal] Calling endpoint', FAL_ENDPOINT, {
+      console.log('[fal] Calling model endpoint', {
+        endpoint: FAL_ENDPOINT,
         species: input.selectedSpecies,
-        plantingType: input.plantingType,
+        maskType,
         hasPlacementPoint: !!input.placementPoint,
       })
 
@@ -152,23 +205,31 @@ export class FalProvider implements ImageProvider {
         },
       })
 
-      // The result type is unknown — access safely
       const data = result?.data as Record<string, unknown> | undefined
       const images = data?.images as Array<{ url: string }> | undefined
       const firstImageUrl = images?.[0]?.url
 
       if (!firstImageUrl) {
-        return {
-          imageBuffer: null,
-          error: 'fal.ai returned no image in the response.',
-        }
+        console.error('[fal] Model returned no image', { data })
+        return { imageBuffer: null, error: 'fal.ai returned no image in the response.' }
       }
 
       resultImageUrl = firstImageUrl
+      console.log('[fal] Model call succeeded', { resultImageUrl: resultImageUrl.slice(0, 60) + '…' })
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err)
-      console.error('[fal] Endpoint call failed:', msg)
-      return { imageBuffer: null, error: `fal.ai image generation failed: ${msg}` }
+      const detail = extractFalError(err)
+      console.error('[fal] Model subscribe FAILED', {
+        stage: 'model_subscribe',
+        endpoint: FAL_ENDPOINT,
+        isApiError: detail.isApiError,
+        status: detail.status,
+        detail: detail.detail,
+        message: detail.message,
+      })
+      return {
+        imageBuffer: null,
+        error: `fal.ai image generation failed: ${detail.message}`,
+      }
     }
 
     // 6. Download the generated image
@@ -176,6 +237,7 @@ export class FalProvider implements ImageProvider {
     try {
       const res = await fetch(resultImageUrl)
       if (!res.ok) {
+        console.error('[fal] Result image download failed', { httpStatus: res.status })
         return {
           imageBuffer: null,
           error: `Could not download fal.ai result image (HTTP ${res.status}).`,
@@ -184,6 +246,7 @@ export class FalProvider implements ImageProvider {
       imageBuffer = Buffer.from(await res.arrayBuffer())
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
+      console.error('[fal] Result image download threw', { message: msg })
       return { imageBuffer: null, error: `Failed to download fal.ai result: ${msg}` }
     }
 
