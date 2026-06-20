@@ -34,39 +34,88 @@ function extractFalError(err: unknown): FalErrorDetail {
 // Prompt builder — inpainting-specific wording
 // ---------------------------------------------------------------------------
 
+function shrubSizeInstruction(): string {
+  return (
+    'Add a mature, full-sized garden shrub that fills most of the masked area. ' +
+    'The shrub should be approximately knee to waist height — roughly 60–100 cm tall depending on perspective. ' +
+    'It must have clear woody shrub structure with visible leafy volume, not a flat groundcover or grass clump.'
+  )
+}
+
 function buildFalPrompt(input: ImageProviderInput): string {
-  const {
-    goalText,
-    detectedIntent,
-    selectedSpecies,
-    hedgeForm,
-    plantingType,
-  } = input
-
+  const { goalText, detectedIntent, selectedSpecies, hedgeForm, plantingType } = input
+  const normalizedType = normalizePlantingType(plantingType)
   const speciesDescription = describeSpeciesListForImage(selectedSpecies)
+  const speciesLabel = selectedSpecies.length > 0 ? selectedSpecies.join(' / ') : 'the selected plant'
 
-  let hedgeInstructions = ''
+  // ── Hedge form ────────────────────────────────────────────────────────────
+  let hedgeFormInstruction = ''
   if (hedgeForm === 'raised_or_pleached_screen') {
-    hedgeInstructions =
-      `Show the ${selectedSpecies.join(' / ') || 'plants'} foliage mainly above 50 cm with visible trunks or stems below — a raised or pleached screen form with open space underneath.`
+    hedgeFormInstruction =
+      `Show the ${speciesLabel} foliage mainly above 50 cm with visible trunks or stems below — ` +
+      `a raised or pleached screen form with open space underneath.`
   } else if (hedgeForm === 'full_coverage_from_ground') {
-    hedgeInstructions =
-      `Show dense foliage right from ground level — full coverage from the base up, no visible gaps or bare stems.`
+    hedgeFormInstruction =
+      `Show dense foliage right from ground level — full coverage from the base up, no gaps or bare stems.`
   }
 
-  const sizeInstruction =
-    'Show the planting as mature, full-sized, lush, healthy, and realistically integrated into the existing planting bed.'
+  // ── Size / form instruction by planting type ──────────────────────────────
+  let sizeInstruction: string
+  if (normalizedType === 'shrubs') {
+    sizeInstruction = shrubSizeInstruction()
+  } else if (normalizedType === 'feature_tree') {
+    sizeInstruction =
+      'Show a mature, full-sized specimen tree with clear trunk and canopy, realistically integrated into the garden.'
+  } else if (normalizedType === 'groundcovers') {
+    sizeInstruction =
+      'Show a low, spreading groundcover planting filling the masked area at ground level.'
+  } else {
+    sizeInstruction =
+      'Show the planting as mature, full-sized, lush, healthy, and realistically integrated into the existing garden.'
+  }
+
+  // ── Negative instructions ─────────────────────────────────────────────────
+  const negatives = [
+    'Do not simply clone or duplicate nearby existing plants.',
+    'Do not fill the mask with generic garden texture or a copied patch of the surrounding ground.',
+    'Create the selected plant as a new, distinct plant with its own form and character.',
+    normalizedType === 'shrubs' || normalizedType === 'feature_tree'
+      ? 'Do not make the plant look like a grass clump or groundcover.'
+      : '',
+    'Do not add text labels, watermarks, arrows, or any overlay.',
+    'Do not alter, recolour, or replace anything outside the white masked area.',
+  ].filter(Boolean).join(' ')
 
   const lines = [
-    `ONLY modify the white masked area of the image. Preserve everything outside the mask exactly as it appears — sky, structures, paths, fences, existing trees, and all existing plants outside the mask must remain unchanged.`,
-    ``,
-    `In the masked area, paint: ${speciesDescription}.`,
+    // Mask instruction — the most important constraint, stated first
+    'TASK: Fill ONLY the white masked area of the image with new planting. ' +
+    'Preserve everything outside the mask exactly as it appears — ' +
+    'sky, structures, paths, fences, existing trees, and all plants outside the mask must remain pixel-perfect and unchanged.',
+
+    '',
+
+    // Species — the primary creative instruction
+    `SPECIES TO PLANT: ${speciesDescription}.`,
+    `The plant in the masked area must look like ${speciesLabel} specifically — ` +
+    `match its characteristic leaf shape, colour, texture, and natural growth habit.`,
+
+    '',
+
+    // Scale / form
     sizeInstruction,
-    hedgeInstructions,
-    plantingType ? `Planting type: ${plantingType}.` : '',
-    `Planting goal: ${goalText || detectedIntent}.`,
-    ``,
-    `Do NOT add text labels, watermarks, arrows, or any overlay. This is a realistic garden planting concept for visual inspiration only.`,
+    hedgeFormInstruction,
+
+    '',
+
+    // Context / goal
+    goalText || detectedIntent
+      ? `Garden goal: ${goalText || detectedIntent}.`
+      : '',
+
+    '',
+
+    // Negatives
+    negatives,
   ]
 
   return lines.filter(Boolean).join('\n')
@@ -193,8 +242,10 @@ export class FalProvider implements ImageProvider {
       console.log('[fal] Calling model endpoint', {
         endpoint: FAL_ENDPOINT,
         species: input.selectedSpecies,
+        speciesDescriptor: describeSpeciesListForImage(input.selectedSpecies).slice(0, 120),
         maskType,
         hasPlacementPoint: !!input.placementPoint,
+        promptLength: prompt.length,
       })
 
       const result = await falClient.subscribe(FAL_ENDPOINT, {
