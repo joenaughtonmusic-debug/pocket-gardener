@@ -14,7 +14,7 @@ const KNOWN_SPECIES: Record<string, string> = {
   griselinia:
     'dense bright apple-green oval leaves, clean hedge texture, upright evergreen shrub',
   camellia:
-    'an upright evergreen shrub with glossy dark-green oval leaves, dense woody branching, rounded natural shrub form — larger leaves than groundcovers, approximately 80 cm to 1.2 m wide. Do not make it look like grass, mondo grass, groundcover, or a copied existing plant.',
+    'Camellia japonica: an upright evergreen garden shrub with glossy dark-green oval leaves and a dense rounded woody form',
   lomandra:
     'fine strappy grass-like clumps with arching mid-green foliage, low-growing tussock form',
   hydrangea:

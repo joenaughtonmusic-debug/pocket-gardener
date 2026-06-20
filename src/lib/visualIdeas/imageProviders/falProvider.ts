@@ -34,88 +34,66 @@ function extractFalError(err: unknown): FalErrorDetail {
 // Prompt builder — inpainting-specific wording
 // ---------------------------------------------------------------------------
 
-function shrubSizeInstruction(): string {
-  return (
-    'Add a mature, full-sized garden shrub that fills most of the masked area. ' +
-    'The shrub should be approximately knee to waist height — roughly 60–100 cm tall depending on perspective. ' +
-    'It must have clear woody shrub structure with visible leafy volume, not a flat groundcover or grass clump.'
-  )
-}
-
 function buildFalPrompt(input: ImageProviderInput): string {
   const { goalText, detectedIntent, selectedSpecies, hedgeForm, plantingType } = input
   const normalizedType = normalizePlantingType(plantingType)
   const speciesDescription = describeSpeciesListForImage(selectedSpecies)
-  const speciesLabel = selectedSpecies.length > 0 ? selectedSpecies.join(' / ') : 'the selected plant'
+  const speciesLabel = selectedSpecies.length > 0 ? selectedSpecies.join(' / ') : 'a garden plant'
+
+  // ── Form instruction — short, positive, type-aware ────────────────────────
+  let formInstruction: string
+  if (normalizedType === 'shrubs') {
+    formInstruction =
+      `Create one clearly visible, healthy, rounded woody garden shrub filling most of the masked area. ` +
+      `The shrub should be knee to waist height with leafy volume and woody branching.`
+  } else if (normalizedType === 'feature_tree') {
+    formInstruction = `Show a healthy specimen tree with a visible trunk and full canopy filling the masked area.`
+  } else if (normalizedType === 'groundcovers') {
+    formInstruction = `Show a low spreading groundcover plant filling the masked area at ground level.`
+  } else if (normalizedType === 'hedge' || normalizedType === 'screening' || normalizedType === 'border_planting') {
+    formInstruction = `Show dense, lush hedge planting filling the masked area.`
+  } else {
+    formInstruction = `Show a healthy, lush plant filling the masked area naturally.`
+  }
 
   // ── Hedge form ────────────────────────────────────────────────────────────
   let hedgeFormInstruction = ''
   if (hedgeForm === 'raised_or_pleached_screen') {
     hedgeFormInstruction =
-      `Show the ${speciesLabel} foliage mainly above 50 cm with visible trunks or stems below — ` +
-      `a raised or pleached screen form with open space underneath.`
+      `Show foliage mainly above 50 cm with visible trunks or stems below — raised or pleached form.`
   } else if (hedgeForm === 'full_coverage_from_ground') {
-    hedgeFormInstruction =
-      `Show dense foliage right from ground level — full coverage from the base up, no gaps or bare stems.`
+    hedgeFormInstruction = `Show dense foliage right from ground level with no gaps.`
   }
-
-  // ── Size / form instruction by planting type ──────────────────────────────
-  let sizeInstruction: string
-  if (normalizedType === 'shrubs') {
-    sizeInstruction = shrubSizeInstruction()
-  } else if (normalizedType === 'feature_tree') {
-    sizeInstruction =
-      'Show a mature, full-sized specimen tree with clear trunk and canopy, realistically integrated into the garden.'
-  } else if (normalizedType === 'groundcovers') {
-    sizeInstruction =
-      'Show a low, spreading groundcover planting filling the masked area at ground level.'
-  } else {
-    sizeInstruction =
-      'Show the planting as mature, full-sized, lush, healthy, and realistically integrated into the existing garden.'
-  }
-
-  // ── Negative instructions ─────────────────────────────────────────────────
-  const negatives = [
-    'Do not simply clone or duplicate nearby existing plants.',
-    'Do not fill the mask with generic garden texture or a copied patch of the surrounding ground.',
-    'Create the selected plant as a new, distinct plant with its own form and character.',
-    normalizedType === 'shrubs' || normalizedType === 'feature_tree'
-      ? 'Do not make the plant look like a grass clump or groundcover.'
-      : '',
-    'Do not add text labels, watermarks, arrows, or any overlay.',
-    'Do not alter, recolour, or replace anything outside the white masked area.',
-  ].filter(Boolean).join(' ')
 
   const lines = [
-    // Mask instruction — the most important constraint, stated first
-    'TASK: Fill ONLY the white masked area of the image with new planting. ' +
-    'Preserve everything outside the mask exactly as it appears — ' +
-    'sky, structures, paths, fences, existing trees, and all plants outside the mask must remain pixel-perfect and unchanged.',
+    // 1. Primary action — stated first so the model leads with creation, not preservation
+    `Add ${speciesLabel} to the white masked area of the image. ` +
+    `The masked area should visibly contain the new plant after editing.`,
 
     '',
 
-    // Species — the primary creative instruction
-    `SPECIES TO PLANT: ${speciesDescription}.`,
-    `The plant in the masked area must look like ${speciesLabel} specifically — ` +
-    `match its characteristic leaf shape, colour, texture, and natural growth habit.`,
+    // 2. Species identity
+    `Plant species: ${speciesDescription}.`,
+    `Match the characteristic leaf shape, colour, texture, and natural growth habit of ${speciesLabel}.`,
 
     '',
 
-    // Scale / form
-    sizeInstruction,
+    // 3. Form
+    formInstruction,
     hedgeFormInstruction,
 
     '',
 
-    // Context / goal
-    goalText || detectedIntent
-      ? `Garden goal: ${goalText || detectedIntent}.`
-      : '',
+    // 4. Goal context (brief)
+    goalText || detectedIntent ? `Garden goal: ${goalText || detectedIntent}.` : '',
 
     '',
 
-    // Negatives
-    negatives,
+    // 5. Minimal constraints — only what matters
+    `Keep everything outside the masked area exactly as it appears. ` +
+    `Do not alter the sky, structures, paths, or existing plants outside the mask. ` +
+    `Do not clone nearby plants. Do not add text or labels. ` +
+    `Blend the new plant's lighting and shadows naturally with the scene.`,
   ]
 
   return lines.filter(Boolean).join('\n')
