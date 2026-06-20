@@ -1,11 +1,13 @@
+import { getPlantVisualForm, VISUAL_FORM_DESCRIPTORS } from './plantVisualForms'
+
 /**
  * Returns a visual description of a plant species suitable for inclusion in an
  * image-generation prompt.  Descriptions focus on leaf shape, colour, texture,
  * and overall form — the details that a vision model needs to render the plant
  * convincingly.
  *
- * For known species we return a curated description.
- * For unknowns we fall back to the common name with any notes appended.
+ * When a species-specific description exists it is used; otherwise the visual
+ * form category description fills in.
  */
 
 const KNOWN_SPECIES: Record<string, string> = {
@@ -48,40 +50,57 @@ const KNOWN_SPECIES: Record<string, string> = {
 }
 
 /**
- * @param speciesName  The species common or scientific name (case-insensitive).
+ * @param speciesName    The species common or scientific name (case-insensitive).
+ * @param plantingType   Optional planting type — improves form classification for
+ *                       context-dependent species (e.g. Titoki as hedge vs. tree).
  * @param fallbackNotes  Optional free-text description / notes from the plant library.
  */
 export function describePlantForImage(
   speciesName: string,
+  plantingType?: string | null,
   fallbackNotes?: string | null,
 ): string {
   const key = speciesName.toLowerCase().trim()
 
-  // Try exact match
+  // 1. Species-specific curator description (highest priority)
+  let speciesText: string | null = null
   if (KNOWN_SPECIES[key]) {
-    return `${speciesName} — ${KNOWN_SPECIES[key]}`
-  }
-
-  // Try partial match (e.g. "Griselinia littoralis" → matches "griselinia")
-  for (const [knownKey, description] of Object.entries(KNOWN_SPECIES)) {
-    if (key.includes(knownKey) || knownKey.includes(key)) {
-      return `${speciesName} — ${description}`
+    speciesText = KNOWN_SPECIES[key]
+  } else {
+    for (const [knownKey, description] of Object.entries(KNOWN_SPECIES)) {
+      if (key.includes(knownKey) || knownKey.includes(key)) {
+        speciesText = description
+        break
+      }
     }
   }
 
-  // Fallback: name + any library notes
-  if (fallbackNotes) {
-    return `${speciesName} — ${fallbackNotes}`
+  // 2. Visual form category description (fills in when no species text, or augments it)
+  const form = getPlantVisualForm(speciesName, plantingType)
+  const formDescriptor = VISUAL_FORM_DESCRIPTORS[form]
+
+  if (speciesText) {
+    return `${speciesName} — ${speciesText}`
   }
 
-  return speciesName
+  if (fallbackNotes) {
+    return `${speciesName} (${formDescriptor.description}) — ${fallbackNotes}`
+  }
+
+  return `${speciesName} — ${formDescriptor.description}`
 }
 
 /**
  * Builds a combined species description string for multiple species, suitable
  * for embedding directly in an image prompt.
+ *
+ * @param species      List of species names.
+ * @param plantingType Optional planting type for context-dependent form classification.
  */
-export function describeSpeciesListForImage(species: string[]): string {
+export function describeSpeciesListForImage(
+  species: string[],
+  plantingType?: string | null,
+): string {
   if (species.length === 0) return 'suitable mature garden plants'
-  return species.map((s) => describePlantForImage(s)).join('; ')
+  return species.map((s) => describePlantForImage(s, plantingType)).join('; ')
 }

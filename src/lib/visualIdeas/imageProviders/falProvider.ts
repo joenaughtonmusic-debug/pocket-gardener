@@ -8,6 +8,7 @@ import {
   type MaskGeometry,
 } from '../createPlacementMask'
 import { describeSpeciesListForImage } from '../describePlantForImage'
+import { getPlantVisualForm, VISUAL_FORM_DESCRIPTORS } from '../plantVisualForms'
 import type { ImageProvider, ImageProviderInput, ImageProviderResult } from './types'
 
 const FAL_ENDPOINT = 'fal-ai/flux-pro/v1/fill'
@@ -97,32 +98,24 @@ async function uploadDebugAssets(
 // Prompt builder — inpainting-specific wording
 // ---------------------------------------------------------------------------
 
+/** Returns the primary visual form for the first selected species (or plantingType fallback). */
+function resolveVisualForm(selectedSpecies: string[], plantingType: string | null | undefined) {
+  const primarySpecies = selectedSpecies[0] ?? ''
+  return getPlantVisualForm(primarySpecies, plantingType)
+}
+
 function buildFalPrompt(input: ImageProviderInput): string {
   const { goalText, detectedIntent, selectedSpecies, hedgeForm, plantingType } = input
-  const normalizedType = normalizePlantingType(plantingType)
-  const speciesDescription = describeSpeciesListForImage(selectedSpecies)
   const speciesLabel = selectedSpecies.length > 0 ? selectedSpecies.join(' / ') : 'a garden plant'
 
-  // ── Form instruction — short, positive, type-aware ────────────────────────
-  let formInstruction: string
-  if (normalizedType === 'shrubs') {
-    formInstruction =
-      `Fill the masked area with one clearly visible, healthy garden shrub. ` +
-      `Use natural mid-to-dark green foliage — not black foliage. ` +
-      `Show realistic woody branching and leafy volume, not a perfectly round artificial mound. ` +
-      `Blend the plant naturally into the garden bed with a realistic contact shadow. ` +
-      `Do not make the plant look like a copied nearby shrub.`
-  } else if (normalizedType === 'feature_tree') {
-    formInstruction = `Show a healthy specimen tree with a visible trunk and full canopy filling the masked area.`
-  } else if (normalizedType === 'groundcovers') {
-    formInstruction = `Show a low spreading groundcover plant filling the masked area at ground level.`
-  } else if (normalizedType === 'hedge' || normalizedType === 'screening' || normalizedType === 'border_planting') {
-    formInstruction = `Show dense, lush hedge planting filling the masked area.`
-  } else {
-    formInstruction = `Show a healthy, lush plant filling the masked area naturally.`
-  }
+  // Species description now includes planting type context
+  const speciesDescription = describeSpeciesListForImage(selectedSpecies, plantingType)
 
-  // ── Hedge form ────────────────────────────────────────────────────────────
+  // Visual form drives the core form + negatives instructions
+  const visualForm = resolveVisualForm(selectedSpecies, plantingType)
+  const formDescriptor = VISUAL_FORM_DESCRIPTORS[visualForm]
+
+  // Hedge form override (user-selected display preference)
   let hedgeFormInstruction = ''
   if (hedgeForm === 'raised_or_pleached_screen') {
     hedgeFormInstruction =
@@ -132,34 +125,36 @@ function buildFalPrompt(input: ImageProviderInput): string {
   }
 
   const lines = [
-    // 1. Primary action — stated first so the model leads with creation, not preservation
+    // 1. Primary action
     `Add ${speciesLabel} to the white masked area of the image. ` +
     `The masked area should visibly contain the new plant after editing.`,
 
     '',
 
-    // 2. Species identity
+    // 2. Species + visual form identity
     `Plant species: ${speciesDescription}.`,
-    `Match the characteristic leaf shape, colour, texture, and natural growth habit of ${speciesLabel}.`,
+    `The plant must match the selected species and this visual form: ${formDescriptor.description}.`,
 
     '',
 
-    // 3. Form
-    formInstruction,
+    // 3. Form instruction + scale + hedge display preference
+    formDescriptor.formInstruction,
+    formDescriptor.scaleHint,
     hedgeFormInstruction,
 
     '',
 
-    // 4. Goal context (brief)
+    // 4. Goal (brief)
     goalText || detectedIntent ? `Garden goal: ${goalText || detectedIntent}.` : '',
 
     '',
 
-    // 5. Minimal constraints — only what matters
+    // 5. Constraints: preservation outside mask + form-specific negatives
     `Keep everything outside the masked area exactly as it appears. ` +
     `Do not alter the sky, structures, paths, or existing plants outside the mask. ` +
     `Do not clone nearby plants. Do not add text or labels. ` +
-    `Blend the new plant's lighting and shadows naturally with the scene.`,
+    `Blend the new plant's lighting and shadows naturally with the scene. ` +
+    formDescriptor.negatives,
   ]
 
   return lines.filter(Boolean).join('\n')
@@ -311,10 +306,12 @@ export class FalProvider implements ImageProvider {
     // 5. Call Flux Pro Fill inpainting endpoint
     let resultImageUrl: string
     try {
+      const visualForm = resolveVisualForm(input.selectedSpecies, input.plantingType)
       console.log('[fal] Calling model endpoint', {
         endpoint: FAL_ENDPOINT,
         species: input.selectedSpecies,
-        speciesDescriptor: describeSpeciesListForImage(input.selectedSpecies).slice(0, 120),
+        visualForm,
+        speciesDescriptor: describeSpeciesListForImage(input.selectedSpecies, input.plantingType).slice(0, 160),
         maskType,
         hasPlacementPoint: !!input.placementPoint,
         promptLength: prompt.length,
