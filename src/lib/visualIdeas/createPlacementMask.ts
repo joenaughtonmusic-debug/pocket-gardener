@@ -57,7 +57,7 @@ function getOvalSpec(plantingType: string | null | undefined): OvalSpec {
     return { rxFrac: 0.11, ryFrac: 0.04, cyCorrectionFrac: 0 }
   }
   if (t === 'shrubs') {
-    return { rxFrac: 0.07, ryFrac: 0.05, cyCorrectionFrac: 0 }
+    return { rxFrac: 0.09, ryFrac: 0.10, cyCorrectionFrac: 0 }
   }
   return { rxFrac: 0.08, ryFrac: 0.06, cyCorrectionFrac: 0 }
 }
