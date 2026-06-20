@@ -1,5 +1,12 @@
 import { createFalClient, ApiError } from '@fal-ai/client'
-import { createPlacementMask, createCentralMask, normalizePlantingType } from '../createPlacementMask'
+import { createClient } from '@supabase/supabase-js'
+import {
+  createPlacementMask,
+  createCentralMask,
+  createDebugOverlay,
+  normalizePlantingType,
+  type MaskGeometry,
+} from '../createPlacementMask'
 import { describeSpeciesListForImage } from '../describePlantForImage'
 import type { ImageProvider, ImageProviderInput, ImageProviderResult } from './types'
 
@@ -28,6 +35,59 @@ function extractFalError(err: unknown): FalErrorDetail {
   }
   const message = err instanceof Error ? err.message : String(err)
   return { isApiError: false, message }
+}
+
+// ---------------------------------------------------------------------------
+// Debug mask upload  (only runs when VISUAL_IDEAS_DEBUG_MASK=true)
+// ---------------------------------------------------------------------------
+
+async function uploadDebugAssets(
+  maskBuffer: Buffer,
+  originalBuffer: Buffer,
+  geometry: MaskGeometry,
+): Promise<void> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!supabaseUrl || !serviceKey) {
+    console.warn('[fal][debug] Skipping debug upload — SUPABASE env vars missing')
+    return
+  }
+
+  const admin = createClient(supabaseUrl, serviceKey)
+  const ts = Date.now()
+  const maskPath = `visual-ideas/debug-masks/mask-${ts}.png`
+  const overlayPath = `visual-ideas/debug-masks/overlay-${ts}.png`
+
+  // Upload mask
+  const { error: maskErr } = await admin.storage
+    .from('weed-images')
+    .upload(maskPath, maskBuffer, { contentType: 'image/png', upsert: false })
+
+  if (maskErr) {
+    console.error('[fal][debug] Mask upload failed', { message: maskErr.message })
+  } else {
+    const { data: { publicUrl: maskUrl } } = admin.storage.from('weed-images').getPublicUrl(maskPath)
+    console.log('[fal][debug] Mask URL', maskUrl)
+  }
+
+  // Build and upload overlay
+  try {
+    const overlayBuffer = await createDebugOverlay(originalBuffer, geometry)
+    const { error: overlayErr } = await admin.storage
+      .from('weed-images')
+      .upload(overlayPath, overlayBuffer, { contentType: 'image/png', upsert: false })
+
+    if (overlayErr) {
+      console.error('[fal][debug] Overlay upload failed', { message: overlayErr.message })
+    } else {
+      const { data: { publicUrl: overlayUrl } } = admin.storage.from('weed-images').getPublicUrl(overlayPath)
+      console.log('[fal][debug] Overlay URL', overlayUrl)
+    }
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error('[fal][debug] Overlay generation failed', { message: msg })
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -145,6 +205,7 @@ export class FalProvider implements ImageProvider {
 
     // 2. Generate mask
     let maskBuffer: Buffer
+    let maskGeometry: MaskGeometry
     const rawPlantingType = input.plantingType ?? null
     const normalizedPlantingType = normalizePlantingType(rawPlantingType)
     const maskType = normalizedPlantingType ?? 'fallback'
@@ -157,25 +218,52 @@ export class FalProvider implements ImageProvider {
 
     try {
       if (input.placementPoint) {
-        maskBuffer = await createPlacementMask(
-          originalBuffer,
-          input.placementPoint,
-          rawPlantingType,
-        )
-        console.log('[fal] Mask generated from placement point', {
+        const result = await createPlacementMask(originalBuffer, input.placementPoint, rawPlantingType)
+        maskBuffer = result.maskBuffer
+        maskGeometry = result.geometry
+        console.log('[fal] Mask geometry (placement point)', {
+          imageWidth: maskGeometry.imageWidth,
+          imageHeight: maskGeometry.imageHeight,
+          tapX: maskGeometry.tapX,
+          tapY: maskGeometry.tapY,
+          maskCx: maskGeometry.maskCx,
+          maskCy: maskGeometry.maskCy,
+          maskRx: maskGeometry.maskRx,
+          maskRy: maskGeometry.maskRy,
+          maskWidthPct: `${maskGeometry.maskWidthPct}%`,
+          maskHeightPct: `${maskGeometry.maskHeightPct}%`,
           maskType,
-          placementPoint: input.placementPoint,
-          bytes: maskBuffer.byteLength,
+          normalizedPlantingType,
         })
       } else {
         console.warn('[fal] No placement point — using central fallback mask')
-        maskBuffer = await createCentralMask(originalBuffer, rawPlantingType)
-        console.log('[fal] Central fallback mask generated', { maskType, bytes: maskBuffer.byteLength })
+        const result = await createCentralMask(originalBuffer, rawPlantingType)
+        maskBuffer = result.maskBuffer
+        maskGeometry = result.geometry
+        console.log('[fal] Mask geometry (central fallback)', {
+          imageWidth: maskGeometry.imageWidth,
+          imageHeight: maskGeometry.imageHeight,
+          maskCx: maskGeometry.maskCx,
+          maskCy: maskGeometry.maskCy,
+          maskRx: maskGeometry.maskRx,
+          maskRy: maskGeometry.maskRy,
+          maskWidthPct: `${maskGeometry.maskWidthPct}%`,
+          maskHeightPct: `${maskGeometry.maskHeightPct}%`,
+          maskType,
+        })
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
       console.error('[fal] Mask generation failed', { message: msg })
       return { imageBuffer: null, error: `Mask generation failed: ${msg}` }
+    }
+
+    // Debug upload (fire-and-forget, does not block generation)
+    if (process.env.VISUAL_IDEAS_DEBUG_MASK === 'true') {
+      uploadDebugAssets(maskBuffer, originalBuffer, maskGeometry).catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : String(err)
+        console.error('[fal][debug] uploadDebugAssets threw', { message: msg })
+      })
     }
 
     // 3. Build prompt

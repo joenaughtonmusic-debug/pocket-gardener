@@ -27,15 +27,9 @@ export function normalizePlantingType(value: string | null | undefined): string 
   return null
 }
 
-/**
- * Generates a black-and-white PNG mask matching the input image dimensions.
- *
- * White area  = region to inpaint (where the model should draw the new plant).
- * Black area  = everything outside — must be preserved exactly.
- *
- * Mask oval sizes are expressed as fractions of image width / height so they
- * scale correctly regardless of the original photo resolution.
- */
+// ---------------------------------------------------------------------------
+// Oval geometry
+// ---------------------------------------------------------------------------
 
 interface OvalSpec {
   /** Horizontal radius as a fraction of image width  (0–1) */
@@ -44,8 +38,8 @@ interface OvalSpec {
   ryFrac: number
   /**
    * Vertical offset fraction applied to the oval centre before placing on the
-   * tap point.  Positive = shift the oval DOWN from the tap point.
-   * For feature trees the tap represents the trunk base, so we shift UP (negative).
+   * tap point.  Positive = shift DOWN.  Negative = shift UP.
+   * For feature trees the tap represents the trunk base, so we shift UP.
    */
   cyCorrectionFrac: number
 }
@@ -54,35 +48,64 @@ function getOvalSpec(plantingType: string | null | undefined): OvalSpec {
   const t = normalizePlantingType(plantingType)
 
   if (t === 'feature_tree') {
-    // Tall oval; tap is at the base/trunk → shift centre upward
     return { rxFrac: 0.10, ryFrac: 0.175, cyCorrectionFrac: -0.175 }
   }
   if (t === 'hedge' || t === 'screening' || t === 'border_planting') {
-    // Wide horizontal ribbon
     return { rxFrac: 0.175, ryFrac: 0.08, cyCorrectionFrac: 0 }
   }
   if (t === 'groundcovers') {
-    // Low and wide
     return { rxFrac: 0.11, ryFrac: 0.04, cyCorrectionFrac: 0 }
   }
   if (t === 'shrubs') {
     return { rxFrac: 0.07, ryFrac: 0.05, cyCorrectionFrac: 0 }
   }
-  // fallback
   return { rxFrac: 0.08, ryFrac: 0.06, cyCorrectionFrac: 0 }
 }
 
+// ---------------------------------------------------------------------------
+// Public geometry type — returned alongside every mask buffer
+// ---------------------------------------------------------------------------
+
+export interface MaskGeometry {
+  imageWidth: number
+  imageHeight: number
+  /** Placement tap point in normalised [0,1] coordinates */
+  tapX: number
+  tapY: number
+  /** Final oval centre in pixels (after clamping) */
+  maskCx: number
+  maskCy: number
+  /** Oval radii in pixels */
+  maskRx: number
+  maskRy: number
+  /** Oval diameter as % of image (for quick sanity checks in logs) */
+  maskWidthPct: number
+  maskHeightPct: number
+  normalizedPlantingType: string | null
+}
+
+export interface MaskResult {
+  maskBuffer: Buffer
+  geometry: MaskGeometry
+}
+
+// ---------------------------------------------------------------------------
+// Core mask generator
+// ---------------------------------------------------------------------------
+
 /**
- * @param originalImageBuffer  Raw bytes of the original garden photo.
- * @param placementPoint       Normalised tap coordinates {x, y} in [0, 1].
- * @param plantingType         One of the known planting type strings (or null).
- * @returns PNG Buffer of the mask — same pixel dimensions as the original image.
+ * Generates a black-and-white PNG mask matching the original image dimensions.
+ *
+ * White = region to inpaint.  Black = preserve exactly.
+ *
+ * @returns `{ maskBuffer, geometry }` — geometry contains all pixel-level
+ *          details needed for debug logging and overlay generation.
  */
 export async function createPlacementMask(
   originalImageBuffer: Buffer,
   placementPoint: { x: number; y: number },
   plantingType: string | null | undefined,
-): Promise<Buffer> {
+): Promise<MaskResult> {
   const meta = await sharp(originalImageBuffer).metadata()
   const width = meta.width ?? 1024
   const height = meta.height ?? 1024
@@ -93,10 +116,9 @@ export async function createPlacementMask(
   const ry = Math.round(spec.ryFrac * height)
 
   const cx = Math.round(placementPoint.x * width)
-  // Apply vertical correction so the tap point aligns with e.g. the trunk base
   const cy = Math.round(placementPoint.y * height + spec.cyCorrectionFrac * height)
 
-  // Clamp centre so the oval never goes out of bounds
+  // Clamp so the oval never goes out of bounds
   const clampedCx = Math.min(Math.max(cx, rx), width - rx)
   const clampedCy = Math.min(Math.max(cy, ry), height - ry)
 
@@ -107,34 +129,67 @@ export async function createPlacementMask(
     `</svg>`,
   ].join('\n')
 
-  return sharp({
-    create: {
-      width,
-      height,
-      channels: 3,
-      background: { r: 0, g: 0, b: 0 },
-    },
+  const maskBuffer = await sharp({
+    create: { width, height, channels: 3, background: { r: 0, g: 0, b: 0 } },
   })
     .composite([{ input: Buffer.from(svg), top: 0, left: 0 }])
     .png()
     .toBuffer()
+
+  const geometry: MaskGeometry = {
+    imageWidth: width,
+    imageHeight: height,
+    tapX: placementPoint.x,
+    tapY: placementPoint.y,
+    maskCx: clampedCx,
+    maskCy: clampedCy,
+    maskRx: rx,
+    maskRy: ry,
+    maskWidthPct: Math.round((rx * 2 / width) * 100),
+    maskHeightPct: Math.round((ry * 2 / height) * 100),
+    normalizedPlantingType: normalizePlantingType(plantingType),
+  }
+
+  return { maskBuffer, geometry }
 }
 
 /**
- * Fallback mask: white oval centred in the image, used when no placement point
- * is available and the caller opts not to abort.
+ * Fallback mask: white oval centred in the image.
+ * Used when no placement point is available.
  */
 export async function createCentralMask(
   originalImageBuffer: Buffer,
   plantingType: string | null | undefined,
-): Promise<Buffer> {
-  const meta = await sharp(originalImageBuffer).metadata()
-  const width = meta.width ?? 1024
-  const height = meta.height ?? 1024
+): Promise<MaskResult> {
+  return createPlacementMask(originalImageBuffer, { x: 0.5, y: 0.5 }, plantingType)
+}
 
-  return createPlacementMask(
-    originalImageBuffer,
-    { x: 0.5, y: 0.5 },
-    plantingType,
-  )
+// ---------------------------------------------------------------------------
+// Debug overlay
+// ---------------------------------------------------------------------------
+
+/**
+ * Composites a semi-transparent amber ellipse onto the original image at the
+ * exact mask position, producing a visual debug overlay PNG.
+ *
+ * Only called when VISUAL_IDEAS_DEBUG_MASK=true.
+ */
+export async function createDebugOverlay(
+  originalImageBuffer: Buffer,
+  geometry: MaskGeometry,
+): Promise<Buffer> {
+  const { imageWidth, imageHeight, maskCx, maskCy, maskRx, maskRy } = geometry
+
+  const svg = [
+    `<svg width="${imageWidth}" height="${imageHeight}" xmlns="http://www.w3.org/2000/svg">`,
+    `  <ellipse cx="${maskCx}" cy="${maskCy}" rx="${maskRx}" ry="${maskRy}"`,
+    `           fill="rgba(255,120,0,0.55)" stroke="red" stroke-width="3"/>`,
+    `</svg>`,
+  ].join('\n')
+
+  return sharp(originalImageBuffer)
+    .png()
+    .composite([{ input: Buffer.from(svg), top: 0, left: 0 }])
+    .png()
+    .toBuffer()
 }
