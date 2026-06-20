@@ -40,10 +40,10 @@ export function buildConceptPrompt({
 }
 
 /**
- * Generates a garden concept image using DALL-E 3.
- * Returns the temporary OpenAI CDN image URL (valid ~1 hour).
- * The caller is responsible for downloading and re-uploading to Supabase storage
- * if permanent storage is required.
+ * Generates a garden concept image using gpt-image-1.
+ * Returns the raw base64-encoded PNG so the caller can upload it to
+ * persistent storage (e.g. Supabase) rather than relying on a short-lived URL.
+ * gpt-image-1 does not return URLs — only b64_json.
  *
  * If OPENAI_API_KEY is not set, returns a descriptive error rather than throwing.
  */
@@ -58,11 +58,11 @@ export async function generateVisualConcept({
   selectedSpecies: string[]
   hedgeForm: string | null
   originalPhotoUrl?: string | null
-}): Promise<{ imageUrl: string | null; error: string | null }> {
+}): Promise<{ b64Image: string | null; error: string | null }> {
   const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey) {
     return {
-      imageUrl: null,
+      b64Image: null,
       error: 'Image generation is not configured. Add OPENAI_API_KEY to enable this feature.',
     }
   }
@@ -72,21 +72,21 @@ export async function generateVisualConcept({
     const prompt = buildConceptPrompt({ goalText, detectedIntent, selectedSpecies, hedgeForm })
 
     const response = await openai.images.generate({
-      model: 'dall-e-3',
+      model: 'gpt-image-1',
       prompt,
       n: 1,
       size: '1024x1024',
-      quality: 'hd',
+      quality: 'medium',
     })
 
-    const imageUrl = response.data?.[0]?.url ?? null
-    if (!imageUrl) {
-      return { imageUrl: null, error: 'Image generation returned no result.' }
+    const b64Image = response.data?.[0]?.b64_json ?? null
+    if (!b64Image) {
+      return { b64Image: null, error: 'Image generation returned no result.' }
     }
 
-    return { imageUrl, error: null }
+    return { b64Image, error: null }
   } catch (err: any) {
     console.error('Visual concept generation error:', err)
-    return { imageUrl: null, error: err.message || 'Image generation failed.' }
+    return { b64Image: null, error: err.message || 'Image generation failed.' }
   }
 }

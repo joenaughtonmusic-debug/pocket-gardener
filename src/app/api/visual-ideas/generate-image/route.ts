@@ -36,7 +36,7 @@ export async function POST(req: Request) {
       .eq('id', conceptId)
       .eq('user_id', user.id)
 
-    const { imageUrl, error } = await generateVisualConcept({
+    const { b64Image, error } = await generateVisualConcept({
       goalText: goalText ?? '',
       detectedIntent: detectedIntent ?? 'general planting',
       selectedSpecies: selectedSpecies ?? [],
@@ -44,7 +44,7 @@ export async function POST(req: Request) {
       originalPhotoUrl: originalPhotoUrl ?? null,
     })
 
-    if (error || !imageUrl) {
+    if (error || !b64Image) {
       await adminSupabase
         .from('garden_visual_concepts')
         .update({
@@ -58,10 +58,36 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: error ?? 'Image generation failed' }, { status: 422 })
     }
 
+    // gpt-image-1 returns b64_json — upload to Supabase storage for a persistent URL.
+    const imageBuffer = Buffer.from(b64Image, 'base64')
+    const uploadPath = `visual-ideas/generated/${user.id}-${Date.now()}.png`
+
+    const { error: uploadError } = await adminSupabase.storage
+      .from('weed-images')
+      .upload(uploadPath, imageBuffer, { contentType: 'image/png', upsert: false })
+
+    if (uploadError) {
+      await adminSupabase
+        .from('garden_visual_concepts')
+        .update({
+          status: 'error',
+          error_message: `Storage upload failed: ${uploadError.message}`,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', conceptId)
+        .eq('user_id', user.id)
+
+      return NextResponse.json({ error: `Storage upload failed: ${uploadError.message}` }, { status: 500 })
+    }
+
+    const { data: { publicUrl } } = adminSupabase.storage
+      .from('weed-images')
+      .getPublicUrl(uploadPath)
+
     await adminSupabase
       .from('garden_visual_concepts')
       .update({
-        generated_image_url: imageUrl,
+        generated_image_url: publicUrl,
         status: 'complete',
         error_message: null,
         updated_at: new Date().toISOString(),
@@ -69,7 +95,7 @@ export async function POST(req: Request) {
       .eq('id', conceptId)
       .eq('user_id', user.id)
 
-    return NextResponse.json({ imageUrl })
+    return NextResponse.json({ imageUrl: publicUrl })
   } catch (err: any) {
     console.error('Generate image error:', err)
     return NextResponse.json({ error: err.message || 'Image generation failed' }, { status: 500 })
