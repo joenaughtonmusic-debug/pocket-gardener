@@ -1,6 +1,33 @@
 import sharp from 'sharp'
 
 /**
+ * Maps any recognised planting type label to a canonical lowercase slug.
+ *
+ * Accepted inputs (case-insensitive, spaces or underscores or hyphens):
+ *   "Hedge"          → "hedge"
+ *   "Screening"      → "screening"
+ *   "Border planting"→ "border_planting"
+ *   "Feature tree"   → "feature_tree"
+ *   "Shrubs"         → "shrubs"
+ *   "Groundcovers"   → "groundcovers"
+ *
+ * Returns null for unrecognised values.
+ */
+export function normalizePlantingType(value: string | null | undefined): string | null {
+  if (!value) return null
+  const v = value.toLowerCase().replace(/[-_\s]+/g, ' ').trim()
+
+  if (v === 'hedge') return 'hedge'
+  if (v === 'screening') return 'screening'
+  if (v === 'border planting' || v === 'border') return 'border_planting'
+  if (v === 'feature tree' || v === 'feature') return 'feature_tree'
+  if (v === 'shrubs' || v === 'shrub') return 'shrubs'
+  if (v === 'groundcovers' || v === 'groundcover') return 'groundcovers'
+
+  return null
+}
+
+/**
  * Generates a black-and-white PNG mask matching the input image dimensions.
  *
  * White area  = region to inpaint (where the model should draw the new plant).
@@ -24,13 +51,13 @@ interface OvalSpec {
 }
 
 function getOvalSpec(plantingType: string | null | undefined): OvalSpec {
-  const t = (plantingType ?? '').toLowerCase()
+  const t = normalizePlantingType(plantingType)
 
-  if (t === 'feature tree') {
+  if (t === 'feature_tree') {
     // Tall oval; tap is at the base/trunk → shift centre upward
     return { rxFrac: 0.10, ryFrac: 0.175, cyCorrectionFrac: -0.175 }
   }
-  if (t === 'hedge' || t === 'screening' || t === 'border planting') {
+  if (t === 'hedge' || t === 'screening' || t === 'border_planting') {
     // Wide horizontal ribbon
     return { rxFrac: 0.175, ryFrac: 0.08, cyCorrectionFrac: 0 }
   }

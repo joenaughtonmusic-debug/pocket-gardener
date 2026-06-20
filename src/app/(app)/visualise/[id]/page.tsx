@@ -95,6 +95,7 @@ export default function VisualConceptDetailPage() {
           hedgeForm:        hedgeForm || null,
           originalPhotoUrl: concept.original_photo_url,
           placementPoint:   concept.placement_point ?? null,
+          plantingType:     concept.style ?? null,
         }),
       })
 

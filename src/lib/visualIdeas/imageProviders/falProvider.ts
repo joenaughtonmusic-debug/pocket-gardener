@@ -1,5 +1,5 @@
 import { createFalClient } from '@fal-ai/client'
-import { createPlacementMask, createCentralMask } from '../createPlacementMask'
+import { createPlacementMask, createCentralMask, normalizePlantingType } from '../createPlacementMask'
 import { describeSpeciesListForImage } from '../describePlantForImage'
 import type { ImageProvider, ImageProviderInput, ImageProviderResult } from './types'
 
@@ -81,13 +81,22 @@ export class FalProvider implements ImageProvider {
 
     // 2. Generate mask
     let maskBuffer: Buffer
-    const maskType = input.plantingType ?? 'fallback'
+    const rawPlantingType = input.plantingType ?? null
+    const normalizedPlantingType = normalizePlantingType(rawPlantingType)
+    const maskType = normalizedPlantingType ?? 'fallback'
+
+    console.log('[fal] Planting type', {
+      raw: rawPlantingType,
+      normalized: normalizedPlantingType,
+      maskType,
+    })
+
     try {
       if (input.placementPoint) {
         maskBuffer = await createPlacementMask(
           originalBuffer,
           input.placementPoint,
-          input.plantingType,
+          rawPlantingType,
         )
         console.log('[fal] Mask generated from placement point', {
           maskType,
@@ -98,7 +107,7 @@ export class FalProvider implements ImageProvider {
           '[fal] No placement point provided — using central fallback mask. ' +
           'Ask the user to mark a placement point for better results.',
         )
-        maskBuffer = await createCentralMask(originalBuffer, input.plantingType)
+        maskBuffer = await createCentralMask(originalBuffer, rawPlantingType)
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
@@ -182,6 +191,8 @@ export class FalProvider implements ImageProvider {
     console.log('[fal] Generation complete', {
       provider: 'fal',
       endpoint: FAL_ENDPOINT,
+      rawPlantingType,
+      normalizedPlantingType,
       maskType,
       species: input.selectedSpecies,
       hasPlacementPoint: !!input.placementPoint,
