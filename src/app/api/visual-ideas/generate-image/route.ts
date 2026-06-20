@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
-import { generateVisualConcept } from '../../../../lib/visualIdeas/generateVisualConcept'
+import { editVisualConcept } from '../../../../lib/visualIdeas/generateVisualConcept'
 
 export async function POST(req: Request) {
   try {
@@ -25,6 +25,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'conceptId is required' }, { status: 400 })
     }
 
+    if (!originalPhotoUrl) {
+      return NextResponse.json(
+        { error: 'No photo found for this concept. Please create a new visual idea with a photo.' },
+        { status: 400 }
+      )
+    }
+
     const adminSupabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -36,12 +43,14 @@ export async function POST(req: Request) {
       .eq('id', conceptId)
       .eq('user_id', user.id)
 
-    const { b64Image, error } = await generateVisualConcept({
+    // Use image edit — the original photo is sent to OpenAI as the input image.
+    // The model edits it in-place rather than generating a new scene.
+    const { b64Image, error } = await editVisualConcept({
+      originalPhotoUrl,
       goalText: goalText ?? '',
       detectedIntent: detectedIntent ?? 'general planting',
       selectedSpecies: selectedSpecies ?? [],
       hedgeForm: hedgeForm ?? null,
-      originalPhotoUrl: originalPhotoUrl ?? null,
     })
 
     if (error || !b64Image) {
@@ -55,10 +64,11 @@ export async function POST(req: Request) {
         .eq('id', conceptId)
         .eq('user_id', user.id)
 
-      return NextResponse.json({ error: error ?? 'Image generation failed' }, { status: 422 })
+      return NextResponse.json({ error: error ?? 'Image editing failed' }, { status: 422 })
     }
 
-    // gpt-image-1 returns b64_json — upload to Supabase storage for a persistent URL.
+    // Upload the edited PNG to Supabase storage for a persistent URL.
+    // gpt-image-1 always returns b64_json, never a URL.
     const imageBuffer = Buffer.from(b64Image, 'base64')
     const uploadPath = `visual-ideas/generated/${user.id}-${Date.now()}.png`
 
@@ -77,7 +87,10 @@ export async function POST(req: Request) {
         .eq('id', conceptId)
         .eq('user_id', user.id)
 
-      return NextResponse.json({ error: `Storage upload failed: ${uploadError.message}` }, { status: 500 })
+      return NextResponse.json(
+        { error: `Storage upload failed: ${uploadError.message}` },
+        { status: 500 }
+      )
     }
 
     const { data: { publicUrl } } = adminSupabase.storage
@@ -98,6 +111,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ imageUrl: publicUrl })
   } catch (err: any) {
     console.error('Generate image error:', err)
-    return NextResponse.json({ error: err.message || 'Image generation failed' }, { status: 500 })
+    return NextResponse.json({ error: err.message || 'Image editing failed' }, { status: 500 })
   }
 }

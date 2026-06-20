@@ -353,6 +353,20 @@ export default function VisualConceptDetailPage() {
           )}
         </button>
 
+        {/* Photo edit mode label */}
+        <div className="bg-green-50 border border-green-100 rounded-[1.5rem] px-5 py-4 flex items-start gap-3">
+          <Sparkles size={14} className="text-green-600 shrink-0 mt-0.5" strokeWidth={2.5} />
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-green-700 mb-0.5">
+              Photo editing mode
+            </p>
+            <p className="text-[11px] text-green-800/70 font-medium leading-relaxed">
+              Your original photo is sent to AI — it edits the image directly rather than
+              generating a new scene. Existing trees, paths, and structures are preserved.
+            </p>
+          </div>
+        </div>
+
         {/* Generate image */}
         <section className="space-y-4">
           <button
@@ -363,19 +377,19 @@ export default function VisualConceptDetailPage() {
             {generating || concept.status === 'generating' ? (
               <>
                 <Loader2 size={16} strokeWidth={3} className="animate-spin" />
-                Generating concept…
+                Editing your photo…
               </>
             ) : (
               <>
                 <Sparkles size={15} strokeWidth={2.5} />
-                {concept.generated_image_url ? 'Regenerate Concept Image' : 'Create Concept Image'}
+                {concept.generated_image_url ? 'Re-edit Photo with Plants' : 'Edit Photo with Plants'}
               </>
             )}
           </button>
 
           {selectedSpecies.length === 0 && !generating && (
             <p className="text-center text-[10px] text-gray-400 font-medium">
-              Select at least one plant above to generate a concept image.
+              Select at least one plant above to edit the photo.
             </p>
           )}
 
@@ -383,14 +397,14 @@ export default function VisualConceptDetailPage() {
           {(generateError || concept.error_message) && (
             <div className="bg-amber-50 border border-amber-100 rounded-[1.5rem] p-5 space-y-2">
               <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">
-                Image generation
+                Photo editing mode
               </p>
               <p className="text-[12px] text-amber-800 font-medium leading-relaxed">
                 {generateError || concept.error_message}
               </p>
               {(generateError || concept.error_message || '').includes('not configured') && (
                 <p className="text-[10px] text-amber-600 italic">
-                  Add OPENAI_API_KEY to your environment to enable AI concept images.
+                  Add OPENAI_API_KEY to your environment to enable AI photo editing.
                 </p>
               )}
             </div>

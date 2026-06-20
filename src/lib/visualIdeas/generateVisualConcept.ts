@@ -1,6 +1,10 @@
-import OpenAI from 'openai'
+import OpenAI, { toFile } from 'openai'
 
-export function buildConceptPrompt({
+/**
+ * Builds the image edit prompt.
+ * Emphasises what must be PRESERVED and what should be ADDED.
+ */
+export function buildEditPrompt({
   goalText,
   detectedIntent,
   selectedSpecies,
@@ -13,51 +17,55 @@ export function buildConceptPrompt({
 }): string {
   const speciesLabel = selectedSpecies.length > 0
     ? selectedSpecies.join(', ')
-    : 'suitable garden species'
+    : 'suitable garden plants'
 
   let hedgeInstructions = ''
   if (hedgeForm === 'raised_or_pleached_screen') {
     hedgeInstructions =
-      'If depicting a hedge or screen, show the foliage mainly above the lower 50cm with visible stems or trunks below — a raised or pleached form with some open space underneath.'
+      `Show the ${speciesLabel} foliage mainly above the lower 50cm with visible stems or trunks below — a raised or pleached form with open space underneath. ` +
+      `If Titoki is selected, show glossy dark green Titoki foliage at roughly 2m tall with visible trunks below 50cm.`
   } else if (hedgeForm === 'full_coverage_from_ground') {
     hedgeInstructions =
-      'If depicting a hedge or screen, show dense foliage right from ground level — full coverage from the base up with no visible gaps below.'
+      `Show dense ${speciesLabel} foliage right from ground level — full coverage from the base up with no visible gaps below.`
   }
 
-  return (
-    `Using the uploaded garden photo as the compositional base, create a realistic visual concept ` +
-    `showing ${speciesLabel} planted along the visible boundary or garden area. ` +
-    `The gardener's goal: "${goalText}". Planting intent: ${detectedIntent}. ` +
-    `Keep the driveway, existing trees, large ferns, trunks, road edge, structures, ` +
-    `paths, lighting poles, and overall perspective unchanged — do not alter, remove, ` +
-    `or reposition existing built or established elements. ` +
-    `Plants should be approximately true-to-life scale, roughly 1.5–2m tall for hedges unless specified otherwise. ` +
-    `${hedgeInstructions} ` +
-    `Make the new planting visually resemble ${speciesLabel} in colour, leaf shape, texture, and form. ` +
-    `Do not add text labels, watermarks, signage, or decorative overlays. ` +
-    `This is a realistic garden planting concept for visual inspiration only.`
-  ).trim()
+  return [
+    `IMPORTANT: This is a photo editing task. Work from the provided garden photo and make targeted additions only.`,
+    ``,
+    `KEEP UNCHANGED: the existing driveway, paths, road edge, large trees, tree ferns, trunks, lighting poles, structures, fences, sky, background, and overall perspective. Do not replace, recolour, or reposition any existing element.`,
+    ``,
+    `ADD ONLY: plant new ${speciesLabel} planting along the visible boundary or garden border area — only where there is currently bare soil, grass, or an empty edge. Do not plant over existing established plants or hard surfaces.`,
+    ``,
+    `Goal: "${goalText}". Planting intent: ${detectedIntent}.`,
+    hedgeInstructions,
+    ``,
+    `Species visual reference: make the new planting look like ${speciesLabel} in leaf shape, colour, and texture. Approximate mature scale appropriate to the goal (roughly 1.5–2m tall for hedges).`,
+    ``,
+    `Do NOT add text labels, watermarks, signage, or arrows. This is a realistic garden planting concept for visual inspiration only.`,
+  ].filter(Boolean).join('\n')
 }
 
 /**
- * Generates a garden concept image using gpt-image-1.
- * Returns the raw base64-encoded PNG so the caller can upload it to
- * persistent storage (e.g. Supabase) rather than relying on a short-lived URL.
- * gpt-image-1 does not return URLs — only b64_json.
+ * Downloads the original garden photo and passes it as the input image to
+ * `openai.images.edit()` with `gpt-image-1` and `input_fidelity: 'high'`.
  *
- * If OPENAI_API_KEY is not set, returns a descriptive error rather than throwing.
+ * This is the PRIMARY path for Visual Ideas — the original photo IS sent to
+ * OpenAI and the model edits it in-place rather than generating a new scene.
+ *
+ * Returns `{ b64Image, error }`. The caller should upload b64Image to storage.
  */
-export async function generateVisualConcept({
+export async function editVisualConcept({
+  originalPhotoUrl,
   goalText,
   detectedIntent,
   selectedSpecies,
   hedgeForm,
 }: {
+  originalPhotoUrl: string
   goalText: string
   detectedIntent: string
   selectedSpecies: string[]
   hedgeForm: string | null
-  originalPhotoUrl?: string | null
 }): Promise<{ b64Image: string | null; error: string | null }> {
   const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey) {
@@ -67,26 +75,56 @@ export async function generateVisualConcept({
     }
   }
 
+  // Download the original photo from Supabase storage
+  let imageArrayBuffer: ArrayBuffer
+  let mimeType: string
+  try {
+    const photoRes = await fetch(originalPhotoUrl)
+    if (!photoRes.ok) {
+      return { b64Image: null, error: `Could not download original photo (${photoRes.status}).` }
+    }
+    imageArrayBuffer = await photoRes.arrayBuffer()
+    // Normalise MIME type to something the edit endpoint accepts
+    const rawType = photoRes.headers.get('content-type') ?? ''
+    if (rawType.includes('png')) {
+      mimeType = 'image/png'
+    } else if (rawType.includes('webp')) {
+      mimeType = 'image/webp'
+    } else {
+      // HEIC and other formats are not supported; treat everything else as JPEG
+      mimeType = 'image/jpeg'
+    }
+  } catch (err: any) {
+    return { b64Image: null, error: `Could not download original photo: ${err.message}` }
+  }
+
   try {
     const openai = new OpenAI({ apiKey })
-    const prompt = buildConceptPrompt({ goalText, detectedIntent, selectedSpecies, hedgeForm })
+    const prompt = buildEditPrompt({ goalText, detectedIntent, selectedSpecies, hedgeForm })
 
-    const response = await openai.images.generate({
+    // Convert ArrayBuffer to a named File object that the SDK can upload
+    const imageFile = await toFile(imageArrayBuffer, 'garden-photo.jpg', { type: mimeType })
+
+    const response = await openai.images.edit({
       model: 'gpt-image-1',
+      image: imageFile,
       prompt,
-      n: 1,
-      size: '1024x1024',
       quality: 'medium',
+      size: '1024x1024',
+      // input_fidelity 'high' tells the model to maximally preserve the input
+      // image's composition, perspective, and existing elements
+      input_fidelity: 'high',
+      n: 1,
     })
 
     const b64Image = response.data?.[0]?.b64_json ?? null
     if (!b64Image) {
-      return { b64Image: null, error: 'Image generation returned no result.' }
+      return { b64Image: null, error: 'Image editing returned no result.' }
     }
 
     return { b64Image, error: null }
   } catch (err: any) {
-    console.error('Visual concept generation error:', err)
-    return { b64Image: null, error: err.message || 'Image generation failed.' }
+    console.error('Visual concept edit error:', err)
+    return { b64Image: null, error: err.message || 'Image editing failed.' }
   }
 }
