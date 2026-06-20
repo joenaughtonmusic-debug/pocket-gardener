@@ -19,7 +19,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json()
-    const { conceptId, goalText, detectedIntent, selectedSpecies, hedgeForm, originalPhotoUrl } = body
+    const { conceptId, goalText, detectedIntent, selectedSpecies, hedgeForm, originalPhotoUrl, placementPoint } = body
 
     if (!conceptId) {
       return NextResponse.json({ error: 'conceptId is required' }, { status: 400 })
@@ -51,6 +51,7 @@ export async function POST(req: Request) {
       detectedIntent: detectedIntent ?? 'general planting',
       selectedSpecies: selectedSpecies ?? [],
       hedgeForm: hedgeForm ?? null,
+      placementPoint: placementPoint ?? null,
     })
 
     if (error || !b64Image) {

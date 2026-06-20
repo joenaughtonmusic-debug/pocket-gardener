@@ -3,7 +3,7 @@
 import { useState, useRef, useMemo, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createSupabaseBrowserClient } from '../../../lib/supabaseClient'
-import { ArrowLeft, Upload, Loader2, Sparkles, Check } from 'lucide-react'
+import { ArrowLeft, Upload, Loader2, Sparkles, Check, MapPin } from 'lucide-react'
 import Link from 'next/link'
 import type { GardenArea } from '../../../../types/garden'
 import {
@@ -64,6 +64,9 @@ function NewVisualIdeaPageInner() {
   const [selectedAreaId, setSelectedAreaId] = useState('')
   const [gardenAreas,   setGardenAreas]   = useState<GardenArea[]>([])
 
+  // Tap-to-place
+  const [placementPoint, setPlacementPoint] = useState<{ x: number; y: number } | null>(null)
+
   // Submission
   const [submitting,  setSubmitting]  = useState(false)
   const [submitStep,  setSubmitStep]  = useState<'idle' | 'uploading' | 'saving'>('idle')
@@ -120,7 +123,16 @@ function NewVisualIdeaPageInner() {
     if (!file) return
     setPhoto(file)
     setPhotoPreview(URL.createObjectURL(file))
+    setPlacementPoint(null) // reset placement when photo changes
     setError(null)
+  }
+
+  // ── Tap-to-place ──────────────────────────────────────────────────────────
+  function handleImageTap(e: React.MouseEvent<HTMLImageElement>) {
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width))
+    const y = Math.min(1, Math.max(0, (e.clientY - rect.top) / rect.height))
+    setPlacementPoint({ x: Math.round(x * 100) / 100, y: Math.round(y * 100) / 100 })
   }
 
   // ── Create the concept ────────────────────────────────────────────────────
@@ -171,6 +183,7 @@ function NewVisualIdeaPageInner() {
           selected_species:   [selectedSpecies],
           style:              plantingType,
           status:             'draft',
+          placement_point:    placementPoint,
         })
         .select()
         .single()
@@ -306,6 +319,71 @@ function NewVisualIdeaPageInner() {
             className="hidden"
           />
         </section>
+
+        {/* ── Step 1b: Tap to place ────────────────────────────────────────── */}
+        {photoPreview && (
+          <section>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-6 h-6 rounded-full bg-amber-400 flex items-center justify-center shrink-0">
+                <MapPin size={11} strokeWidth={3} className="text-green-950" />
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-green-900">
+                  Tap where it should go
+                </p>
+                <p className="text-[9px] text-gray-300 font-medium mt-0.5">
+                  {placementPoint
+                    ? 'Placement selected — tap again to move it.'
+                    : 'Optional, but helps the AI place plants more accurately.'}
+                </p>
+              </div>
+              {placementPoint && (
+                <button
+                  type="button"
+                  onClick={() => setPlacementPoint(null)}
+                  className="ml-auto text-[8px] font-black uppercase tracking-widest text-gray-300 active:opacity-70"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+
+            {/* Tappable image with marker overlay */}
+            <div className="relative rounded-[2rem] overflow-hidden border border-gray-100 shadow-sm bg-gray-50 select-none">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={photoPreview}
+                alt="Tap to mark where plants should go"
+                className="w-full h-auto block cursor-crosshair"
+                onClick={handleImageTap}
+                draggable={false}
+              />
+              {placementPoint && (
+                <div
+                  className="absolute pointer-events-none"
+                  style={{
+                    left: `${placementPoint.x * 100}%`,
+                    top:  `${placementPoint.y * 100}%`,
+                    transform: 'translate(-50%, -50%)',
+                  }}
+                >
+                  {/* Drop shadow ring */}
+                  <div className="w-10 h-10 rounded-full bg-white/30 absolute inset-0 -m-1 blur-sm" />
+                  <div className="relative w-8 h-8 rounded-full bg-amber-400 border-4 border-white shadow-xl flex items-center justify-center">
+                    <MapPin size={13} strokeWidth={3} className="text-green-950" />
+                  </div>
+                </div>
+              )}
+              {!placementPoint && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="bg-black/40 backdrop-blur-sm text-white text-[10px] font-black uppercase tracking-widest px-4 py-2.5 rounded-full">
+                    Tap photo to mark location
+                  </div>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
 
         {/* ── Step 2: What to add ──────────────────────────────────────────── */}
         <section>
@@ -553,7 +631,7 @@ function NewVisualIdeaPageInner() {
                 ? 'Choose what to add above.'
                 : !selectedSpecies
                 ? 'Select a plant above.'
-                : `${selectedSpecies} · ${plantingType}${placementArea ? ` · ${placementArea}` : ''}`}
+                : `${selectedSpecies} · ${plantingType}${placementArea ? ` · ${placementArea}` : ''}${placementPoint ? ' · Placement marked' : ''}`}
             </p>
           )}
         </div>

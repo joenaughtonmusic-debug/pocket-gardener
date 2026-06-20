@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation'
 import { createSupabaseBrowserClient } from '../../../lib/supabaseClient'
 import Link from 'next/link'
 import {
-  ArrowLeft, ImageOff, Loader2, Check, Sparkles, Leaf, ExternalLink,
+  ArrowLeft, ImageOff, Loader2, Check, Sparkles, Leaf, ExternalLink, MapPin,
 } from 'lucide-react'
 import type { VisualConcept, SuggestedSpecies } from '../../../../types/garden'
 
@@ -94,6 +94,7 @@ export default function VisualConceptDetailPage() {
           selectedSpecies,
           hedgeForm:        hedgeForm || null,
           originalPhotoUrl: concept.original_photo_url,
+          placementPoint:   concept.placement_point ?? null,
         }),
       })
 
@@ -226,24 +227,46 @@ export default function VisualConceptDetailPage() {
 
       <div className="px-6 space-y-6">
 
-        {/* Original photo */}
+        {/* Original photo with optional placement marker */}
         <section>
           <p className="text-[9px] font-black uppercase tracking-widest text-green-800/40 mb-2 px-1">
             Your photo
           </p>
-          <div className="bg-white rounded-[2rem] overflow-hidden border border-gray-100 shadow-sm">
+          <div className="bg-white rounded-[2rem] overflow-hidden border border-gray-100 shadow-sm relative">
             {concept.original_photo_url ? (
-              <img
-                src={concept.original_photo_url}
-                alt="Your garden"
-                className="w-full h-56 object-cover"
-              />
+              <>
+                <img
+                  src={concept.original_photo_url}
+                  alt="Your garden"
+                  className="w-full h-auto block"
+                />
+                {concept.placement_point && (
+                  <div
+                    className="absolute pointer-events-none"
+                    style={{
+                      left: `${concept.placement_point.x * 100}%`,
+                      top:  `${concept.placement_point.y * 100}%`,
+                      transform: 'translate(-50%, -50%)',
+                    }}
+                  >
+                    <div className="w-8 h-8 rounded-full bg-amber-400 border-[3px] border-white shadow-xl flex items-center justify-center">
+                      <MapPin size={13} strokeWidth={3} className="text-green-950" />
+                    </div>
+                  </div>
+                )}
+              </>
             ) : (
               <div className="h-44 flex items-center justify-center bg-gray-50">
                 <ImageOff size={24} className="text-gray-300" />
               </div>
             )}
           </div>
+          {concept.placement_point && (
+            <p className="text-[9px] font-black uppercase tracking-widest text-amber-600 px-1 mt-2 flex items-center gap-1.5">
+              <MapPin size={9} strokeWidth={3} />
+              Placement point selected
+            </p>
+          )}
         </section>
 
         {/* Photo editing info */}

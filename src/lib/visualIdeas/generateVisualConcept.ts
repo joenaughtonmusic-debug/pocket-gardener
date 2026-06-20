@@ -1,6 +1,27 @@
 import OpenAI, { toFile } from 'openai'
 
 /**
+ * Translates normalized {x, y} tap coordinates into a plain-English zone description
+ * that the image model can reason about spatially.
+ *
+ * x: 0.0–0.33 = left · 0.34–0.66 = centre · 0.67–1.0 = right
+ * y: 0.0–0.33 = upper · 0.34–0.66 = middle · 0.67–1.0 = lower / foreground
+ */
+export function describePlacementPoint(point: { x: number; y: number }): string {
+  const xZone =
+    point.x <= 0.33 ? 'left side'
+    : point.x <= 0.66 ? 'centre'
+    : 'right side'
+
+  const yZone =
+    point.y <= 0.33 ? 'upper part of the photo'
+    : point.y <= 0.66 ? 'middle of the photo'
+    : 'lower part of the photo / foreground'
+
+  return `the ${yZone === 'middle of the photo' ? 'middle-' : yZone.startsWith('upper') ? 'upper-' : 'lower-'}${xZone} area of the photo`
+}
+
+/**
  * Builds the image edit prompt.
  * Emphasises what must be PRESERVED and what should be ADDED.
  */
@@ -9,11 +30,13 @@ export function buildEditPrompt({
   detectedIntent,
   selectedSpecies,
   hedgeForm,
+  placementPoint,
 }: {
   goalText: string
   detectedIntent: string
   selectedSpecies: string[]
   hedgeForm: string | null
+  placementPoint?: { x: number; y: number } | null
 }): string {
   const speciesLabel = selectedSpecies.length > 0
     ? selectedSpecies.join(', ')
@@ -29,12 +52,21 @@ export function buildEditPrompt({
       `Show dense ${speciesLabel} foliage right from ground level — full coverage from the base up with no visible gaps below.`
   }
 
+  const placementInstructions = placementPoint
+    ? [
+        `PLACEMENT: The user marked the desired planting location at approximately ${describePlacementPoint(placementPoint)}.`,
+        `Place the new planting near that marked location. Do not place it somewhere else unless that location is clearly impossible (e.g. it is a building, sealed driveway, or large established tree).`,
+      ].join(' ')
+    : null
+
   return [
     `IMPORTANT: This is a photo editing task. Work from the provided garden photo and make targeted additions only.`,
     ``,
     `KEEP UNCHANGED: the existing driveway, paths, road edge, large trees, tree ferns, trunks, lighting poles, structures, fences, sky, background, and overall perspective. Do not replace, recolour, or reposition any existing element.`,
     ``,
     `ADD ONLY: plant new ${speciesLabel} planting along the visible boundary or garden border area — only where there is currently bare soil, grass, or an empty edge. Do not plant over existing established plants or hard surfaces.`,
+    ``,
+    placementInstructions,
     ``,
     `Goal: "${goalText}". Planting intent: ${detectedIntent}.`,
     hedgeInstructions,
@@ -60,12 +92,14 @@ export async function editVisualConcept({
   detectedIntent,
   selectedSpecies,
   hedgeForm,
+  placementPoint,
 }: {
   originalPhotoUrl: string
   goalText: string
   detectedIntent: string
   selectedSpecies: string[]
   hedgeForm: string | null
+  placementPoint?: { x: number; y: number } | null
 }): Promise<{ b64Image: string | null; error: string | null }> {
   const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey) {
@@ -100,7 +134,7 @@ export async function editVisualConcept({
 
   try {
     const openai = new OpenAI({ apiKey })
-    const prompt = buildEditPrompt({ goalText, detectedIntent, selectedSpecies, hedgeForm })
+    const prompt = buildEditPrompt({ goalText, detectedIntent, selectedSpecies, hedgeForm, placementPoint })
 
     // Convert ArrayBuffer to a named File object that the SDK can upload
     const imageFile = await toFile(imageArrayBuffer, 'garden-photo.jpg', { type: mimeType })

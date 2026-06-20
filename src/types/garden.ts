@@ -82,6 +82,7 @@ export interface VisualConcept {
   style: string | null;
   status: 'draft' | 'generating' | 'complete' | 'error';
   error_message: string | null;
+  placement_point: { x: number; y: number } | null;
   created_at: string;
   updated_at: string;
 }
