@@ -1,10 +1,12 @@
 'use client'
 
 import { useEffect, useState, useMemo } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import { createSupabaseBrowserClient } from '../../../lib/supabaseClient'
 import Link from 'next/link'
-import { ArrowLeft, ImageOff, Loader2, Check, Sparkles, Leaf, ExternalLink } from 'lucide-react'
+import {
+  ArrowLeft, ImageOff, Loader2, Check, Sparkles, Leaf, ExternalLink,
+} from 'lucide-react'
 import type { VisualConcept, SuggestedSpecies } from '../../../../types/garden'
 
 const HEDGE_FORM_OPTIONS = [
@@ -22,23 +24,22 @@ const HEDGE_FORM_OPTIONS = [
 
 export default function VisualConceptDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const router = useRouter()
   const supabase = useMemo(() => createSupabaseBrowserClient(), [])
 
-  const [concept, setConcept] = useState<VisualConcept | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [notFound, setNotFound] = useState(false)
+  const [concept,    setConcept]    = useState<VisualConcept | null>(null)
+  const [loading,    setLoading]    = useState(true)
+  const [notFound,   setNotFound]   = useState(false)
 
   const [selectedSpecies, setSelectedSpecies] = useState<string[]>([])
-  const [hedgeForm, setHedgeForm] = useState<string>('')
+  const [hedgeForm,       setHedgeForm]       = useState<string>('')
 
-  const [generating, setGenerating] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [addingPlants, setAddingPlants] = useState(false)
+  const [generating,      setGenerating]      = useState(false)
+  const [saving,          setSaving]          = useState(false)
+  const [addingPlants,    setAddingPlants]    = useState(false)
 
-  const [generateError, setGenerateError] = useState<string | null>(null)
+  const [generateError,   setGenerateError]   = useState<string | null>(null)
   const [addPlantsResult, setAddPlantsResult] = useState<string | null>(null)
-  const [saveSuccess, setSaveSuccess] = useState(false)
+  const [saveSuccess,     setSaveSuccess]     = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -76,16 +77,22 @@ export default function VisualConceptDetailPage() {
     setGenerateError(null)
     setGenerating(true)
 
+    // Auto-save selections before generating
+    await supabase
+      .from('garden_visual_concepts')
+      .update({ selected_species: selectedSpecies, hedge_form: hedgeForm || null })
+      .eq('id', concept.id)
+
     try {
       const res = await fetch('/api/visual-ideas/generate-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          conceptId: concept.id,
-          goalText: concept.goal_text,
-          detectedIntent: concept.detected_intent,
+          conceptId:        concept.id,
+          goalText:         concept.goal_text,
+          detectedIntent:   concept.detected_intent,
           selectedSpecies,
-          hedgeForm: hedgeForm || null,
+          hedgeForm:        hedgeForm || null,
           originalPhotoUrl: concept.original_photo_url,
         }),
       })
@@ -93,12 +100,16 @@ export default function VisualConceptDetailPage() {
       const json = await res.json()
       if (!res.ok) {
         setGenerateError(json.error || 'Image generation failed.')
-        setConcept((prev) => prev ? { ...prev, status: 'error', error_message: json.error } : prev)
+        setConcept((prev) => prev
+          ? { ...prev, status: 'error', error_message: json.error }
+          : prev
+        )
         return
       }
 
-      setConcept((prev) =>
-        prev ? { ...prev, generated_image_url: json.imageUrl, status: 'complete', error_message: null } : prev
+      setConcept((prev) => prev
+        ? { ...prev, generated_image_url: json.imageUrl, status: 'complete', error_message: null }
+        : prev
       )
     } catch {
       setGenerateError('Something went wrong. Please try again.')
@@ -116,13 +127,16 @@ export default function VisualConceptDetailPage() {
       .from('garden_visual_concepts')
       .update({
         selected_species: selectedSpecies,
-        hedge_form: hedgeForm || null,
-        updated_at: new Date().toISOString(),
+        hedge_form:       hedgeForm || null,
+        updated_at:       new Date().toISOString(),
       })
       .eq('id', concept.id)
 
     if (!error) {
-      setConcept((prev) => prev ? { ...prev, selected_species: selectedSpecies, hedge_form: hedgeForm || null } : prev)
+      setConcept((prev) => prev
+        ? { ...prev, selected_species: selectedSpecies, hedge_form: hedgeForm || null }
+        : prev
+      )
       setSaveSuccess(true)
       setTimeout(() => setSaveSuccess(false), 2500)
     }
@@ -147,19 +161,19 @@ export default function VisualConceptDetailPage() {
     if (!res.ok) {
       setAddPlantsResult(`Error: ${json.error}`)
     } else {
-      const added = json.results?.filter((r: any) => r.status === 'added').length ?? 0
+      const added    = json.results?.filter((r: any) => r.status === 'added').length ?? 0
       const existing = json.results?.filter((r: any) => r.status === 'already_planned').length ?? 0
-      const notFoundCount = json.notFound?.length ?? 0
-
-      const parts = []
-      if (added > 0) parts.push(`${added} added to your planned garden`)
-      if (existing > 0) parts.push(`${existing} already planned`)
-      if (notFoundCount > 0) parts.push(`${notFoundCount} not found in plant library`)
+      const nf       = json.notFound?.length ?? 0
+      const parts    = []
+      if (added    > 0) parts.push(`${added} added to Future Ideas`)
+      if (existing > 0) parts.push(`${existing} already there`)
+      if (nf       > 0) parts.push(`${nf} not found in plant library`)
       setAddPlantsResult(parts.join(' · ') || 'Done.')
     }
     setAddingPlants(false)
   }
 
+  // ── Loading / not-found states ────────────────────────────────────────────
   if (loading) {
     return (
       <div className="min-h-screen bg-[#f0f4f1] flex items-center justify-center">
@@ -186,9 +200,11 @@ export default function VisualConceptDetailPage() {
   }
 
   const suggestedSpecies = (concept.suggested_species ?? []) as SuggestedSpecies[]
+  const hasGenerated     = !!concept.generated_image_url
 
   return (
     <main className="min-h-screen bg-[#f0f4f1] pb-40">
+
       {/* Header */}
       <div className="bg-green-900 px-6 pt-12 pb-8 rounded-b-[3rem] shadow-xl shadow-green-900/20 mb-6">
         <Link
@@ -230,23 +246,25 @@ export default function VisualConceptDetailPage() {
           </div>
         </section>
 
-        {/* Goal */}
-        {concept.goal_text && (
-          <section className="bg-white rounded-[2rem] p-5 border border-gray-100 shadow-sm">
-            <p className="text-[9px] font-black uppercase tracking-widest text-green-800/40 mb-2">
-              Goal
+        {/* Photo editing info */}
+        <div className="bg-green-50 border border-green-100 rounded-[1.5rem] px-5 py-4 flex items-start gap-3">
+          <Sparkles size={14} className="text-green-600 shrink-0 mt-0.5" strokeWidth={2.5} />
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-green-700 mb-0.5">
+              Photo editing mode
             </p>
-            <p className="text-sm font-medium text-gray-700 leading-relaxed italic">
-              "{concept.goal_text}"
+            <p className="text-[11px] text-green-800/70 font-medium leading-relaxed">
+              Your original photo is sent to AI — it edits the image to add the selected
+              planting. Existing trees, paths, and structures are preserved.
             </p>
-          </section>
-        )}
+          </div>
+        </div>
 
-        {/* Suggested species */}
+        {/* Choose plants to visualise */}
         {suggestedSpecies.length > 0 && (
           <section className="space-y-3">
             <p className="text-[9px] font-black uppercase tracking-widest text-green-800/40 px-1">
-              Suggested plants — select your favourites
+              Choose a plant to visualise — tap to select
             </p>
             {suggestedSpecies.map((species) => {
               const isSelected = selectedSpecies.includes(species.name)
@@ -272,14 +290,20 @@ export default function VisualConceptDetailPage() {
                       {isSelected && <Check size={11} strokeWidth={4} className="text-green-950" />}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-black uppercase tracking-tight leading-none mb-1.5 ${isSelected ? 'text-white' : 'text-green-950'}`}>
+                      <p className={`text-sm font-black uppercase tracking-tight leading-none mb-1.5 ${
+                        isSelected ? 'text-white' : 'text-green-950'
+                      }`}>
                         {species.name}
                       </p>
-                      <p className={`text-[11px] font-medium leading-relaxed mb-2 ${isSelected ? 'text-green-200' : 'text-gray-500'}`}>
+                      <p className={`text-[11px] font-medium leading-relaxed mb-2 ${
+                        isSelected ? 'text-green-200' : 'text-gray-500'
+                      }`}>
                         {species.description}
                       </p>
                       {species.notes && (
-                        <p className={`text-[10px] italic leading-relaxed ${isSelected ? 'text-green-300' : 'text-gray-400'}`}>
+                        <p className={`text-[10px] italic leading-relaxed ${
+                          isSelected ? 'text-green-300' : 'text-gray-400'
+                        }`}>
                           {species.notes}
                         </p>
                       )}
@@ -295,10 +319,10 @@ export default function VisualConceptDetailPage() {
         {showHedgeForm && (
           <section className="space-y-3">
             <p className="text-[9px] font-black uppercase tracking-widest text-green-800/40 px-1">
-              Hedge form / style
+              Hedge form
             </p>
             <p className="text-[11px] text-gray-500 font-medium px-1 leading-relaxed">
-              Do you want coverage from the ground up, or a raised/pleached screen with some gaps underneath?
+              Coverage from the ground, or a raised/pleached screen with gaps underneath?
             </p>
             {HEDGE_FORM_OPTIONS.map((opt) => (
               <button
@@ -322,10 +346,14 @@ export default function VisualConceptDetailPage() {
                     {hedgeForm === opt.value && <Check size={11} strokeWidth={4} className="text-green-950" />}
                   </div>
                   <div>
-                    <p className={`text-[12px] font-black uppercase tracking-tight ${hedgeForm === opt.value ? 'text-white' : 'text-green-950'}`}>
+                    <p className={`text-[12px] font-black uppercase tracking-tight ${
+                      hedgeForm === opt.value ? 'text-white' : 'text-green-950'
+                    }`}>
                       {opt.label}
                     </p>
-                    <p className={`text-[10px] font-medium mt-0.5 ${hedgeForm === opt.value ? 'text-green-200' : 'text-gray-400'}`}>
+                    <p className={`text-[10px] font-medium mt-0.5 ${
+                      hedgeForm === opt.value ? 'text-green-200' : 'text-gray-400'
+                    }`}>
                       {opt.description}
                     </p>
                   </div>
@@ -335,44 +363,12 @@ export default function VisualConceptDetailPage() {
           </section>
         )}
 
-        {/* Save selections */}
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="w-full bg-white border border-gray-100 text-green-900 py-4 rounded-[2rem] text-[10px] font-black uppercase tracking-widest shadow-sm active:scale-[0.98] transition-all disabled:opacity-60 flex items-center justify-center gap-2"
-        >
-          {saving ? (
-            <Loader2 size={14} strokeWidth={3} className="animate-spin" />
-          ) : saveSuccess ? (
-            <>
-              <Check size={14} strokeWidth={3} className="text-green-600" />
-              Selections saved
-            </>
-          ) : (
-            'Save selections'
-          )}
-        </button>
-
-        {/* Photo edit mode label */}
-        <div className="bg-green-50 border border-green-100 rounded-[1.5rem] px-5 py-4 flex items-start gap-3">
-          <Sparkles size={14} className="text-green-600 shrink-0 mt-0.5" strokeWidth={2.5} />
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-green-700 mb-0.5">
-              Photo editing mode
-            </p>
-            <p className="text-[11px] text-green-800/70 font-medium leading-relaxed">
-              Your original photo is sent to AI — it edits the image directly rather than
-              generating a new scene. Existing trees, paths, and structures are preserved.
-            </p>
-          </div>
-        </div>
-
-        {/* Generate image */}
-        <section className="space-y-4">
+        {/* ── Primary CTA: Edit Photo with Plants ────────────────────────── */}
+        <section className="space-y-3">
           <button
             onClick={handleGenerateImage}
             disabled={generating || concept.status === 'generating' || selectedSpecies.length === 0}
-            className="w-full bg-green-900 text-white py-5 rounded-[2rem] text-[11px] font-black uppercase tracking-widest shadow-lg active:scale-[0.98] transition-all disabled:opacity-60 flex items-center justify-center gap-3"
+            className="w-full bg-green-900 text-white py-5 rounded-[2rem] text-[11px] font-black uppercase tracking-widest shadow-lg active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-3"
           >
             {generating || concept.status === 'generating' ? (
               <>
@@ -382,22 +378,22 @@ export default function VisualConceptDetailPage() {
             ) : (
               <>
                 <Sparkles size={15} strokeWidth={2.5} />
-                {concept.generated_image_url ? 'Re-edit Photo with Plants' : 'Edit Photo with Plants'}
+                {hasGenerated ? 'Re-edit Photo with Plants' : 'Edit Photo with Plants'}
               </>
             )}
           </button>
 
           {selectedSpecies.length === 0 && !generating && (
             <p className="text-center text-[10px] text-gray-400 font-medium">
-              Select at least one plant above to edit the photo.
+              Select a plant above to edit the photo.
             </p>
           )}
 
-          {/* Error / not configured state */}
+          {/* Error state */}
           {(generateError || concept.error_message) && (
             <div className="bg-amber-50 border border-amber-100 rounded-[1.5rem] p-5 space-y-2">
               <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">
-                Photo editing mode
+                Photo editing
               </p>
               <p className="text-[12px] text-amber-800 font-medium leading-relaxed">
                 {generateError || concept.error_message}
@@ -409,13 +405,31 @@ export default function VisualConceptDetailPage() {
               )}
             </div>
           )}
+
+          {/* Secondary: Save selections */}
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="w-full bg-white border border-gray-100 text-green-800/60 py-3.5 rounded-[2rem] text-[9px] font-black uppercase tracking-widest shadow-sm active:scale-[0.98] transition-all disabled:opacity-60 flex items-center justify-center gap-2"
+          >
+            {saving ? (
+              <Loader2 size={12} strokeWidth={3} className="animate-spin" />
+            ) : saveSuccess ? (
+              <>
+                <Check size={12} strokeWidth={3} className="text-green-600" />
+                Saved
+              </>
+            ) : (
+              'Save selections without editing'
+            )}
+          </button>
         </section>
 
         {/* Generated image */}
         {concept.generated_image_url && (
           <section className="space-y-3">
             <p className="text-[9px] font-black uppercase tracking-widest text-green-800/40 px-1">
-              ✨ Generated concept
+              ✨ Your visual concept
             </p>
             <div className="bg-white rounded-[2rem] overflow-hidden border border-gray-100 shadow-sm">
               <img
@@ -425,7 +439,7 @@ export default function VisualConceptDetailPage() {
               />
             </div>
 
-            {/* Before / After label */}
+            {/* Before / After */}
             {concept.original_photo_url && (
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-white rounded-[1.5rem] overflow-hidden border border-gray-100 shadow-sm">
@@ -453,7 +467,7 @@ export default function VisualConceptDetailPage() {
           </section>
         )}
 
-        {/* Add to My Garden */}
+        {/* Add to Future Ideas (planned plants) */}
         {selectedSpecies.length > 0 && (
           <section className="space-y-3">
             <button
@@ -466,7 +480,7 @@ export default function VisualConceptDetailPage() {
               ) : (
                 <>
                   <Leaf size={15} strokeWidth={3} />
-                  Add selected plants to My Garden
+                  Add selected plants to Future Ideas
                 </>
               )}
             </button>
@@ -481,7 +495,7 @@ export default function VisualConceptDetailPage() {
           </section>
         )}
 
-        {/* Inspiration disclaimer */}
+        {/* Disclaimer */}
         <div className="bg-white rounded-[2rem] p-5 border border-gray-100 shadow-sm text-center">
           <p className="text-[10px] text-gray-400 font-medium leading-relaxed">
             Visual ideas are for inspiration only. Plant spacing, mature size, and
