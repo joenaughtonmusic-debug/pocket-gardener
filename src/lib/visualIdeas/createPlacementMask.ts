@@ -174,22 +174,43 @@ export async function createCentralMask(
  *
  * Only called when VISUAL_IDEAS_DEBUG_MASK=true.
  */
+const DEBUG_OVERLAY_MAX_WIDTH = 1200
+
+export interface DebugOverlayResult {
+  buffer: Buffer
+  width: number
+  height: number
+}
+
 export async function createDebugOverlay(
   originalImageBuffer: Buffer,
   geometry: MaskGeometry,
-): Promise<Buffer> {
+): Promise<DebugOverlayResult> {
   const { imageWidth, imageHeight, maskCx, maskCy, maskRx, maskRy } = geometry
 
+  // Scale factor so we can draw the SVG overlay at the downscaled dimensions
+  const scale = Math.min(1, DEBUG_OVERLAY_MAX_WIDTH / imageWidth)
+  const outWidth = Math.round(imageWidth * scale)
+  const outHeight = Math.round(imageHeight * scale)
+
+  const scaledCx = Math.round(maskCx * scale)
+  const scaledCy = Math.round(maskCy * scale)
+  const scaledRx = Math.max(1, Math.round(maskRx * scale))
+  const scaledRy = Math.max(1, Math.round(maskRy * scale))
+
   const svg = [
-    `<svg width="${imageWidth}" height="${imageHeight}" xmlns="http://www.w3.org/2000/svg">`,
-    `  <ellipse cx="${maskCx}" cy="${maskCy}" rx="${maskRx}" ry="${maskRy}"`,
+    `<svg width="${outWidth}" height="${outHeight}" xmlns="http://www.w3.org/2000/svg">`,
+    `  <ellipse cx="${scaledCx}" cy="${scaledCy}" rx="${scaledRx}" ry="${scaledRy}"`,
     `           fill="rgba(255,120,0,0.55)" stroke="red" stroke-width="3"/>`,
     `</svg>`,
   ].join('\n')
 
-  return sharp(originalImageBuffer)
-    .png()
+  const buffer = await sharp(originalImageBuffer)
+    .resize(outWidth, outHeight, { fit: 'inside', withoutEnlargement: true })
+    .jpeg({ quality: 80 })
     .composite([{ input: Buffer.from(svg), top: 0, left: 0 }])
-    .png()
+    .jpeg({ quality: 80 })
     .toBuffer()
+
+  return { buffer, width: outWidth, height: outHeight }
 }

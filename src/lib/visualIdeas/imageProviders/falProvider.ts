@@ -57,7 +57,7 @@ async function uploadDebugAssets(
   const admin = createClient(supabaseUrl, serviceKey)
   const ts = Date.now()
   const maskPath = `visual-ideas/debug-masks/mask-${ts}.png`
-  const overlayPath = `visual-ideas/debug-masks/overlay-${ts}.png`
+  const overlayPath = `visual-ideas/debug-masks/overlay-${ts}.jpg`
 
   // Upload mask
   const { error: maskErr } = await admin.storage
@@ -71,18 +71,21 @@ async function uploadDebugAssets(
     console.log('[fal][debug] Mask URL', maskUrl)
   }
 
-  // Build and upload overlay
+  // Build and upload overlay (resized JPEG to stay under storage size limits)
   try {
-    const overlayBuffer = await createDebugOverlay(originalBuffer, geometry)
+    const overlay = await createDebugOverlay(originalBuffer, geometry)
     const { error: overlayErr } = await admin.storage
       .from('weed-images')
-      .upload(overlayPath, overlayBuffer, { contentType: 'image/png', upsert: false })
+      .upload(overlayPath, overlay.buffer, { contentType: 'image/jpeg', upsert: false })
 
     if (overlayErr) {
       console.error('[fal][debug] Overlay upload failed', { message: overlayErr.message })
     } else {
       const { data: { publicUrl: overlayUrl } } = admin.storage.from('weed-images').getPublicUrl(overlayPath)
-      console.log('[fal][debug] Overlay URL', overlayUrl)
+      console.log('[fal][debug] Overlay URL', overlayUrl, {
+        overlayWidth: overlay.width,
+        overlayHeight: overlay.height,
+      })
     }
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err)
@@ -104,8 +107,11 @@ function buildFalPrompt(input: ImageProviderInput): string {
   let formInstruction: string
   if (normalizedType === 'shrubs') {
     formInstruction =
-      `Create one clearly visible, healthy, rounded woody garden shrub filling most of the masked area. ` +
-      `The shrub should be knee to waist height with leafy volume and woody branching.`
+      `Fill the masked area with one clearly visible, healthy garden shrub. ` +
+      `Use natural mid-to-dark green foliage — not black foliage. ` +
+      `Show realistic woody branching and leafy volume, not a perfectly round artificial mound. ` +
+      `Blend the plant naturally into the garden bed with a realistic contact shadow. ` +
+      `Do not make the plant look like a copied nearby shrub.`
   } else if (normalizedType === 'feature_tree') {
     formInstruction = `Show a healthy specimen tree with a visible trunk and full canopy filling the masked area.`
   } else if (normalizedType === 'groundcovers') {
