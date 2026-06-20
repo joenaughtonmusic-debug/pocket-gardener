@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
-import { editVisualConcept } from '../../../../lib/visualIdeas/generateVisualConcept'
+import { getImageProvider } from '../../../../lib/visualIdeas/imageProviders'
 
 export async function POST(req: Request) {
   try {
@@ -19,7 +19,16 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json()
-    const { conceptId, goalText, detectedIntent, selectedSpecies, hedgeForm, originalPhotoUrl, placementPoint } = body
+    const {
+      conceptId,
+      goalText,
+      detectedIntent,
+      selectedSpecies,
+      hedgeForm,
+      originalPhotoUrl,
+      placementPoint,
+      plantingType,
+    } = body
 
     if (!conceptId) {
       return NextResponse.json({ error: 'conceptId is required' }, { status: 400 })
@@ -29,6 +38,19 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { error: 'No photo found for this concept. Please create a new visual idea with a photo.' },
         { status: 400 }
+      )
+    }
+
+    // fal provider requires a placement point to generate a meaningful mask
+    const activeProvider = (process.env.VISUAL_IDEAS_IMAGE_PROVIDER ?? '').toLowerCase().trim()
+    if (activeProvider === 'fal' && !placementPoint) {
+      return NextResponse.json(
+        {
+          error:
+            'Please tap the photo to mark where you want to plant before generating. ' +
+            'The fal.ai provider uses your placement point to create a precise inpainting mask.',
+        },
+        { status: 422 }
       )
     }
 
@@ -43,18 +65,18 @@ export async function POST(req: Request) {
       .eq('id', conceptId)
       .eq('user_id', user.id)
 
-    // Use image edit — the original photo is sent to OpenAI as the input image.
-    // The model edits it in-place rather than generating a new scene.
-    const { b64Image, error } = await editVisualConcept({
+    const provider = getImageProvider()
+    const { imageBuffer, error } = await provider.generate({
       originalPhotoUrl,
       goalText: goalText ?? '',
       detectedIntent: detectedIntent ?? 'general planting',
       selectedSpecies: selectedSpecies ?? [],
       hedgeForm: hedgeForm ?? null,
       placementPoint: placementPoint ?? null,
+      plantingType: plantingType ?? null,
     })
 
-    if (error || !b64Image) {
+    if (error || !imageBuffer) {
       await adminSupabase
         .from('garden_visual_concepts')
         .update({
@@ -67,10 +89,6 @@ export async function POST(req: Request) {
 
       return NextResponse.json({ error: error ?? 'Image editing failed' }, { status: 422 })
     }
-
-    // Upload the edited PNG to Supabase storage for a persistent URL.
-    // gpt-image-1 always returns b64_json, never a URL.
-    const imageBuffer = Buffer.from(b64Image, 'base64')
     const uploadPath = `visual-ideas/generated/${user.id}-${Date.now()}.png`
 
     const { error: uploadError } = await adminSupabase.storage
