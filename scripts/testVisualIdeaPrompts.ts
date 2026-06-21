@@ -35,27 +35,51 @@ const CASES: TestCase[] = [
 ]
 
 // ---------------------------------------------------------------------------
-// Minimal prompt preview (mirrors falProvider's buildFalPrompt structure)
-// without importing the provider itself)
+// Prompt preview — mirrors buildFalPrompt in falProvider exactly
+// (kept in sync manually; update both when changing the prompt structure)
 // ---------------------------------------------------------------------------
 
-function previewPrompt(species: string, plantingType?: string): string {
-  const form = getPlantVisualForm(species, plantingType)
-  const descriptor = VISUAL_FORM_DESCRIPTORS[form]
+function stripTrailingPeriod(s: string): string {
+  return s.replace(/\.+\s*$/, '').trimEnd()
+}
+
+function previewPrompt(species: string, plantingType?: string, hedgeForm?: string, goalText?: string): string {
   const speciesLabel = species
   const speciesDescription = describePlantForImage(species, plantingType)
+  const form = getPlantVisualForm(species, plantingType)
+  const descriptor = VISUAL_FORM_DESCRIPTORS[form]
 
-  return [
-    `Add ${speciesLabel} to the white masked area of the image. The masked area should visibly contain the new plant after editing.`,
-    '',
-    `Plant species: ${speciesDescription}.`,
-    `The plant must match the selected species and this visual form: ${descriptor.description}.`,
-    '',
-    descriptor.formInstruction,
-    descriptor.scaleHint,
-    '',
-    `Keep everything outside the masked area exactly as it appears. Do not clone nearby plants. Do not add text or labels. Blend the new plant's lighting and shadows naturally with the scene. ${descriptor.negatives}`,
-  ].filter(Boolean).join('\n')
+  const section1 = `Add ${speciesLabel} to the white masked area of the image. The masked area should visibly contain the new plant after editing.`
+
+  const section2 = [
+    `Plant species: ${stripTrailingPeriod(speciesDescription)}.`,
+    `The plant must match the selected species and this visual form: ${stripTrailingPeriod(descriptor.description)}.`,
+  ].join('\n')
+
+  const hedgeFormLine =
+    hedgeForm === 'raised_or_pleached_screen'
+      ? 'Show foliage mainly above 50 cm with visible trunks or stems below — raised or pleached form.'
+      : hedgeForm === 'full_coverage_from_ground'
+        ? 'Show dense foliage right from ground level with no gaps.'
+        : ''
+  const section3 = [descriptor.formInstruction, descriptor.scaleHint, hedgeFormLine]
+    .filter(Boolean)
+    .join('\n')
+
+  const section4 = goalText ? `Garden goal: ${goalText}.` : ''
+
+  const section5 = [
+    'Keep everything outside the masked area exactly as it appears.',
+    'Do not alter the sky, structures, paths, or existing plants outside the mask.',
+    'Do not clone nearby plants.',
+    'Do not add text or labels.',
+    "Blend the new plant's lighting and shadows naturally with the scene.",
+    stripTrailingPeriod(descriptor.negatives) + '.',
+  ].join(' ')
+
+  return [section1, section2, section3, section4, section5]
+    .filter(Boolean)
+    .join('\n\n')
 }
 
 // ---------------------------------------------------------------------------

@@ -104,60 +104,56 @@ function resolveVisualForm(selectedSpecies: string[], plantingType: string | nul
   return getPlantVisualForm(primarySpecies, plantingType)
 }
 
+/** Strips trailing period(s) so the caller can add exactly one. */
+function stripTrailingPeriod(s: string): string {
+  return s.replace(/\.+\s*$/, '').trimEnd()
+}
+
 function buildFalPrompt(input: ImageProviderInput): string {
   const { goalText, detectedIntent, selectedSpecies, hedgeForm, plantingType } = input
   const speciesLabel = selectedSpecies.length > 0 ? selectedSpecies.join(' / ') : 'a garden plant'
-
-  // Species description now includes planting type context
   const speciesDescription = describeSpeciesListForImage(selectedSpecies, plantingType)
-
-  // Visual form drives the core form + negatives instructions
   const visualForm = resolveVisualForm(selectedSpecies, plantingType)
   const formDescriptor = VISUAL_FORM_DESCRIPTORS[visualForm]
 
-  // Hedge form override (user-selected display preference)
-  let hedgeFormInstruction = ''
-  if (hedgeForm === 'raised_or_pleached_screen') {
-    hedgeFormInstruction =
-      `Show foliage mainly above 50 cm with visible trunks or stems below — raised or pleached form.`
-  } else if (hedgeForm === 'full_coverage_from_ground') {
-    hedgeFormInstruction = `Show dense foliage right from ground level with no gaps.`
-  }
+  // Section 1 — primary action
+  const section1 = `Add ${speciesLabel} to the white masked area of the image. The masked area should visibly contain the new plant after editing.`
 
-  const lines = [
-    // 1. Primary action
-    `Add ${speciesLabel} to the white masked area of the image. ` +
-    `The masked area should visibly contain the new plant after editing.`,
+  // Section 2 — species identity
+  // stripTrailingPeriod prevents double periods when a curated description already ends with "."
+  const section2 = [
+    `Plant species: ${stripTrailingPeriod(speciesDescription)}.`,
+    `The plant must match the selected species and this visual form: ${stripTrailingPeriod(formDescriptor.description)}.`,
+  ].join('\n')
 
-    '',
+  // Section 3 — form, scale, hedge display preference
+  const hedgeFormLine =
+    hedgeForm === 'raised_or_pleached_screen'
+      ? 'Show foliage mainly above 50 cm with visible trunks or stems below — raised or pleached form.'
+      : hedgeForm === 'full_coverage_from_ground'
+        ? 'Show dense foliage right from ground level with no gaps.'
+        : ''
+  const section3 = [formDescriptor.formInstruction, formDescriptor.scaleHint, hedgeFormLine]
+    .filter(Boolean)
+    .join('\n')
 
-    // 2. Species + visual form identity
-    `Plant species: ${speciesDescription}.`,
-    `The plant must match the selected species and this visual form: ${formDescriptor.description}.`,
+  // Section 4 — goal context
+  const goalContext = goalText || detectedIntent
+  const section4 = goalContext ? `Garden goal: ${goalContext}.` : ''
 
-    '',
+  // Section 5 — constraints (each sentence clearly separated)
+  const section5 = [
+    'Keep everything outside the masked area exactly as it appears.',
+    'Do not alter the sky, structures, paths, or existing plants outside the mask.',
+    'Do not clone nearby plants.',
+    'Do not add text or labels.',
+    "Blend the new plant's lighting and shadows naturally with the scene.",
+    stripTrailingPeriod(formDescriptor.negatives) + '.',
+  ].join(' ')
 
-    // 3. Form instruction + scale + hedge display preference
-    formDescriptor.formInstruction,
-    formDescriptor.scaleHint,
-    hedgeFormInstruction,
-
-    '',
-
-    // 4. Goal (brief)
-    goalText || detectedIntent ? `Garden goal: ${goalText || detectedIntent}.` : '',
-
-    '',
-
-    // 5. Constraints: preservation outside mask + form-specific negatives
-    `Keep everything outside the masked area exactly as it appears. ` +
-    `Do not alter the sky, structures, paths, or existing plants outside the mask. ` +
-    `Do not clone nearby plants. Do not add text or labels. ` +
-    `Blend the new plant's lighting and shadows naturally with the scene. ` +
-    formDescriptor.negatives,
-  ]
-
-  return lines.filter(Boolean).join('\n')
+  return [section1, section2, section3, section4, section5]
+    .filter(Boolean)
+    .join('\n\n')
 }
 
 // ---------------------------------------------------------------------------
