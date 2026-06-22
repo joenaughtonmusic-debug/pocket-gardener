@@ -83,6 +83,11 @@ export interface VisualConcept {
   status: 'draft' | 'generating' | 'complete' | 'error';
   error_message: string | null;
   placement_point: { x: number; y: number } | null;
+  /** Quick Preview overlay fields */
+  overlay_asset_key: string | null;
+  overlay_position: { x: number; y: number } | null;
+  overlay_scale: number | null;
+  preview_mode: string | null;
   created_at: string;
   updated_at: string;
 }
