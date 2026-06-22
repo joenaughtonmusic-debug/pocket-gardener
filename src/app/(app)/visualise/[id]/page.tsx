@@ -566,14 +566,14 @@ export default function VisualConceptDetailPage() {
           </section>
         )}
 
-        {/* ── Quick Preview ─────────────────────────────────────────────────── */}
+        {/* ── Quick Preview (primary) ───────────────────────────────────────── */}
         {concept.original_photo_url && (
-          <section className="space-y-4">
+          <section className="space-y-4 bg-white rounded-[2rem] border border-gray-100 shadow-sm p-5">
             <div className="px-1">
-              <p className="text-[9px] font-black uppercase tracking-widest text-green-800/40">
+              <p className="text-[10px] font-black uppercase tracking-widest text-green-800">
                 Quick Preview
               </p>
-              <p className="text-[11px] text-gray-500 font-medium mt-1 leading-relaxed">
+              <p className="text-[12px] text-gray-600 font-medium mt-1 leading-relaxed">
                 Place a plant cut-out into your photo to test shape, scale, and position.
               </p>
             </div>
@@ -653,143 +653,42 @@ export default function VisualConceptDetailPage() {
               <div className="flex gap-3">
                 <button
                   onClick={handleResetOverlay}
-                  className="flex-1 bg-white border border-gray-100 text-green-800/60 py-3.5 rounded-[1.5rem] text-[9px] font-black uppercase tracking-widest shadow-sm active:scale-[0.98] transition-all"
+                  className="flex-1 bg-[#f0f4f1] border border-gray-100 text-green-800/60 py-4 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest active:scale-[0.98] transition-all"
                 >
                   Reset
                 </button>
                 <button
                   onClick={handleSavePreview}
                   disabled={savingPreview}
-                  className="flex-1 bg-green-900 text-white py-3.5 rounded-[1.5rem] text-[9px] font-black uppercase tracking-widest shadow-sm active:scale-[0.98] transition-all disabled:opacity-60 flex items-center justify-center gap-2"
+                  className="flex-[2] bg-green-900 text-white py-4 rounded-[1.5rem] text-[11px] font-black uppercase tracking-widest shadow-lg active:scale-[0.98] transition-all disabled:opacity-60 flex items-center justify-center gap-2"
                 >
                   {savingPreview ? (
-                    <Loader2 size={12} strokeWidth={3} className="animate-spin" />
+                    <Loader2 size={14} strokeWidth={3} className="animate-spin" />
                   ) : previewSaved ? (
-                    <><Check size={12} strokeWidth={3} /> Saved</>
+                    <><Check size={14} strokeWidth={3} /> Preview saved</>
                   ) : (
                     'Save Preview'
                   )}
                 </button>
               </div>
+
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="w-full text-green-800/50 py-2 text-[9px] font-black uppercase tracking-widest active:opacity-70 transition-all disabled:opacity-40 flex items-center justify-center gap-2"
+              >
+                {saving ? (
+                  <Loader2 size={11} strokeWidth={3} className="animate-spin" />
+                ) : saveSuccess ? (
+                  <>
+                    <Check size={11} strokeWidth={3} className="text-green-600" />
+                    Plant selections saved
+                  </>
+                ) : (
+                  'Save plant selections only'
+                )}
+              </button>
             </div>
-          </section>
-        )}
-
-        {/* ── AI Blend — experimental ────────────────────────────────────────── */}
-        <section className="space-y-3">
-
-          <div className="bg-green-50 border border-green-100 rounded-[1.5rem] px-5 py-4 flex items-start gap-3">
-            <Sparkles size={14} className="text-green-600 shrink-0 mt-0.5" strokeWidth={2.5} />
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-green-700 mb-0.5">
-                AI Blend — experimental
-              </p>
-              <p className="text-[11px] text-green-800/70 font-medium leading-relaxed">
-                AI tries to merge the plant into your photo. Quick Preview above is more
-                reliable for checking plant shape and scale.
-              </p>
-            </div>
-          </div>
-
-          <button
-            onClick={handleGenerateImage}
-            disabled={generating || concept.status === 'generating' || selectedSpecies.length === 0}
-            className="w-full bg-green-900 text-white py-5 rounded-[2rem] text-[11px] font-black uppercase tracking-widest shadow-lg active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-3"
-          >
-            {generating || concept.status === 'generating' ? (
-              <>
-                <Loader2 size={16} strokeWidth={3} className="animate-spin" />
-                Blending…
-              </>
-            ) : (
-              <>
-                <Sparkles size={15} strokeWidth={2.5} />
-                {hasGenerated ? 'Re-run AI Blend' : 'AI Blend — edit photo with AI'}
-              </>
-            )}
-          </button>
-
-          {selectedSpecies.length === 0 && !generating && (
-            <p className="text-center text-[10px] text-gray-400 font-medium">
-              Select a plant above to run AI Blend.
-            </p>
-          )}
-
-          {(generateError || concept.error_message) && (
-            <div className="bg-amber-50 border border-amber-100 rounded-[1.5rem] p-5 space-y-2">
-              <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">
-                AI Blend error
-              </p>
-              <p className="text-[12px] text-amber-800 font-medium leading-relaxed">
-                {generateError || concept.error_message}
-              </p>
-              {(generateError || concept.error_message || '').includes('not configured') && (
-                <p className="text-[10px] text-amber-600 italic">
-                  Add OPENAI_API_KEY to your environment to enable AI Blend.
-                </p>
-              )}
-            </div>
-          )}
-
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="w-full bg-white border border-gray-100 text-green-800/60 py-3.5 rounded-[2rem] text-[9px] font-black uppercase tracking-widest shadow-sm active:scale-[0.98] transition-all disabled:opacity-60 flex items-center justify-center gap-2"
-          >
-            {saving ? (
-              <Loader2 size={12} strokeWidth={3} className="animate-spin" />
-            ) : saveSuccess ? (
-              <>
-                <Check size={12} strokeWidth={3} className="text-green-600" />
-                Saved
-              </>
-            ) : (
-              'Save plant selections'
-            )}
-          </button>
-        </section>
-
-        {/* ── AI Blend result ── */}
-        {concept.generated_image_url && (
-          <section className="space-y-3">
-            <p className="text-[9px] font-black uppercase tracking-widest text-green-800/40 px-1">
-              ✨ AI Blend result
-            </p>
-            <div className="bg-white rounded-[2rem] overflow-hidden border border-gray-100 shadow-sm">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={concept.generated_image_url}
-                alt="AI Blend concept"
-                className="w-full object-cover"
-              />
-            </div>
-
-            {concept.original_photo_url && (
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-white rounded-[1.5rem] overflow-hidden border border-gray-100 shadow-sm">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={concept.original_photo_url}
-                    alt="Before"
-                    className="w-full h-32 object-cover"
-                  />
-                  <p className="text-center text-[9px] font-black uppercase tracking-widest text-gray-400 py-2">
-                    Before
-                  </p>
-                </div>
-                <div className="bg-white rounded-[1.5rem] overflow-hidden border border-gray-100 shadow-sm">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={concept.generated_image_url}
-                    alt="AI Blend"
-                    className="w-full h-32 object-cover"
-                  />
-                  <p className="text-center text-[9px] font-black uppercase tracking-widest text-green-700 py-2">
-                    AI Blend
-                  </p>
-                </div>
-              </div>
-            )}
           </section>
         )}
 
@@ -820,6 +719,107 @@ export default function VisualConceptDetailPage() {
             )}
           </section>
         )}
+
+        {/* ── Advanced / Experimental AI Blend (collapsed) ── */}
+        <details className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden group">
+          <summary className="px-5 py-4 cursor-pointer list-none flex items-center justify-between gap-3 active:bg-gray-50">
+            <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+              Advanced / Experimental AI Blend
+            </span>
+            <span className="text-[10px] text-gray-300 font-medium group-open:hidden">Show</span>
+            <span className="text-[10px] text-gray-300 font-medium hidden group-open:inline">Hide</span>
+          </summary>
+
+          <div className="px-5 pb-5 space-y-4 border-t border-gray-50">
+            <p className="text-[11px] text-gray-500 font-medium leading-relaxed pt-4">
+              Experimental: AI Blend tries to merge plants into the photo, but results may be
+              less accurate than Quick Preview.
+            </p>
+
+            {concept.generated_image_url && (
+              <div className="space-y-3">
+                <p className="text-[9px] font-black uppercase tracking-widest text-green-800/40">
+                  Previous AI Blend result
+                </p>
+                <div className="rounded-[1.5rem] overflow-hidden border border-gray-100">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={concept.generated_image_url}
+                    alt="Previous AI Blend result"
+                    className="w-full object-cover"
+                  />
+                </div>
+
+                {concept.original_photo_url && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-[1.25rem] overflow-hidden border border-gray-100">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={concept.original_photo_url}
+                        alt="Before"
+                        className="w-full h-24 object-cover"
+                      />
+                      <p className="text-center text-[9px] font-black uppercase tracking-widest text-gray-400 py-2">
+                        Before
+                      </p>
+                    </div>
+                    <div className="rounded-[1.25rem] overflow-hidden border border-gray-100">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={concept.generated_image_url}
+                        alt="AI Blend"
+                        className="w-full h-24 object-cover"
+                      />
+                      <p className="text-center text-[9px] font-black uppercase tracking-widest text-gray-400 py-2">
+                        AI Blend
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <button
+              onClick={handleGenerateImage}
+              disabled={generating || concept.status === 'generating' || selectedSpecies.length === 0}
+              className="w-full bg-gray-100 text-gray-600 py-3.5 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {generating || concept.status === 'generating' ? (
+                <>
+                  <Loader2 size={14} strokeWidth={3} className="animate-spin" />
+                  Blending…
+                </>
+              ) : (
+                <>
+                  <Sparkles size={13} strokeWidth={2.5} />
+                  {hasGenerated ? 'Re-run AI Blend' : 'Run AI Blend'}
+                </>
+              )}
+            </button>
+
+            {selectedSpecies.length === 0 && !generating && (
+              <p className="text-center text-[10px] text-gray-400 font-medium">
+                Select a plant above to run AI Blend.
+              </p>
+            )}
+
+            {(generateError || concept.error_message) && (
+              <div className="bg-amber-50 border border-amber-100 rounded-[1.5rem] p-4 space-y-2">
+                <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">
+                  AI Blend error
+                </p>
+                <p className="text-[12px] text-amber-800 font-medium leading-relaxed">
+                  {generateError || concept.error_message}
+                </p>
+                {(generateError || concept.error_message || '').includes('not configured') && (
+                  <p className="text-[10px] text-amber-600 italic">
+                    Add OPENAI_API_KEY to your environment to enable AI Blend.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        </details>
 
         {/* ── Disclaimer ── */}
         <div className="bg-white rounded-[2rem] p-5 border border-gray-100 shadow-sm text-center">
