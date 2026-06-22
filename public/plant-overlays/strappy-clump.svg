@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 250" width="200" height="250">
+  <!-- Ground contact shadow -->
+  <ellipse cx="100" cy="243" rx="46" ry="7" fill="#003200" fill-opacity="0.28"/>
+
+  <!-- Back blades — widest angles, darkest -->
+  <ellipse cx="100" cy="138" rx="5" ry="97" fill="#1b4a0c" fill-opacity="0.82"
+           transform="rotate(-42, 100, 235)"/>
+  <ellipse cx="100" cy="138" rx="5" ry="97" fill="#1b4a0c" fill-opacity="0.82"
+           transform="rotate(42, 100, 235)"/>
+  <ellipse cx="100" cy="136" rx="6" ry="101" fill="#265e12" fill-opacity="0.84"
+           transform="rotate(-30, 100, 235)"/>
+  <ellipse cx="100" cy="136" rx="6" ry="101" fill="#265e12" fill-opacity="0.84"
+           transform="rotate(30, 100, 235)"/>
+
+  <!-- Mid blades -->
+  <ellipse cx="100" cy="134" rx="7" ry="105" fill="#347519" fill-opacity="0.86"
+           transform="rotate(-18, 100, 235)"/>
+  <ellipse cx="100" cy="134" rx="7" ry="105" fill="#347519" fill-opacity="0.86"
+           transform="rotate(18, 100, 235)"/>
+  <ellipse cx="100" cy="132" rx="8" ry="108" fill="#438e21" fill-opacity="0.86"
+           transform="rotate(-9, 100, 235)"/>
+  <ellipse cx="100" cy="132" rx="8" ry="108" fill="#438e21" fill-opacity="0.86"
+           transform="rotate(9, 100, 235)"/>
+
+  <!-- Centre upright blades — brightest -->
+  <ellipse cx="100" cy="130" rx="9" ry="111" fill="#54a82a" fill-opacity="0.84"
+           transform="rotate(-3, 100, 235)"/>
+  <ellipse cx="100" cy="130" rx="9" ry="111" fill="#54a82a" fill-opacity="0.84"
+           transform="rotate(3, 100, 235)"/>
+  <ellipse cx="100" cy="128" rx="10" ry="114" fill="#65c234" fill-opacity="0.80"
+           transform="rotate(0, 100, 235)"/>
+
+  <!-- Drooping side blades -->
+  <ellipse cx="100" cy="158" rx="4" ry="65" fill="#3e8420" fill-opacity="0.76"
+           transform="rotate(-58, 100, 235)"/>
+  <ellipse cx="100" cy="158" rx="4" ry="65" fill="#3e8420" fill-opacity="0.76"
+           transform="rotate(58, 100, 235)"/>
+  <ellipse cx="100" cy="165" rx="3" ry="52" fill="#2d6615" fill-opacity="0.70"
+           transform="rotate(-70, 100, 235)"/>
+  <ellipse cx="100" cy="165" rx="3" ry="52" fill="#2d6615" fill-opacity="0.70"
+           transform="rotate(70, 100, 235)"/>
+</svg>
