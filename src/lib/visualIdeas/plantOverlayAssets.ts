@@ -15,41 +15,91 @@ export interface OverlayAsset {
   aspect: number
 }
 
+/** Reference preview width used when tuning defaultWidthFraction from dev-overlay px sizes. */
+const PREVIEW_REF_WIDTH = 900
+
+function widthFraction(px: number): number {
+  return px / PREVIEW_REF_WIDTH
+}
+
 const ASSETS: Record<string, OverlayAsset> = {
-  lomandra: {
-    key: 'lomandra',
-    src: '/plant-overlays/lomandra.png',
-    defaultWidthFraction: 0.14,
-    aspect: 4576 / 3056,
+  hydrangea: {
+    key: 'hydrangea',
+    src: '/plant-overlays/hydrangea.png',
+    defaultWidthFraction: widthFraction(220),
+    aspect: 1,
   },
-  camellia: {
-    key: 'camellia',
-    src: '/plant-overlays/camellia_clean_transparent.png',
-    defaultWidthFraction: 0.20,
+  'bird-of-paradise': {
+    key: 'bird-of-paradise',
+    src: '/plant-overlays/bird-of-paradise.png',
+    defaultWidthFraction: widthFraction(260),
+    aspect: 1,
+  },
+  nikau: {
+    key: 'nikau',
+    src: '/plant-overlays/nikau.png',
+    defaultWidthFraction: widthFraction(320),
+    aspect: 1,
+  },
+  hebe: {
+    key: 'hebe',
+    src: '/plant-overlays/hebe.png',
+    defaultWidthFraction: widthFraction(180),
+    aspect: 1,
+  },
+  'renga-renga-lily': {
+    key: 'renga-renga-lily',
+    src: '/plant-overlays/renga-renga-lily.png',
+    defaultWidthFraction: widthFraction(220),
+    aspect: 1,
+  },
+  clivia: {
+    key: 'clivia',
+    src: '/plant-overlays/clivia.png',
+    defaultWidthFraction: widthFraction(200),
+    aspect: 1,
+  },
+  'star-jasmine': {
+    key: 'star-jasmine',
+    src: '/plant-overlays/star-jasmine.png',
+    defaultWidthFraction: widthFraction(260),
     aspect: 1,
   },
   flax: {
     key: 'flax',
     src: '/plant-overlays/flax.png',
-    defaultWidthFraction: 0.18,
+    defaultWidthFraction: widthFraction(240),
     aspect: 1,
   },
   groundcover: {
     key: 'groundcover',
     src: '/plant-overlays/groundcover.png',
-    defaultWidthFraction: 0.16,
+    defaultWidthFraction: widthFraction(160),
     aspect: 1,
   },
   ponga: {
     key: 'ponga',
     src: '/plant-overlays/ponga.png',
-    defaultWidthFraction: 0.24,
+    defaultWidthFraction: widthFraction(280),
     aspect: 1,
   },
+  lomandra: {
+    key: 'lomandra',
+    src: '/plant-overlays/lomandra.png',
+    defaultWidthFraction: widthFraction(220),
+    aspect: 4576 / 3056,
+  },
+  camellia: {
+    key: 'camellia',
+    src: '/plant-overlays/camellia_clean_transparent.png',
+    defaultWidthFraction: widthFraction(200),
+    aspect: 1,
+  },
+  // Legacy / category fallbacks — kept for saved concepts and non-approved species
   buxus: {
     key: 'buxus',
     src: '/plant-overlays/buxus.png',
-    defaultWidthFraction: 0.20,
+    defaultWidthFraction: widthFraction(200),
     aspect: 1,
   },
   hedge: {
@@ -61,16 +111,32 @@ const ASSETS: Record<string, OverlayAsset> = {
   'strappy-clump': {
     key: 'strappy-clump',
     src: '/plant-overlays/strappy-clump.svg',
-    defaultWidthFraction: 0.14,
+    defaultWidthFraction: widthFraction(220),
     aspect: 200 / 250,
   },
   'rounded-shrub': {
     key: 'rounded-shrub',
     src: '/plant-overlays/rounded-shrub.svg',
-    defaultWidthFraction: 0.20,
+    defaultWidthFraction: widthFraction(200),
     aspect: 200 / 230,
   },
 }
+
+/** Approved PNG overlays shown in the production Visualise plant chooser. */
+export const APPROVED_OVERLAY_KEYS = new Set<string>([
+  'hydrangea',
+  'bird-of-paradise',
+  'nikau',
+  'hebe',
+  'renga-renga-lily',
+  'clivia',
+  'star-jasmine',
+  'flax',
+  'groundcover',
+  'ponga',
+  'lomandra',
+  'camellia',
+])
 
 const FALLBACK_ASSET: OverlayAsset = ASSETS['rounded-shrub']
 
@@ -137,6 +203,111 @@ export const PLANT_TYPE_FILTERS: Array<PlantTypeFilter | 'Any'> = [
 ]
 
 export const CREATE_VISUAL_PLANT_OPTIONS: CreateVisualPlantOption[] = [
+  {
+    name: 'Hydrangea',
+    description: 'Flowering shrub with bold seasonal blooms.',
+    notes: 'Suits part shade borders and foundation planting.',
+    detectedIntent: 'shrub planting',
+    style: 'Shrubs',
+    gardenStyles: ['Cottage', 'Formal', 'Coastal'],
+    plantTypes: ['Shrub'],
+    conditions: {
+      sun: ['part shade', 'full shade'],
+      moisture: ['moist'],
+      drainage: ['average', 'well drained'],
+      wind: ['sheltered', 'moderate'],
+    },
+  },
+  {
+    name: 'Bird of Paradise',
+    description: 'Tropical upright plant with striking architectural form.',
+    notes: 'Strong focal point for sunny sheltered spots.',
+    detectedIntent: 'feature planting',
+    style: 'Feature planting',
+    gardenStyles: ['Subtropical', 'Coastal'],
+    plantTypes: ['Shrub'],
+    conditions: {
+      sun: ['full sun', 'part shade'],
+      moisture: ['average', 'moist'],
+      drainage: ['well drained'],
+      wind: ['sheltered', 'moderate'],
+    },
+  },
+  {
+    name: 'Nikau Palm',
+    description: 'NZ native palm with a clean upright trunk and crown.',
+    notes: 'Instant subtropical height and structure.',
+    detectedIntent: 'feature tree',
+    style: 'Feature tree',
+    gardenStyles: ['Native', 'Subtropical', 'Coastal'],
+    plantTypes: ['Tree'],
+    conditions: {
+      sun: ['part shade'],
+      moisture: ['moist'],
+      drainage: ['average', 'well drained'],
+      wind: ['sheltered', 'moderate'],
+    },
+  },
+  {
+    name: 'Hebe',
+    description: 'Compact evergreen shrub with tidy foliage.',
+    notes: 'Reliable structure plant for borders and edges.',
+    detectedIntent: 'shrub planting',
+    style: 'Shrubs',
+    gardenStyles: ['Native', 'Coastal', 'Low maintenance'],
+    plantTypes: ['Shrub'],
+    conditions: {
+      sun: ['full sun', 'part shade'],
+      moisture: ['average', 'moist'],
+      drainage: ['average', 'well drained'],
+      wind: ['moderate', 'exposed'],
+    },
+  },
+  {
+    name: 'Renga Renga Lily',
+    description: 'Strappy native clump with airy white summer flowers.',
+    notes: 'Soft underplanting for shady borders.',
+    detectedIntent: 'general planting',
+    style: 'Border planting',
+    gardenStyles: ['Native', 'Cottage', 'Low maintenance'],
+    plantTypes: ['Grass / strappy plant'],
+    conditions: {
+      sun: ['part shade', 'full shade'],
+      moisture: ['average', 'moist'],
+      drainage: ['average', 'well drained'],
+      wind: ['sheltered', 'moderate'],
+    },
+  },
+  {
+    name: 'Clivia',
+    description: 'Shade-loving clump with bold strappy leaves and seasonal flowers.',
+    notes: 'Excellent under trees and in dry shade.',
+    detectedIntent: 'groundcover planting',
+    style: 'Groundcovers',
+    gardenStyles: ['Cottage', 'Subtropical', 'Low maintenance'],
+    plantTypes: ['Groundcover', 'Grass / strappy plant'],
+    conditions: {
+      sun: ['part shade', 'full shade'],
+      moisture: ['dry', 'average'],
+      drainage: ['average', 'well drained'],
+      wind: ['sheltered'],
+    },
+  },
+  {
+    name: 'Star Jasmine',
+    description: 'Evergreen climber with glossy leaves and fragrant flowers.',
+    notes: 'Suits fences, pergolas, and sheltered walls.',
+    detectedIntent: 'climber planting',
+    style: 'Climbers',
+    gardenStyles: ['Formal', 'Cottage', 'Subtropical'],
+    plantTypes: ['Climber'],
+    conditions: {
+      sun: ['full sun', 'part shade'],
+      moisture: ['average', 'moist'],
+      drainage: ['average', 'well drained'],
+      wind: ['sheltered', 'moderate'],
+    },
+  },
   {
     name: 'Lomandra',
     description: 'Compact grass-like clump. Tough and low maintenance.',
@@ -238,51 +409,6 @@ export const CREATE_VISUAL_PLANT_OPTIONS: CreateVisualPlantOption[] = [
     conditions: {
       sun: ['part shade', 'full shade'],
       moisture: ['moist'],
-      drainage: ['average', 'well drained'],
-      wind: ['sheltered', 'moderate'],
-    },
-  },
-  {
-    name: 'Buxus',
-    description: 'Small-leaved evergreen shrub for formal shapes.',
-    notes: 'Rounded shrub form; good for structure planting.',
-    detectedIntent: 'shrub planting',
-    style: 'Shrubs',
-    gardenStyles: ['Formal'],
-    plantTypes: ['Shrub'],
-    conditions: {
-      sun: ['full sun', 'part shade'],
-      moisture: ['average', 'moist'],
-      drainage: ['average', 'well drained'],
-      wind: ['sheltered', 'moderate'],
-    },
-  },
-  {
-    name: 'Griselinia littoralis',
-    description: 'Dense NZ native screening plant.',
-    notes: 'Reliable hedge and boundary planting.',
-    detectedIntent: 'hedge/screening',
-    style: 'Hedge',
-    gardenStyles: ['Native', 'Coastal', 'Low maintenance'],
-    plantTypes: ['Hedge / screening'],
-    conditions: {
-      sun: ['full sun', 'part shade'],
-      moisture: ['average', 'moist'],
-      drainage: ['average', 'well drained'],
-      wind: ['moderate', 'exposed'],
-    },
-  },
-  {
-    name: 'Titoki',
-    description: 'NZ native screening plant with glossy foliage.',
-    notes: 'Can be used as a raised screen or small tree.',
-    detectedIntent: 'hedge/screening',
-    style: 'Screening',
-    gardenStyles: ['Native', 'Formal'],
-    plantTypes: ['Hedge / screening', 'Tree'],
-    conditions: {
-      sun: ['full sun', 'part shade'],
-      moisture: ['average', 'moist'],
       drainage: ['average', 'well drained'],
       wind: ['sheltered', 'moderate'],
     },
@@ -411,22 +537,33 @@ export function getCreateVisualPlantOption(name: string): CreateVisualPlantOptio
 
 /** Species-name matching rules, tested in priority order. */
 const SPECIES_RULES: Array<{ pattern: RegExp; assetKey: string }> = [
-  { pattern: /phormium|flax|astelia/i,                                   assetKey: 'flax' },
-  { pattern: /ponga|tree.?fern|dicksonia|cyathea/i,                      assetKey: 'ponga' },
-  { pattern: /griselinia|titoki/i,                                       assetKey: 'hedge' },
-  { pattern: /buxus/i,                                                   assetKey: 'buxus' },
-  { pattern: /camellia/i,                                                assetKey: 'camellia' },
-  { pattern: /lomandra|carex|libertia|dietes|agapanthus|harakeke/i,     assetKey: 'lomandra' },
+  { pattern: /hydrangea/i,                                              assetKey: 'hydrangea' },
+  { pattern: /bird of paradise|strelitzia/i,                           assetKey: 'bird-of-paradise' },
+  { pattern: /nikau/i,                                                 assetKey: 'nikau' },
+  { pattern: /hebe|koromiko/i,                                         assetKey: 'hebe' },
+  { pattern: /renga.?renga|arthropodium/i,                             assetKey: 'renga-renga-lily' },
+  { pattern: /clivia/i,                                                assetKey: 'clivia' },
+  { pattern: /star jasmine|trachelospermum/i,                          assetKey: 'star-jasmine' },
+  { pattern: /phormium|flax|astelia|harakeke|nz flax/i,                assetKey: 'flax' },
+  { pattern: /ponga|tree.?fern|dicksonia|cyathea/i,                    assetKey: 'ponga' },
+  { pattern: /camellia/i,                                              assetKey: 'camellia' },
+  { pattern: /lomandra|carex|libertia|dietes|agapanthus/i,             assetKey: 'lomandra' },
   { pattern: /groundcover|ground.?cover|pratia|muehlenbeckia|coprosma/i, assetKey: 'groundcover' },
+  // Legacy / category fallbacks for saved concepts and unmatched species
+  { pattern: /griselinia|titoki/i,                                     assetKey: 'hedge' },
+  { pattern: /buxus/i,                                                 assetKey: 'buxus' },
 ]
 
 /** Detected-intent matching rules. */
 const INTENT_RULES: Array<{ pattern: RegExp; assetKey: string }> = [
-  { pattern: /hedge|screen/i,               assetKey: 'hedge' },
-  { pattern: /ponga|tree.?fern/i,           assetKey: 'ponga' },
-  { pattern: /flax|phormium/i,              assetKey: 'flax' },
-  { pattern: /groundcover|ground.?cover/i,  assetKey: 'groundcover' },
-  { pattern: /shrub/i,                      assetKey: 'camellia' },
+  { pattern: /climber/i,                      assetKey: 'star-jasmine' },
+  { pattern: /hedge|screen/i,                 assetKey: 'hedge' },
+  { pattern: /ponga|tree.?fern|palm/i,       assetKey: 'ponga' },
+  { pattern: /flax|phormium/i,                assetKey: 'flax' },
+  { pattern: /groundcover|ground.?cover/i,   assetKey: 'groundcover' },
+  { pattern: /feature tree/i,                  assetKey: 'nikau' },
+  { pattern: /shrub/i,                        assetKey: 'camellia' },
+  { pattern: /general planting|border/i,      assetKey: 'lomandra' },
 ]
 
 /**
@@ -475,9 +612,9 @@ export function resolveOverlayAsset(
   return FALLBACK_ASSET
 }
 
-/** Plants with a dedicated preview overlay asset (excludes generic fallbacks). */
+/** Production Visualise chooser — approved dedicated PNG overlays only. */
 export const PREVIEW_PLANT_OPTIONS: CreateVisualPlantOption[] = CREATE_VISUAL_PLANT_OPTIONS.filter(
-  (plant) => resolveOverlayAsset([plant.name], plant.detectedIntent).key !== 'rounded-shrub',
+  (plant) => APPROVED_OVERLAY_KEYS.has(resolveOverlayAsset([plant.name], plant.detectedIntent).key),
 )
 
 // TODO: Future hedge mode — support linear metres, desired height, trim frequency,

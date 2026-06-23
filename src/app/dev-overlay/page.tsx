@@ -19,76 +19,151 @@ import { useState, useRef, useCallback } from 'react'
 interface OverlayDef {
   id: string
   label: string
-  src: string
+  /** Filename under public/plant-overlays/ */
+  file: string
   /** Sensible starting width in px */
   defaultWidth: number
   /** viewBox aspect ratio (w / h) for height-auto sizing guidance */
   aspect: number
 }
 
+function overlaySrc(file: string): string {
+  return `/plant-overlays/${encodeURIComponent(file)}`
+}
+
 const OVERLAYS: OverlayDef[] = [
   // ── Processed PNGs (background-removed) ──────────────────────────────────
   {
+    id: 'bird-of-paradise',
+    label: 'Bird of Paradise',
+    file: 'birds of paradies white.png',
+    defaultWidth: 260,
+    aspect: 1,
+  },
+  {
     id: 'buxus',
     label: 'Buxus',
-    src: '/plant-overlays/buxus.png',
+    file: 'buxus.png',
     defaultWidth: 200,
-    aspect: 1, // 1254 × 1254
-  },
-  {
-    id: 'flax',
-    label: 'Flax',
-    src: '/plant-overlays/flax.png',
-    defaultWidth: 240,
-    aspect: 1, // 1254 × 1254
-  },
-  {
-    id: 'groundcover',
-    label: 'Groundcover',
-    src: '/plant-overlays/groundcover.png',
-    defaultWidth: 160,
-    aspect: 1, // 1254 × 1254
-  },
-  {
-    id: 'ponga',
-    label: 'Ponga',
-    src: '/plant-overlays/ponga.png',
-    defaultWidth: 280,
-    aspect: 1, // 1254 × 1254
-  },
-  {
-    id: 'lomandra',
-    label: 'Lomandra',
-    src: '/plant-overlays/lomandra.png',
-    defaultWidth: 220,
-    aspect: 4576 / 3056, // native PNG dimensions
+    aspect: 1,
   },
   {
     id: 'camellia',
     label: 'Camellia',
-    src: '/plant-overlays/camellia_clean_transparent.png',
+    file: 'camellia_clean_transparent.png',
     defaultWidth: 200,
-    aspect: 1, // 1254 × 1254
+    aspect: 1,
+  },
+  {
+    id: 'citrus',
+    label: 'Citrus / Lemon Tree',
+    file: 'lemon white.png',
+    defaultWidth: 300,
+    aspect: 1,
+  },
+  {
+    id: 'clivia',
+    label: 'Clivia',
+    file: 'clivia white.png',
+    defaultWidth: 200,
+    aspect: 1,
+  },
+  {
+    id: 'flax',
+    label: 'Flax',
+    file: 'flax.png',
+    defaultWidth: 240,
+    aspect: 1,
+  },
+  {
+    id: 'gardenia',
+    label: 'Gardenia',
+    file: 'Gardenia white.png',
+    defaultWidth: 200,
+    aspect: 1,
+  },
+  {
+    id: 'groundcover',
+    label: 'Groundcover',
+    file: 'groundcover.png',
+    defaultWidth: 160,
+    aspect: 1,
+  },
+  {
+    id: 'hebe',
+    label: 'Hebe',
+    file: 'hebe white.png',
+    defaultWidth: 180,
+    aspect: 1,
+  },
+  {
+    id: 'hydrangea',
+    label: 'Hydrangea',
+    file: 'Hydrangea white.png',
+    defaultWidth: 220,
+    aspect: 1,
+  },
+  {
+    id: 'lavender',
+    label: 'Lavender',
+    file: 'lavender white.png',
+    defaultWidth: 180,
+    aspect: 1,
+  },
+  {
+    id: 'lomandra',
+    label: 'Lomandra',
+    file: 'lomandra.png',
+    defaultWidth: 220,
+    aspect: 4576 / 3056,
+  },
+  {
+    id: 'nikau',
+    label: 'Nikau',
+    file: 'Nikau white.png',
+    defaultWidth: 320,
+    aspect: 1,
+  },
+  {
+    id: 'ponga',
+    label: 'Ponga',
+    file: 'ponga.png',
+    defaultWidth: 280,
+    aspect: 1,
+  },
+  {
+    id: 'renga-renga',
+    label: 'Renga Renga Lily',
+    file: 'Renga renga white.png',
+    defaultWidth: 220,
+    aspect: 1,
+  },
+  {
+    id: 'star-jasmine',
+    label: 'Star Jasmine',
+    file: 'star jasmine white.png',
+    defaultWidth: 260,
+    aspect: 1,
   },
   // ── SVG placeholders ─────────────────────────────────────────────────────
   {
     id: 'strappy-clump',
     label: 'Strappy Clump (SVG)',
-    src: '/plant-overlays/strappy-clump.svg',
+    file: 'strappy-clump.svg',
     defaultWidth: 160,
     aspect: 200 / 250,
   },
   {
     id: 'rounded-shrub',
     label: 'Rounded Shrub (SVG)',
-    src: '/plant-overlays/rounded-shrub.svg',
+    file: 'rounded-shrub.svg',
     defaultWidth: 200,
     aspect: 200 / 230,
   },
   {
     id: 'hedge-section',
     label: 'Hedge Section (SVG)',
-    src: '/plant-overlays/hedge-section.svg',
+    file: 'hedge-section.svg',
     defaultWidth: 300,
     aspect: 320 / 200,
   },
@@ -194,7 +269,7 @@ export default function DevOverlayPage() {
           <input
             type="range"
             min={60}
-            max={520}
+            max={640}
             value={width}
             onChange={(e) => setWidth(Number(e.target.value))}
             style={styles.slider}
@@ -239,7 +314,7 @@ export default function DevOverlayPage() {
         {/* Plant overlay */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={selected.src}
+          src={overlaySrc(selected.file)}
           alt={selected.label}
           draggable={false}
           style={{
@@ -269,8 +344,8 @@ export default function DevOverlayPage() {
 
       <p style={styles.footer}>
         Smoke test only — no saving, no database, no fal.ai calls.
-        PNGs (Buxus, Flax, Groundcover, Ponga, Lomandra, Camellia) are background-removed transparent PNGs.
-        SVG entries are placeholder shapes.
+        {OVERLAYS.filter((ov) => ov.file.endsWith('.png')).length} transparent PNG overlays
+        plus {OVERLAYS.filter((ov) => ov.file.endsWith('.svg')).length} SVG placeholders.
         Assets live in <code style={{ color: '#9090c0' }}>public/plant-overlays/</code>
       </p>
     </div>
@@ -336,7 +411,9 @@ const styles = {
 
   row: {
     display: 'flex',
+    flexWrap: 'wrap' as const,
     gap: 8,
+    maxWidth: 900,
   } as React.CSSProperties,
 
   btn: {
