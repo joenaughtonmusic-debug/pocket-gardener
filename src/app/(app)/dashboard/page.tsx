@@ -625,10 +625,10 @@ export default function MyGardenDashboard() {
         {/* ── 1. Quick Actions row ─────────────────────────────────────── */}
         <nav aria-label="Quick actions" className="flex items-start gap-3">
           {([
-            { icon: '🌿', label: 'Visualise', href: '/match' },
-            { icon: '📅', label: 'Maintain',  href: '/calendar' },
-            { icon: '📚', label: 'Learn',     href: '/guides' },
-            { icon: '✨', label: 'Inspire',   href: '/feature' },
+            { icon: '🖼️', label: 'Visualise',  href: '/visualise' },
+            { icon: '📅', label: 'Maintain',   href: '/calendar' },
+            { icon: '📚', label: 'Learn',      href: '/guides' },
+            { icon: '🔍', label: 'Find Plants', href: '/match' },
           ] as const).map(({ icon, label, href }) => (
             <Link
               key={href}
@@ -645,30 +645,6 @@ export default function MyGardenDashboard() {
           ))}
         </nav>
 
-        {/* ── Visual Ideas CTA ──────────────────────────────────────────── */}
-        <Link
-          href="/visualise"
-          className="block bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden active:scale-[0.98] transition-all"
-        >
-          <div className="flex items-center gap-4 p-5">
-            <div className="w-12 h-12 rounded-[1rem] bg-green-50 flex items-center justify-center text-2xl shrink-0">
-              🎨
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-black uppercase tracking-widest text-green-800/50 mb-0.5">
-                Plan & Visualise
-              </p>
-              <h3 className="text-sm font-black text-green-950 uppercase leading-none">
-                Visual Ideas
-              </h3>
-              <p className="text-[11px] text-gray-400 font-medium mt-0.5">
-                Upload a photo · get plant ideas · see how it could look.
-              </p>
-            </div>
-            <ArrowRight size={14} className="text-gray-300 shrink-0" strokeWidth={2.5} />
-          </div>
-        </Link>
-
         {/* ── 2. Empty state — no plants yet ────────────────────────────── */}
         {ownedPlants.length === 0 && !loading && (
           <section>
@@ -680,13 +656,13 @@ export default function MyGardenDashboard() {
               {gardenAreas.length === 0 ? (
                 <>
                   <p className="text-[12px] text-gray-400 leading-relaxed font-medium max-w-xs mx-auto">
-                    Start by adding your garden spaces — like Front Boundary, Back Fence, Deck Pots, or Veggie Patch. Then add the plants you already have.
+                    Create areas like Front Garden, Back Fence, Patio Pots or Veggie Patch. Add plants now, or come back later when you&apos;re ready.
                   </p>
                   <Link
                     href="/match"
                     className="inline-block mt-2 bg-green-900 text-white text-[10px] font-black uppercase tracking-widest px-8 py-3 rounded-full shadow-sm active:scale-95 transition-all"
                   >
-                    Create My First Garden Space
+                    Create My First Garden Area
                   </Link>
                   <p className="text-[9px] text-gray-300 font-bold uppercase tracking-widest pt-1">
                     or{' '}
@@ -698,7 +674,7 @@ export default function MyGardenDashboard() {
               ) : (
                 <>
                   <p className="text-[12px] text-gray-400 leading-relaxed font-medium max-w-xs mx-auto">
-                    You have {gardenAreas.length} garden {gardenAreas.length === 1 ? 'space' : 'spaces'} set up. Now add the plants you already have growing — or browse the Library to discover new ones.
+                    You have {gardenAreas.length} garden {gardenAreas.length === 1 ? 'area' : 'areas'} set up. Now add the plants you already have growing — or browse the Library to discover new ones.
                   </p>
                   <Link
                     href="/plants"
@@ -720,10 +696,10 @@ export default function MyGardenDashboard() {
                 My Garden
               </h2>
               <Link
-                href="/match"
+                href="#garden-areas"
                 className="text-[8px] font-black uppercase tracking-widest text-green-700"
               >
-                {gardenAreas.length > 0 ? 'Manage spaces →' : 'Add spaces →'}
+                {gardenAreas.length > 0 ? 'Manage areas →' : 'Add areas →'}
               </Link>
             </div>
 
@@ -1060,7 +1036,7 @@ export default function MyGardenDashboard() {
 
         {/* ── 9. My Garden Areas ────────────────────────────────────────── */}
         {!loading && (
-          <section className="space-y-3">
+          <section id="garden-areas" className="space-y-3 scroll-mt-6">
             <div className="flex items-center justify-between px-1">
               <h2 className="text-xs font-black text-green-950 uppercase tracking-tight">
                 My Garden Areas
@@ -1070,7 +1046,7 @@ export default function MyGardenDashboard() {
                   href="/match"
                   className="text-[8px] font-black uppercase tracking-widest text-green-700"
                 >
-                  Manage →
+                  Add area →
                 </Link>
               )}
             </div>
@@ -1082,7 +1058,7 @@ export default function MyGardenDashboard() {
                   No garden areas yet
                 </p>
                 <p className="text-[11px] text-gray-400 font-medium leading-relaxed max-w-xs mx-auto">
-                  Add the parts of your garden — Front Boundary, Deck Pots, Back Fence — then assign plants and get tailored recommendations for each spot.
+                  Create areas like Front Garden, Back Fence, Patio Pots or Veggie Patch. Add plants now, or come back later when you&apos;re ready.
                 </p>
                 <Link
                   href="/match"

@@ -52,13 +52,13 @@ export default function WelcomeOverlay() {
     },
     {
       title: "Map Out Your Garden",
-      desc: "Start by adding the parts of your garden — like Front Boundary, Back Fence, Deck Pots, or Veggie Patch. You can add plants to each area now or come back later.",
+      desc: "Create areas like Front Garden, Back Fence, Patio Pots or Veggie Patch. Add plants now, or come back later when you're ready.",
       icon: "🗺️",
     },
     {
       title: "Find the Right Plants",
-      desc: "Not sure what will grow in your conditions? Set your sun, soil, and slope for each area — and see exactly what thrives in your section.",
-      icon: "🌱",
+      desc: "Find plants that suit your garden, then preview them in your own photo.",
+      icon: "🖼️",
     },
     {
       title: "Local Guides",

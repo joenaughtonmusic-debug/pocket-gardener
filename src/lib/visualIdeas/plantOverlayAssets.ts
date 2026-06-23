@@ -74,6 +74,341 @@ const ASSETS: Record<string, OverlayAsset> = {
 
 const FALLBACK_ASSET: OverlayAsset = ASSETS['rounded-shrub']
 
+/** Plants available in the simplified Visualise creation flow. */
+export type GardenStyleFilter =
+  | 'Subtropical'
+  | 'Native'
+  | 'Formal'
+  | 'Cottage'
+  | 'Coastal'
+  | 'Low maintenance'
+
+export type PlantTypeFilter =
+  | 'Hedge / screening'
+  | 'Shrub'
+  | 'Tree'
+  | 'Groundcover'
+  | 'Grass / strappy plant'
+  | 'Climber'
+
+export type SunCondition = 'full sun' | 'part shade' | 'full shade'
+export type MoistureCondition = 'dry' | 'average' | 'moist'
+export type DrainageCondition = 'poor' | 'average' | 'well drained'
+export type WindCondition = 'sheltered' | 'moderate' | 'exposed'
+
+export type SuitabilityResult = 'good' | 'possible' | 'poor'
+
+export interface PlantConditionProfile {
+  sun: SunCondition[]
+  moisture: MoistureCondition[]
+  drainage: DrainageCondition[]
+  wind: WindCondition[]
+}
+
+export interface CreateVisualPlantOption {
+  name: string
+  description: string
+  notes: string
+  detectedIntent: string
+  style: string | null
+  gardenStyles: GardenStyleFilter[]
+  plantTypes: PlantTypeFilter[]
+  conditions: PlantConditionProfile
+}
+
+export const GARDEN_STYLE_FILTERS: Array<GardenStyleFilter | 'Any'> = [
+  'Any',
+  'Subtropical',
+  'Native',
+  'Formal',
+  'Cottage',
+  'Coastal',
+  'Low maintenance',
+]
+
+export const PLANT_TYPE_FILTERS: Array<PlantTypeFilter | 'Any'> = [
+  'Any',
+  'Hedge / screening',
+  'Shrub',
+  'Tree',
+  'Groundcover',
+  'Grass / strappy plant',
+  'Climber',
+]
+
+export const CREATE_VISUAL_PLANT_OPTIONS: CreateVisualPlantOption[] = [
+  {
+    name: 'Lomandra',
+    description: 'Compact grass-like clump. Tough and low maintenance.',
+    notes: 'Good for borders, slopes, and mass planting.',
+    detectedIntent: 'general planting',
+    style: 'Border planting',
+    gardenStyles: ['Native', 'Low maintenance', 'Coastal'],
+    plantTypes: ['Grass / strappy plant'],
+    conditions: {
+      sun: ['full sun', 'part shade'],
+      moisture: ['dry', 'average'],
+      drainage: ['average', 'well drained'],
+      wind: ['moderate', 'exposed'],
+    },
+  },
+  {
+    name: 'Agapanthus',
+    description: 'Strappy clump with blue or white summer flowers.',
+    notes: 'Hardy border and edge plant.',
+    detectedIntent: 'general planting',
+    style: 'Border planting',
+    gardenStyles: ['Cottage', 'Low maintenance', 'Coastal'],
+    plantTypes: ['Grass / strappy plant'],
+    conditions: {
+      sun: ['full sun', 'part shade'],
+      moisture: ['average', 'moist'],
+      drainage: ['average', 'well drained'],
+      wind: ['moderate', 'exposed'],
+    },
+  },
+  {
+    name: 'Camellia sasanqua',
+    description: 'Flowering evergreen shrub with seasonal colour.',
+    notes: 'Works as a specimen shrub or informal hedge.',
+    detectedIntent: 'shrub planting',
+    style: 'Shrubs',
+    gardenStyles: ['Formal', 'Cottage'],
+    plantTypes: ['Shrub', 'Hedge / screening'],
+    conditions: {
+      sun: ['part shade', 'full shade'],
+      moisture: ['average', 'moist'],
+      drainage: ['average', 'well drained'],
+      wind: ['sheltered', 'moderate'],
+    },
+  },
+  {
+    name: 'Harakeke (New Zealand Flax)',
+    description: 'Bold architectural NZ native with upright strap leaves.',
+    notes: 'Strong vertical form for feature or screening.',
+    detectedIntent: 'general planting',
+    style: 'Feature tree',
+    gardenStyles: ['Native', 'Coastal', 'Low maintenance', 'Subtropical'],
+    plantTypes: ['Grass / strappy plant'],
+    conditions: {
+      sun: ['full sun', 'part shade'],
+      moisture: ['average', 'moist'],
+      drainage: ['average', 'well drained'],
+      wind: ['moderate', 'exposed'],
+    },
+  },
+  {
+    name: 'Phormium',
+    description: 'Architectural flax with upright strappy foliage.',
+    notes: 'Many sizes and foliage colours available.',
+    detectedIntent: 'general planting',
+    style: 'Feature tree',
+    gardenStyles: ['Native', 'Coastal', 'Low maintenance', 'Subtropical'],
+    plantTypes: ['Grass / strappy plant'],
+    conditions: {
+      sun: ['full sun', 'part shade'],
+      moisture: ['average', 'moist'],
+      drainage: ['average', 'well drained'],
+      wind: ['moderate', 'exposed'],
+    },
+  },
+  {
+    name: 'Pratia angulata',
+    description: 'Low spreading groundcover with small white flowers.',
+    notes: 'Suits edges, gaps, and underplanting.',
+    detectedIntent: 'groundcover planting',
+    style: 'Groundcovers',
+    gardenStyles: ['Native', 'Cottage', 'Low maintenance'],
+    plantTypes: ['Groundcover'],
+    conditions: {
+      sun: ['part shade', 'full shade'],
+      moisture: ['moist'],
+      drainage: ['average', 'well drained'],
+      wind: ['sheltered', 'moderate'],
+    },
+  },
+  {
+    name: 'Tree Fern (Ponga)',
+    description: 'Tall tree fern with spreading fronds.',
+    notes: 'Instant subtropical structure and height.',
+    detectedIntent: 'feature tree',
+    style: 'Feature tree',
+    gardenStyles: ['Native', 'Subtropical'],
+    plantTypes: ['Tree'],
+    conditions: {
+      sun: ['part shade', 'full shade'],
+      moisture: ['moist'],
+      drainage: ['average', 'well drained'],
+      wind: ['sheltered', 'moderate'],
+    },
+  },
+  {
+    name: 'Buxus',
+    description: 'Small-leaved evergreen shrub for formal shapes.',
+    notes: 'Rounded shrub form; good for structure planting.',
+    detectedIntent: 'shrub planting',
+    style: 'Shrubs',
+    gardenStyles: ['Formal'],
+    plantTypes: ['Shrub'],
+    conditions: {
+      sun: ['full sun', 'part shade'],
+      moisture: ['average', 'moist'],
+      drainage: ['average', 'well drained'],
+      wind: ['sheltered', 'moderate'],
+    },
+  },
+  {
+    name: 'Griselinia littoralis',
+    description: 'Dense NZ native screening plant.',
+    notes: 'Reliable hedge and boundary planting.',
+    detectedIntent: 'hedge/screening',
+    style: 'Hedge',
+    gardenStyles: ['Native', 'Coastal', 'Low maintenance'],
+    plantTypes: ['Hedge / screening'],
+    conditions: {
+      sun: ['full sun', 'part shade'],
+      moisture: ['average', 'moist'],
+      drainage: ['average', 'well drained'],
+      wind: ['moderate', 'exposed'],
+    },
+  },
+  {
+    name: 'Titoki',
+    description: 'NZ native screening plant with glossy foliage.',
+    notes: 'Can be used as a raised screen or small tree.',
+    detectedIntent: 'hedge/screening',
+    style: 'Screening',
+    gardenStyles: ['Native', 'Formal'],
+    plantTypes: ['Hedge / screening', 'Tree'],
+    conditions: {
+      sun: ['full sun', 'part shade'],
+      moisture: ['average', 'moist'],
+      drainage: ['average', 'well drained'],
+      wind: ['sheltered', 'moderate'],
+    },
+  },
+]
+
+export interface SpotConditions {
+  sun: SunCondition | 'not sure'
+  moisture: MoistureCondition | 'not sure'
+  drainage: DrainageCondition | 'not sure'
+  wind: WindCondition | 'not sure'
+}
+
+export function plantMatchesSpotConditions(
+  plant: CreateVisualPlantOption,
+  spot: SpotConditions,
+): boolean {
+  if (spot.sun !== 'not sure' && !plant.conditions.sun.includes(spot.sun)) return false
+  if (spot.moisture !== 'not sure' && !plant.conditions.moisture.includes(spot.moisture)) return false
+  if (spot.drainage !== 'not sure' && !plant.conditions.drainage.includes(spot.drainage)) return false
+  if (spot.wind !== 'not sure' && !plant.conditions.wind.includes(spot.wind)) return false
+  return true
+}
+
+/** Filter preview plants by style, type, and optional garden conditions. */
+export function filterVisualPlantOptions(
+  options: CreateVisualPlantOption[],
+  gardenStyle: GardenStyleFilter | 'Any',
+  plantType: PlantTypeFilter | 'Any',
+  spot?: SpotConditions,
+): CreateVisualPlantOption[] {
+  return options.filter((plant) => {
+    const styleMatch =
+      gardenStyle === 'Any' || plant.gardenStyles.includes(gardenStyle)
+    const typeMatch =
+      plantType === 'Any' || plant.plantTypes.includes(plantType)
+    const conditionMatch = !spot || plantMatchesSpotConditions(plant, spot)
+    return styleMatch && typeMatch && conditionMatch
+  })
+}
+
+/**
+ * Rough suitability check for the creation flow.
+ * Returns null when no plant is selected or all condition fields are "not sure".
+ */
+export function checkPlantSuitability(
+  plantName: string,
+  spot: SpotConditions,
+): SuitabilityResult | null {
+  const plant = getCreateVisualPlantOption(plantName)
+  if (!plant) return null
+
+  const checks: Array<{ chosen: boolean; match: boolean }> = []
+
+  if (spot.sun !== 'not sure') {
+    checks.push({
+      chosen: true,
+      match: plant.conditions.sun.includes(spot.sun),
+    })
+  }
+  if (spot.moisture !== 'not sure') {
+    checks.push({
+      chosen: true,
+      match: plant.conditions.moisture.includes(spot.moisture),
+    })
+  }
+  if (spot.drainage !== 'not sure') {
+    checks.push({
+      chosen: true,
+      match: plant.conditions.drainage.includes(spot.drainage),
+    })
+  }
+  if (spot.wind !== 'not sure') {
+    checks.push({
+      chosen: true,
+      match: plant.conditions.wind.includes(spot.wind),
+    })
+  }
+
+  if (checks.length === 0) return null
+
+  const mismatches = checks.filter((c) => !c.match).length
+  const matches = checks.filter((c) => c.match).length
+
+  if (mismatches === 0 && matches > 0) return 'good'
+  if (mismatches >= 2) return 'poor'
+  if (mismatches === 1) return 'possible'
+  return 'possible'
+}
+
+export function suitabilityLabel(result: SuitabilityResult): string {
+  switch (result) {
+    case 'good':
+      return 'Looks like a good fit'
+    case 'possible':
+      return 'Possible fit — check details before planting'
+    case 'poor':
+      return 'May not suit this spot'
+  }
+}
+
+export function suitabilityTone(result: SuitabilityResult): string {
+  switch (result) {
+    case 'good':
+      return 'bg-green-50 border-green-100 text-green-800'
+    case 'possible':
+      return 'bg-amber-50 border-amber-100 text-amber-800'
+    case 'poor':
+      return 'bg-red-50 border-red-100 text-red-700'
+  }
+}
+
+/** Build suggested_species payload from the creation-flow plant list. */
+export function createVisualPlantSuggestions(): Array<{ name: string; description: string; notes: string }> {
+  return PREVIEW_PLANT_OPTIONS.map(({ name, description, notes }) => ({
+    name,
+    description,
+    notes,
+  }))
+}
+
+/** Find a creation-flow plant option by name. */
+export function getCreateVisualPlantOption(name: string): CreateVisualPlantOption | undefined {
+  return CREATE_VISUAL_PLANT_OPTIONS.find((p) => p.name === name)
+}
+
 /** Species-name matching rules, tested in priority order. */
 const SPECIES_RULES: Array<{ pattern: RegExp; assetKey: string }> = [
   { pattern: /phormium|flax|astelia/i,                                   assetKey: 'flax' },
@@ -139,3 +474,11 @@ export function resolveOverlayAsset(
 
   return FALLBACK_ASSET
 }
+
+/** Plants with a dedicated preview overlay asset (excludes generic fallbacks). */
+export const PREVIEW_PLANT_OPTIONS: CreateVisualPlantOption[] = CREATE_VISUAL_PLANT_OPTIONS.filter(
+  (plant) => resolveOverlayAsset([plant.name], plant.detectedIntent).key !== 'rounded-shrub',
+)
+
+// TODO: Future hedge mode — support linear metres, desired height, trim frequency,
+// and calendar duration estimates.

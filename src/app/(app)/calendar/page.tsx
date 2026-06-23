@@ -132,9 +132,17 @@ function priorityToUrgency(score: number): 'must' | 'should' | 'could' {
 }
 
 function urgencyToLabel(urgency: 'must' | 'should' | 'could'): string {
-  if (urgency === 'must') return 'Priority Level 1'
-  if (urgency === 'should') return 'Priority Level 2'
-  return 'Priority Level 3'
+  if (urgency === 'must') return 'Do first'
+  if (urgency === 'should') return 'This week'
+  return 'When you can'
+}
+
+function formatTaskDuration(minutes: number): string {
+  if (minutes >= 60) {
+    const hrs = minutes / 60
+    return hrs === 1 ? '~1 hr' : `~${hrs.toFixed(1)} hrs`
+  }
+  return `~${Math.round(minutes)} min`
 }
 
 function getAucklandDateParts(date = new Date()) {
@@ -708,7 +716,7 @@ export default function CalendarPage() {
               title="Calendar"
               description="Your weekly garden plan based on your plants, season, and any issues you've logged."
               bullets={[
-                "Priority Level 1 tasks are the most important right now.",
+                "Do first tasks are the most important right now.",
                 "Sick plants appear at the top and can be resolved here.",
                 "Shopping and tools update automatically based on your tasks."
               ]}
@@ -756,15 +764,15 @@ export default function CalendarPage() {
             {priorityLevel1Tasks.map((task) => (
               <div
                 key={task.id}
-                className={`p-6 rounded-[2.5rem] border-2 shadow-md flex gap-4 items-start ${
+                className={`bg-white rounded-[2rem] border border-gray-100 shadow-sm p-5 flex gap-4 items-start border-l-4 ${
                   task.taskType === 'sick'
-                    ? 'border-red-200 bg-red-50'
-                    : 'border-amber-300 bg-amber-50/60'
+                    ? 'border-l-red-500'
+                    : 'border-l-amber-400'
                 }`}
               >
                 <div
-                  className={`mt-1 w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                    task.taskType === 'sick' ? 'bg-red-100' : 'bg-amber-200'
+                  className={`mt-0.5 w-10 h-10 rounded-[0.875rem] flex items-center justify-center shrink-0 ${
+                    task.taskType === 'sick' ? 'bg-red-50' : 'bg-amber-50'
                   }`}
                 >
                   <input
@@ -777,38 +785,38 @@ export default function CalendarPage() {
                   />
                 </div>
 
-                <div className="flex-1">
-                  <div className="flex justify-between items-start w-full gap-4">
-                    <div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-start w-full gap-3">
+                    <div className="min-w-0">
+                      <span
+                        className={`inline-block text-[9px] font-black uppercase tracking-[0.16em] px-2 py-0.5 rounded-full mb-2 ${
+                          task.taskType === 'sick'
+                            ? 'bg-red-50 text-red-700'
+                            : 'bg-amber-50 text-amber-800'
+                        }`}
+                      >
+                        {urgencyToLabel(task.urgency)}
+                      </span>
                       <h3
-                        className={`font-black uppercase text-sm tracking-tight ${
+                        className={`font-black uppercase text-sm tracking-tight leading-snug ${
                           task.taskType === 'sick' ? 'text-red-900' : 'text-green-950'
                         }`}
                       >
                         {task.title}
                       </h3>
-                      <p
-                        className={`text-[10px] font-black uppercase tracking-[0.18em] mt-1 ${
-                          task.taskType === 'sick' ? 'text-red-600' : 'text-amber-700'
-                        }`}
-                      >
-                        {urgencyToLabel(task.urgency)}
-                      </p>
                     </div>
 
-                    <div className="flex items-center gap-1 opacity-70 shrink-0">
-                      <Clock size={10} />
-                      <span className="text-[10px] font-bold uppercase">
-                        {task.minutes >= 60
-                          ? `${(task.minutes / 60).toFixed(1)} HRS`
-                          : `${Math.round(task.minutes)} MIN`}
+                    <div className="flex items-center gap-1 shrink-0 bg-gray-50 border border-gray-100 rounded-full px-2.5 py-1">
+                      <Clock size={11} className="text-gray-400" />
+                      <span className="text-[10px] font-bold text-gray-500">
+                        {formatTaskDuration(task.minutes)}
                       </span>
                     </div>
                   </div>
 
                   <p
-                    className={`text-[16px] font-normal leading-relaxed mt-3 ${
-                      task.taskType === 'sick' ? 'text-red-800' : 'text-gray-700'
+                    className={`text-[13px] font-medium leading-relaxed mt-2.5 ${
+                      task.taskType === 'sick' ? 'text-red-800/90' : 'text-gray-600'
                     }`}
                   >
                     {task.note}
@@ -826,9 +834,9 @@ export default function CalendarPage() {
             {priorityLevel2And3Tasks.map((task) => (
               <div
                 key={task.id}
-                className="p-6 rounded-[2.5rem] border bg-white border-white text-gray-900 shadow-sm flex gap-4 items-start"
+                className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-5 flex gap-4 items-start border-l-4 border-l-green-200"
               >
-                <div className="mt-1 w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-green-50">
+                <div className="mt-0.5 w-10 h-10 rounded-[0.875rem] flex items-center justify-center shrink-0 bg-green-50">
                   <input
                     type="checkbox"
                     checked={taskStatus[task.id] || false}
@@ -837,28 +845,26 @@ export default function CalendarPage() {
                   />
                 </div>
 
-                <div className="flex-1">
-                  <div className="flex justify-between items-start w-full gap-4">
-                    <div>
-                      <h3 className="font-black uppercase text-sm tracking-tight text-green-950">
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-start w-full gap-3">
+                    <div className="min-w-0">
+                      <span className="inline-block text-[9px] font-black uppercase tracking-[0.16em] px-2 py-0.5 rounded-full mb-2 bg-green-50 text-green-700">
+                        {urgencyToLabel(task.urgency)}
+                      </span>
+                      <h3 className="font-black uppercase text-sm tracking-tight leading-snug text-green-950">
                         {task.title}
                       </h3>
-                      <p className="text-[10px] font-black uppercase tracking-[0.18em] mt-1 text-amber-600">
-                        {urgencyToLabel(task.urgency)}
-                      </p>
                     </div>
 
-                    <div className="flex items-center gap-1 opacity-60 shrink-0">
-                      <Clock size={10} />
-                      <span className="text-[10px] font-bold uppercase">
-                        {task.minutes >= 60
-                          ? `${(task.minutes / 60).toFixed(1)} HRS`
-                          : `${Math.round(task.minutes)} MIN`}
+                    <div className="flex items-center gap-1 shrink-0 bg-gray-50 border border-gray-100 rounded-full px-2.5 py-1">
+                      <Clock size={11} className="text-gray-400" />
+                      <span className="text-[10px] font-bold text-gray-500">
+                        {formatTaskDuration(task.minutes)}
                       </span>
                     </div>
                   </div>
 
-                  <p className="text-[13px] font-normal leading-relaxed mt-3 text-gray-700">
+                  <p className="text-[13px] font-medium leading-relaxed mt-2.5 text-gray-600">
                     {task.note}
                   </p>
                 </div>

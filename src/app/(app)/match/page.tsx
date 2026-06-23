@@ -207,7 +207,7 @@ function MatchPageInner() {
   const [loading,       setLoading]       = useState(false)
   const [selectedPlant, setSelectedPlant] = useState<any | null>(null)
 
-  // ── Garden Spaces state ───────────────────────────────────────────────────
+  // ── Garden Areas state ───────────────────────────────────────────────────
   const [areas,           setAreas]           = useState<GardenArea[]>([])
   const [areaMatches,     setAreaMatches]     = useState<Record<string, RankedPlantMatch[]>>({})
   const [areasLoading,    setAreasLoading]    = useState(true)
@@ -486,46 +486,33 @@ function MatchPageInner() {
         <header className="mb-8 pt-4 flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-black text-green-950 tracking-tighter italic uppercase leading-none">
-              Plan & Visualise
+              Find Plants
             </h1>
             <p className="text-[10px] text-green-700/60 font-black uppercase tracking-[0.2em] mt-2">
-              Choose a garden space, get plant ideas, and visualise them.
+              Garden areas, conditions, and plant suggestions.
             </p>
           </div>
           <PageHelp
-            title="Plan & Visualise"
-            description="Create garden spaces, choose a style and goal, get plant suggestions, then create a visual idea from your own photo."
+            title="Find Plants"
+            description="Set up garden areas, add conditions, and browse plant suggestions. Use Visualise to preview plants in your own photo."
             bullets={[
-              'Add spaces like Front Boundary, Back Fence, or Shady Corner',
+              'Add areas like Front Garden, Back Fence, or Patio Pots',
               'Set style and goals to get relevant plant ideas',
-              'Tap Create Visual Idea on any space to see how planting could look',
+              'Use Visualise to preview plants in your garden photo',
             ]}
           />
         </header>
 
-        {/* ── Create a Visual Idea — primary CTA ──────────────────────────── */}
-        <Link
-          href="/visualise/new"
-          className="block bg-amber-400 rounded-[2rem] p-6 shadow-xl active:scale-[0.98] transition-all"
-        >
-          <p className="text-[9px] font-black uppercase tracking-widest text-amber-900/50 mb-1">
-            New
-          </p>
-          <h2 className="text-xl font-black text-green-950 uppercase tracking-tighter italic leading-none mb-2">
-            Create a Visual Idea
-          </h2>
-          <p className="text-[11px] text-green-900/70 font-medium leading-relaxed mb-4">
-            Upload a garden photo, pick a plant, and see how it could look in your space.
-          </p>
-          <div className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-green-950 bg-green-950/10 px-4 py-2 rounded-full">
-            <Sparkles size={11} strokeWidth={2.5} />
-            Get started
-          </div>
-        </Link>
+        <p className="text-[11px] text-gray-400 font-medium mb-8 -mt-4">
+          Prefer a photo preview?{' '}
+          <Link href="/visualise" className="text-green-700 font-black uppercase tracking-widest">
+            Open Visualise →
+          </Link>
+        </p>
 
         {/* ── Saved Visual Ideas — secondary link ──────────────────────────── */}
         <Link
-          href="/visualise"
+          href="/visualise/saved"
           className="flex items-center gap-3 bg-white rounded-[1.5rem] px-5 py-4 border border-gray-100 shadow-sm active:scale-[0.98] transition-all"
         >
           <div className="w-8 h-8 bg-green-50 rounded-[0.75rem] flex items-center justify-center text-base shrink-0">
@@ -546,48 +533,48 @@ function MatchPageInner() {
         <div className="flex items-center gap-3 pt-2">
           <div className="h-px bg-gray-100 flex-1" />
           <p className="text-[9px] font-black uppercase tracking-widest text-gray-300 whitespace-nowrap">
-            Garden spaces &amp; plant ideas
+            Garden areas &amp; plant ideas
           </p>
           <div className="h-px bg-gray-100 flex-1" />
         </div>
 
-        {/* ══ GARDEN SPACES ════════════════════════════════════════════════════ */}
+        {/* ══ GARDEN AREAS ════════════════════════════════════════════════════ */}
         <section className="mb-12">
           <div className="flex justify-between items-center mb-2">
             <h2 className="text-[10px] font-black text-green-900 uppercase tracking-[0.2em]">
-              My Garden Spaces
+              My Garden Areas
             </h2>
             <button
               onClick={openCreateForm}
               className="flex items-center gap-1.5 bg-green-900 text-white text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-full shadow-sm active:scale-95 transition-all"
             >
-              <Plus size={12} strokeWidth={3} /> New Space
+              <Plus size={12} strokeWidth={3} /> New Area
             </button>
           </div>
           <p className="text-[11px] text-gray-400 font-medium leading-snug mb-5 px-1">
-            Name each part of your garden. Add style and goal to get plant ideas, then create a visual idea to see how it could look.
+            Name each part of your garden. Add style and goal to get plant ideas, then use Visualise to preview how it could look.
           </p>
 
           {areasLoading ? (
             <div className="py-8 text-center text-[10px] font-black uppercase tracking-widest text-gray-300 animate-pulse">
-              Loading your garden spaces…
+              Loading your garden areas…
             </div>
           ) : areas.length === 0 ? (
             <div className="bg-white rounded-[2.5rem] border border-dashed border-gray-200 p-8 text-center space-y-3">
               <p className="text-sm font-black text-green-950 uppercase tracking-tight">
-                No garden spaces yet
+                No garden areas yet
               </p>
               <p className="text-[12px] text-gray-400 leading-relaxed font-medium max-w-xs mx-auto">
-                Add a space and we'll suggest plants and let you visualise how it could look.
+                Add an area and we&apos;ll suggest plants. Use Visualise when you&apos;re ready to preview in a photo.
               </p>
               <p className="text-[11px] text-gray-300 font-medium max-w-[16rem] mx-auto leading-snug">
-                Try: Front Boundary, Back Fence, Shady Corner, or Balcony Pots.
+                Try: Front Garden, Back Fence, Shady Corner, or Patio Pots.
               </p>
               <button
                 onClick={openCreateForm}
                 className="inline-flex items-center gap-2 bg-green-900 text-white text-[10px] font-black uppercase tracking-widest px-7 py-3 rounded-full shadow-sm active:scale-95 transition-all mt-2"
               >
-                <Plus size={14} strokeWidth={3} /> Add First Space
+                <Plus size={14} strokeWidth={3} /> Add First Area
               </button>
             </div>
           ) : (
@@ -615,7 +602,7 @@ function MatchPageInner() {
                         <div className="flex items-center gap-2 shrink-0">
                           <button
                             onClick={() => openEditForm(area)}
-                            title="Edit space"
+                            title="Edit area"
                             className="w-8 h-8 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 active:scale-90 transition-all"
                           >
                             <Pencil size={13} />
@@ -623,7 +610,7 @@ function MatchPageInner() {
                           <button
                             onClick={() => handleDeleteArea(area.id, area.name)}
                             disabled={isDeleting}
-                            title="Delete space"
+                            title="Delete area"
                             className="w-8 h-8 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 active:scale-90 transition-all disabled:opacity-40"
                           >
                             <Trash2 size={13} />
@@ -658,20 +645,20 @@ function MatchPageInner() {
                         </p>
                       )}
 
-                      {/* Create Visual Idea for this space */}
+                      {/* Create Visual Idea for this area */}
                       <Link
-                        href={`/visualise/new?areaId=${area.id}`}
+                        href={`/visualise?areaId=${area.id}`}
                         className="mt-4 inline-flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-green-700 bg-green-50 border border-green-100 px-4 py-2.5 rounded-full active:scale-95 transition-all"
                       >
                         <Sparkles size={10} strokeWidth={2.5} />
-                        Create Visual Idea
+                        Visualise this area
                       </Link>
                     </div>
 
-                    {/* Suggested plants / Future Plants for this space */}
+                    {/* Suggested plants / Future Plants for this area */}
                     <div className="border-t border-gray-50 px-6 pb-6 pt-4">
                       <p className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400 mb-1">
-                        Plant ideas for this space{recs.length > 0 ? ` · ${recs.length} suggestions` : ''}
+                        Plant ideas for this area{recs.length > 0 ? ` · ${recs.length} suggestions` : ''}
                       </p>
                       {areaPlanningHint(area) && (
                         <p className="text-[10px] text-gray-400 font-medium italic leading-snug mb-3">
@@ -684,13 +671,13 @@ function MatchPageInner() {
                           <p className="text-[11px] text-gray-400 font-medium leading-snug">
                             {area.style || area.goal
                               ? 'No matched plants found. Try a different style or goal.'
-                              : 'Add a style or goal to get plant suggestions for this space.'}
+                              : 'Add a style or goal to get plant suggestions for this area.'}
                           </p>
                           <button
                             onClick={() => openEditForm(area)}
                             className="inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-green-700 bg-green-50 border border-green-100 px-3 py-1.5 rounded-full active:scale-95 transition-all"
                           >
-                            <Pencil size={9} strokeWidth={2.5} /> Edit space details
+                            <Pencil size={9} strokeWidth={2.5} /> Edit area details
                           </button>
                         </div>
                       ) : (
@@ -748,7 +735,7 @@ function MatchPageInner() {
             <LockedProFeatureCard
               icon="📋"
               title="Planting Plan Export"
-              description="Coming soon — export your garden spaces and planting ideas as a shareable PDF."
+              description="Coming soon — export your garden areas and planting ideas as a shareable PDF."
             />
           </section>
         )}
@@ -979,7 +966,7 @@ function MatchPageInner() {
         </div>
       )}
 
-      {/* ── Garden Space form overlay ────────────────────────────────────────── */}
+      {/* ── Garden Area form overlay ────────────────────────────────────────── */}
       {showAreaForm && (
         <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center sm:p-4">
           <div
@@ -991,7 +978,7 @@ function MatchPageInner() {
             {/* Sticky header */}
             <div className="sticky top-0 bg-white z-10 px-7 pt-7 pb-4 border-b border-gray-50 flex items-center justify-between">
               <h2 className="text-xl font-black text-green-950 uppercase italic tracking-tight">
-                {editingArea ? 'Edit Space' : 'New Garden Space'}
+                {editingArea ? 'Edit Area' : 'New Garden Area'}
               </h2>
               <button
                 onClick={() => { if (!savingArea) setShowAreaForm(false) }}
@@ -1009,7 +996,7 @@ function MatchPageInner() {
                 return (
                   <div className="bg-green-50 border border-green-100 rounded-2xl p-5 space-y-3">
                     <p className="text-[9px] font-black uppercase tracking-[0.2em] text-green-700/70">
-                      Create a garden space inspired by this style
+                      Create a garden area inspired by this style
                     </p>
                     <p className="text-base font-black text-green-950 uppercase italic tracking-tight leading-none">
                       {initialStyle}
@@ -1032,16 +1019,16 @@ function MatchPageInner() {
                       </>
                     )}
                     <p className="text-[10px] text-green-700/60 font-medium pt-1">
-                      Give the space a name, choose a goal, then save.
+                      Give the area a name, choose a goal, then save.
                     </p>
                   </div>
                 )
               })()}
 
-              {/* Space name — required */}
+              {/* Area name — required */}
               <div>
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
-                  Space name
+                  Area name
                 </label>
                 <p className="text-[10px] text-gray-300 font-medium mb-2">
                   This is the only required field.
@@ -1050,7 +1037,7 @@ function MatchPageInner() {
                   type="text"
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
-                  placeholder="e.g. Front boundary, Back fence, Balcony pots"
+                  placeholder="e.g. Front garden, Back fence, Patio pots"
                   className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-sm font-bold text-gray-800 placeholder:text-gray-300 outline-none focus:border-green-200 transition-colors"
                 />
               </div>
@@ -1151,7 +1138,7 @@ function MatchPageInner() {
                 disabled={savingArea || !formName.trim()}
                 className="w-full bg-green-900 text-white font-black uppercase py-5 rounded-2xl text-[11px] tracking-widest shadow-lg active:scale-95 transition-all disabled:opacity-50"
               >
-                {savingArea ? 'Saving…' : editingArea ? 'Save Changes' : 'Create Space'}
+                {savingArea ? 'Saving…' : editingArea ? 'Save Changes' : 'Create Area'}
               </button>
             </div>
           </div>
