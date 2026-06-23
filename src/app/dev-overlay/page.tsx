@@ -48,6 +48,13 @@ const OVERLAYS: OverlayDef[] = [
     aspect: 1,
   },
   {
+    id: 'buxus-hedge-v2',
+    label: 'Buxus Hedge v2',
+    file: 'buxus-hedge-v2.png',
+    defaultWidth: 320,
+    aspect: 1,
+  },
+  {
     id: 'camellia',
     label: 'Camellia',
     file: 'camellia_clean_transparent.png',
@@ -79,6 +86,13 @@ const OVERLAYS: OverlayDef[] = [
     id: 'gardenia',
     label: 'Gardenia',
     file: 'Gardenia white.png',
+    defaultWidth: 200,
+    aspect: 1,
+  },
+  {
+    id: 'gardenia-v2',
+    label: 'Gardenia v2',
+    file: 'gardenia-v2.png',
     defaultWidth: 200,
     aspect: 1,
   },

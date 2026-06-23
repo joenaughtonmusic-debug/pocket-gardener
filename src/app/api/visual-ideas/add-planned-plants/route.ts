@@ -20,6 +20,8 @@ export async function POST(req: Request) {
     const selectedSpecies: string[] = body.selectedSpecies ?? []
     const gardenAreaId: string | null = body.gardenAreaId ?? null
 
+    // TODO: enrich Future Plants with per-overlay metadata from overlay_items when available.
+
     if (selectedSpecies.length === 0) {
       return NextResponse.json({ error: 'No species selected' }, { status: 400 })
     }

@@ -44,7 +44,7 @@ function VisualisePageInner() {
           Visualise your garden
         </h1>
         <p className="text-green-200/70 text-[12px] font-medium leading-relaxed">
-          Upload a garden photo, choose a plant, and preview it in your space.
+          Start with a garden photo, then add plants in Quick Preview.
         </p>
       </section>
 

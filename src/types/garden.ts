@@ -63,6 +63,21 @@ export interface SuggestedSpecies {
 }
 
 /**
+ * A placed plant overlay in Quick Preview (normalised coordinates).
+ */
+export interface PreviewOverlay {
+  id: string;
+  assetKey: string;
+  plantName: string;
+  /** Normalised centre x within the photo (0–1). */
+  x: number;
+  /** Normalised centre y within the photo (0–1). */
+  y: number;
+  /** Overlay width as a fraction of the photo container width (0–1). */
+  scale: number;
+}
+
+/**
  * A saved visual concept — a row from `garden_visual_concepts`.
  * Tracks the uploaded photo, goal, detected intent, species suggestions,
  * selected species, hedge form preference, and generated concept image.
@@ -88,6 +103,7 @@ export interface VisualConcept {
   overlay_position: { x: number; y: number } | null;
   overlay_scale: number | null;
   preview_mode: string | null;
+  overlay_items?: PreviewOverlay[] | null;
   created_at: string;
   updated_at: string;
 }
