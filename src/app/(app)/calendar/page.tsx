@@ -179,8 +179,8 @@ function getDefaultActiveWeek() {
 export default function CalendarPage() {
   const [loading, setLoading] = useState(true)
   const [weekLoading, setWeekLoading] = useState(false)
-  const [hasLoadedOnce, setHasLoadedOnce] = useState(false)
 
+  const [userId, setUserId] = useState<string | null>(null)
   const [gardenPhoto, setGardenPhoto] = useState<string | null>(null)
   const [activeWeek, setActiveWeek] = useState(getDefaultActiveWeek())
   const [allPlants, setAllPlants] = useState<UserPlantRow[]>([])
@@ -220,67 +220,62 @@ export default function CalendarPage() {
     }).format(today)
   )
 
+  // Effect 1: load static data (plants, care rules, profile) — runs once on mount,
+  // re-runs only when the month rolls over (extremely rare during a session).
   useEffect(() => {
-    async function loadData() {
-      if (!hasLoadedOnce) {
-        setLoading(true)
-      } else {
-        setWeekLoading(true)
-      }
+    let cancelled = false
+
+    async function loadStaticData() {
+      setLoading(true)
 
       const {
         data: { user },
       } = await supabase.auth.getUser()
 
+      if (cancelled) return
+
       if (!user) {
         setLoading(false)
-        setWeekLoading(false)
         return
       }
 
+      setUserId(user.id)
       setGardenPhoto(user.user_metadata?.garden_photo || null)
 
-      const [plantsRes, careRes, rulesRes, statusRes, profileRes] = await Promise.all([
-  supabase
-    .from('user_plants')
-    .select(
-      `
-        id,
-        quantity,
-        length_metres,
-        nickname,
-        personal_notes,
-        is_sick,
-        current_issue,
-        current_remedy,
-        current_shopping_tags,
-        plants (
-          id,
-          common_name,
-          plant_type,
-          task_category,
-          maintenance_level,
-          trim_cycle,
-          feed_cycle,
-          trim_notes,
-          feed_notes
-        )
-      `
-    )
-    .eq('user_id', user.id)
-    .eq('is_project', false),
+      const [plantsRes, careRes, rulesRes, profileRes] = await Promise.all([
+        supabase
+          .from('user_plants')
+          .select(
+            `
+              id,
+              quantity,
+              length_metres,
+              nickname,
+              personal_notes,
+              is_sick,
+              current_issue,
+              current_remedy,
+              current_shopping_tags,
+              plants (
+                id,
+                common_name,
+                plant_type,
+                task_category,
+                maintenance_level,
+                trim_cycle,
+                feed_cycle,
+                trim_notes,
+                feed_notes
+              )
+            `
+          )
+          .eq('user_id', user.id)
+          .eq('is_project', false),
         supabase
           .from('auckland_monthly_care')
           .select('id, month_number, plant_type, care_note')
           .eq('month_number', currentMonthNum),
         supabase.from('plant_task_rules').select('*'),
-        supabase
-          .from('user_task_status')
-          .select('task_key, is_done')
-          .eq('user_id', user.id)
-          .eq('week_number', activeWeek)
-          .eq('month_number', currentMonthNum)
-          .eq('year_number', currentYear),
         supabase
           .from('profiles')
           .select('is_pro')
@@ -288,55 +283,87 @@ export default function CalendarPage() {
           .maybeSingle(),
       ])
 
+      if (cancelled) return
+
       if (profileRes.data) setIsPro(profileRes.data.is_pro)
 
       if (plantsRes.error) console.error('Error loading user plants:', plantsRes.error)
       if (careRes.error) console.error('Error loading monthly care:', careRes.error)
       if (rulesRes.error) console.error('Error loading task rules:', rulesRes.error)
-      if (statusRes.error) console.error('Error loading task status:', statusRes.error)
 
       const safePlants: UserPlantRow[] = (plantsRes.data ?? []).map((row: any) => ({
-  id: row.id,
-  quantity: row.quantity ?? 1,
-  length_metres: row.length_metres ?? null,
-  nickname: row.nickname ?? null,
-  personal_notes: row.personal_notes ?? null,
-  is_sick: row.is_sick ?? false,
-  current_issue: row.current_issue ?? null,
-  current_remedy: row.current_remedy ?? null,
-  current_shopping_tags: row.current_shopping_tags ?? [],
-  plants: row.plants
-    ? {
-        id: row.plants.id,
-        common_name: row.plants.common_name ?? null,
-        plant_type: row.plants.plant_type ?? null,
-        task_category: row.plants.task_category ?? null,
-        maintenance_level: row.plants.maintenance_level ?? null,
-        trim_cycle: row.plants.trim_cycle ?? null,
-        feed_cycle: row.plants.feed_cycle ?? null,
-        trim_notes: row.plants.trim_notes ?? null,
-        feed_notes: row.plants.feed_notes ?? null,
-      }
-    : null,
-}))
-
-      const statusMap: Record<string, boolean> = {}
-      ;((statusRes.data ?? []) as TaskStatusRow[]).forEach((row) => {
-        statusMap[row.task_key] = row.is_done
-      })
+        id: row.id,
+        quantity: row.quantity ?? 1,
+        length_metres: row.length_metres ?? null,
+        nickname: row.nickname ?? null,
+        personal_notes: row.personal_notes ?? null,
+        is_sick: row.is_sick ?? false,
+        current_issue: row.current_issue ?? null,
+        current_remedy: row.current_remedy ?? null,
+        current_shopping_tags: row.current_shopping_tags ?? [],
+        plants: row.plants
+          ? {
+              id: row.plants.id,
+              common_name: row.plants.common_name ?? null,
+              plant_type: row.plants.plant_type ?? null,
+              task_category: row.plants.task_category ?? null,
+              maintenance_level: row.plants.maintenance_level ?? null,
+              trim_cycle: row.plants.trim_cycle ?? null,
+              feed_cycle: row.plants.feed_cycle ?? null,
+              trim_notes: row.plants.trim_notes ?? null,
+              feed_notes: row.plants.feed_notes ?? null,
+            }
+          : null,
+      }))
 
       setAllPlants(safePlants)
       setMonthlyCare((careRes.data ?? []) as MonthlyCareRow[])
       setTaskRules((rulesRes.data ?? []) as TaskRuleRow[])
-      setTaskStatus(statusMap)
-
       setLoading(false)
-      setWeekLoading(false)
-      setHasLoadedOnce(true)
     }
 
-    loadData()
-  }, [currentMonthNum, currentYear, activeWeek, hasLoadedOnce, supabase])
+    loadStaticData()
+    return () => { cancelled = true }
+  }, [supabase, currentMonthNum])
+
+  // Effect 2: load task completion status for the selected week only.
+  // Runs immediately when activeWeek changes — static plant/care data is untouched.
+  useEffect(() => {
+    if (!userId) return
+
+    let cancelled = false
+
+    async function loadTaskStatus() {
+      setWeekLoading(true)
+      // Clear stale statuses immediately so the new week starts with clean checkboxes.
+      setTaskStatus({})
+
+      const { data, error } = await supabase
+        .from('user_task_status')
+        .select('task_key, is_done')
+        .eq('user_id', userId)
+        .eq('week_number', activeWeek)
+        .eq('month_number', currentMonthNum)
+        .eq('year_number', currentYear)
+
+      if (cancelled) return
+
+      if (error) {
+        console.error('Error loading task status:', error)
+      } else {
+        const statusMap: Record<string, boolean> = {}
+        ;((data ?? []) as TaskStatusRow[]).forEach((row) => {
+          statusMap[row.task_key] = row.is_done
+        })
+        setTaskStatus(statusMap)
+      }
+
+      setWeekLoading(false)
+    }
+
+    loadTaskStatus()
+    return () => { cancelled = true }
+  }, [supabase, userId, activeWeek, currentMonthNum, currentYear])
 
   async function toggleTask(task: TaskCandidate, done: boolean) {
     const {
@@ -737,24 +764,33 @@ export default function CalendarPage() {
         <div className="bg-white rounded-[2.5rem] shadow-xl p-2 flex items-center justify-between border border-gray-100">
           <button
             onClick={() => setActiveWeek((prev) => Math.max(1, prev - 1))}
-            className="p-4 text-gray-300"
+            disabled={activeWeek === 1}
+            aria-label="Previous week"
+            className="p-4 text-gray-400 disabled:opacity-25 transition-opacity active:scale-90"
           >
             <ChevronLeft size={24} />
           </button>
 
-          <div className="text-center flex flex-col items-center">
+          <div className="text-center flex flex-col items-center min-w-0">
             <p className="text-[8px] font-black text-amber-500 uppercase tracking-[0.3em] mb-1">
               Weekly Plan
             </p>
 
-            <p className="font-black text-green-950 uppercase italic text-sm">
-              Week {activeWeek} Agenda
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="font-black text-green-950 uppercase italic text-sm">
+                Week {activeWeek} Agenda
+              </p>
+              {weekLoading && (
+                <span className="w-3.5 h-3.5 rounded-full border-2 border-green-400 border-t-transparent animate-spin inline-block" />
+              )}
+            </div>
           </div>
 
           <button
             onClick={() => setActiveWeek((prev) => Math.min(4, prev + 1))}
-            className="p-4 text-gray-300"
+            disabled={activeWeek === 4}
+            aria-label="Next week"
+            className="p-4 text-gray-400 disabled:opacity-25 transition-opacity active:scale-90"
           >
             <ChevronRight size={24} />
           </button>

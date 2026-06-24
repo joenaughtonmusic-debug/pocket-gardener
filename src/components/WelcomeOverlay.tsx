@@ -1,8 +1,31 @@
 'use client'
 
-import { useLayoutEffect, useState } from 'react'
+import React, { useLayoutEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { hasPendingNotificationPath, storePendingNotificationPath } from '../lib/notificationPath'
+
+function GardenBedIcon() {
+  return (
+    <svg viewBox="0 0 120 100" width="96" height="80" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      {/* Soil bed */}
+      <rect x="8" y="68" width="104" height="22" rx="6" fill="#6b3f1a" />
+      <rect x="8" y="68" width="104" height="8" rx="4" fill="#7d4e24" />
+      {/* Centre plant — tall stem + two leaves */}
+      <line x1="60" y1="68" x2="60" y2="32" stroke="#4ade80" strokeWidth="4" strokeLinecap="round" />
+      <ellipse cx="47" cy="46" rx="11" ry="7" fill="#22c55e" transform="rotate(-30 47 46)" />
+      <ellipse cx="73" cy="40" rx="11" ry="7" fill="#16a34a" transform="rotate(30 73 40)" />
+      <ellipse cx="60" cy="30" rx="9" ry="6" fill="#4ade80" />
+      {/* Left sprout */}
+      <line x1="32" y1="68" x2="30" y2="48" stroke="#4ade80" strokeWidth="3" strokeLinecap="round" />
+      <ellipse cx="24" cy="46" rx="8" ry="5" fill="#22c55e" transform="rotate(-20 24 46)" />
+      <ellipse cx="35" cy="42" rx="8" ry="5" fill="#16a34a" transform="rotate(20 35 42)" />
+      {/* Right sprout */}
+      <line x1="88" y1="68" x2="90" y2="48" stroke="#4ade80" strokeWidth="3" strokeLinecap="round" />
+      <ellipse cx="85" cy="42" rx="8" ry="5" fill="#22c55e" transform="rotate(-20 85 42)" />
+      <ellipse cx="96" cy="46" rx="8" ry="5" fill="#16a34a" transform="rotate(20 96 46)" />
+    </svg>
+  )
+}
 
 export default function WelcomeOverlay() {
   const [isVisible, setIsVisible] = useState(false);
@@ -44,7 +67,7 @@ export default function WelcomeOverlay() {
     setIsVisible(true);
   }, []);
 
-  const slides = [
+  const slides: { title: string; desc: string; icon: React.ReactNode }[] = [
     {
       title: "Your Garden, Sorted",
       desc: "Whether you're starting from scratch or keeping an established garden going, Pocket Gardener gives you a clear monthly plan — built around your plants and Auckland's seasons.",
@@ -53,7 +76,7 @@ export default function WelcomeOverlay() {
     {
       title: "Map Out Your Garden",
       desc: "Create areas like Front Garden, Back Fence, Patio Pots or Veggie Patch. Add plants now, or come back later when you're ready.",
-      icon: "🗺️",
+      icon: <GardenBedIcon />,
     },
     {
       title: "Find the Right Plants",
@@ -95,7 +118,9 @@ export default function WelcomeOverlay() {
           transition={{ duration: 0.3 }}
           className="max-w-xs relative z-10"
         >
-          <div className="text-8xl mb-10 drop-shadow-2xl">{slides[currentSlide].icon}</div>
+          <div className="mb-10 drop-shadow-2xl flex items-center justify-center" style={{ fontSize: typeof slides[currentSlide].icon === 'string' ? '6rem' : undefined }}>
+            {slides[currentSlide].icon}
+          </div>
           <h2 className="text-3xl font-black uppercase italic tracking-tighter leading-none mb-4">
             {slides[currentSlide].title}
           </h2>

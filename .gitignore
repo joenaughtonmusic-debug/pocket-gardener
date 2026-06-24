@@ -40,8 +40,13 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-repomix-output.md
-*-repomix*.md
+# Generated audit / repo-dump files (repomix, QA exports, etc.)
+repomix-output.*
+repomix*.md
+repomix*.xml
+*-repomix*
+*qa-audit*
+*-audit.md
 
 # Android build artifacts
 android/.gradle/

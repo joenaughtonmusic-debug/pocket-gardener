@@ -100,17 +100,42 @@ export default function PlantDetailPage() {
   async function handleAddPhoto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file || !userPlantRecordId) return
+
+    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+    const MAX_BYTES = 5 * 1024 * 1024 // 5 MB
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      alert('Please use a JPEG, PNG, or WebP image.')
+      return
+    }
+    if (file.size > MAX_BYTES) {
+      alert('Image must be under 5 MB.')
+      return
+    }
+
     try {
       setUploadingPhoto(true)
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${userPlantRecordId}-${Date.now()}.${fileExt}`
-      const filePath = `plant-progress/${fileName}`
-      await supabase.storage.from('weed-images').upload(filePath, file)
-      const { data: { publicUrl } } = supabase.storage.from('weed-images').getPublicUrl(filePath)
-      const { error } = await supabase.from('plant_photos').insert([{ user_plant_id: userPlantRecordId, photo_url: publicUrl }])
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const fileExt = file.name.split('.').pop() ?? 'jpg'
+      const filePath = `${user.id}/${userPlantRecordId}-${Date.now()}.${fileExt}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('user-plant-photos')
+        .upload(filePath, file, { upsert: false })
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('user-plant-photos')
+        .getPublicUrl(filePath)
+
+      const { error } = await supabase
+        .from('plant_photos')
+        .insert([{ user_plant_id: userPlantRecordId, photo_url: publicUrl }])
       if (!error) fetchPlantPhotos(userPlantRecordId)
     } catch (err) {
-      console.error(err)
+      console.error('Photo upload failed:', err)
+      alert('Could not upload photo. Please try again.')
     } finally {
       setUploadingPhoto(false)
     }

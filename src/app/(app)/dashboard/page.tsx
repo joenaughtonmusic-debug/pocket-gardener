@@ -350,23 +350,43 @@ export default function MyGardenDashboard() {
   }
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]; 
-    if (!file) return;
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+    const MAX_BYTES = 5 * 1024 * 1024 // 5 MB
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      alert('Please use a JPEG, PNG, or WebP image.')
+      return
+    }
+    if (file.size > MAX_BYTES) {
+      alert('Image must be under 5 MB.')
+      return
+    }
 
     try {
-      setUploading(true);
-      const { data: { user } } = await supabase.auth.getUser(); 
-      if (!user) return;
+      setUploading(true)
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
 
-      const fileName = `${user.id}-${Date.now()}.${file.name.split('.').pop()}`;
-      await supabase.storage.from('weed-images').upload(`garden-photos/${fileName}`, file);
-      const { data: { publicUrl } } = supabase.storage.from('weed-images').getPublicUrl(`garden-photos/${fileName}`);
-      await supabase.auth.updateUser({ data: { garden_photo: publicUrl } });
-      setGardenPhoto(publicUrl);
-    } catch (err) { 
-      alert("Error uploading photo"); 
-    } finally { 
-      setUploading(false); 
+      const ext = file.name.split('.').pop() ?? 'jpg'
+      const filePath = `${user.id}/garden-${Date.now()}.${ext}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('user-plant-photos')
+        .upload(filePath, file, { upsert: false })
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('user-plant-photos')
+        .getPublicUrl(filePath)
+
+      await supabase.auth.updateUser({ data: { garden_photo: publicUrl } })
+      setGardenPhoto(publicUrl)
+    } catch (err) {
+      alert('Error uploading photo')
+    } finally {
+      setUploading(false)
     }
   };
 
@@ -1043,7 +1063,7 @@ export default function MyGardenDashboard() {
 
             {gardenAreas.length === 0 ? (
               <div className="bg-white rounded-[2rem] border border-dashed border-gray-200 p-6 text-center space-y-3">
-                <p className="text-2xl">🗺️</p>
+                <p className="text-2xl">🪴</p>
                 <p className="text-[12px] text-gray-500 font-black uppercase tracking-tight">
                   No garden areas yet
                 </p>
