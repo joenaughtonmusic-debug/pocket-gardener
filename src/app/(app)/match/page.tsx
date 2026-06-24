@@ -120,16 +120,18 @@ function MatchPageInner() {
             </h1>
             <p className="text-[10px] text-green-700/60 font-black uppercase tracking-[0.2em] mt-2">
               {isSuitabilityMode
-                ? 'Choose a plant and conditions to check whether it could suit your space.'
-                : 'Choose style, goal and conditions to find plants for your space.'}
+                ? 'Choose the conditions for your space to check which plants may suit.'
+                : 'Choose the conditions for your space to find plants that could suit your garden.'}
             </p>
           </div>
           <PageHelp
-            title="Plant Finder"
-            description="Dial in sun, soil, drainage and slope to see plants that suit that spot. Tap any plant to save it as a Future Plant."
+            title={isSuitabilityMode ? 'Check Suitability' : 'Plant Finder'}
+            description={isSuitabilityMode
+              ? 'Dial in sun, soil, drainage and slope to check whether a plant could suit that spot.'
+              : 'Dial in sun, soil, drainage and slope to see plants that suit that spot. Tap any plant to save it to your garden.'}
             bullets={[
               'Adjust the sliders to match your garden conditions',
-              'Tap a plant to see details and save to Future Plants',
+              'Tap a plant to see details and add it to your garden',
               'Use Visualise to preview plants in your own garden photo',
             ]}
           />

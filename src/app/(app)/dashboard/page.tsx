@@ -15,6 +15,7 @@ import DiagnoseProblemModal from '../../../components/DiagnoseProblemModal'
 import { resolveAreaName, GENERAL_GARDEN_LABEL } from '../../../lib/gardenAreas'
 import type { UserPlant, PlantRemedy, GardenArea } from '../../../types/garden'
 import { trackEvent } from '../../../lib/analytics/trackEvent'
+import { enrichShoppingForIssue, prettySupplyTag } from '../../../lib/taskSupplies'
 
 // ── Garden Coach types ────────────────────────────────────────────────────────
 interface CoachAction {
@@ -316,6 +317,13 @@ export default function MyGardenDashboard() {
       ? `${remedy.remedy_title}: ${remedy.remedy_description}`
       : remedy.remedy_description || remedy.remedy_title || null
 
+    const enrichedShopping = enrichShoppingForIssue({
+      issue: remedy.issue_type,
+      remedy: remedyText,
+      plantName: targetPlant.plants?.common_name,
+      existing: remedy.shopping_tags ?? [],
+    })
+
     const { data: { user } } = await supabase.auth.getUser()
 
     // Close any prior Ongoing logs before opening a new one — prevents duplicate
@@ -333,7 +341,7 @@ export default function MyGardenDashboard() {
           is_sick: true,
           current_issue: remedy.issue_type,
           current_remedy: remedyText,
-          current_shopping_tags: remedy.shopping_tags || [],
+          current_shopping_tags: enrichedShopping,
         })
         .eq('id', targetPlant.id),
       supabase
@@ -611,11 +619,11 @@ export default function MyGardenDashboard() {
         {/* ── 1. Garden Coach ──────────────────────────────────────────── */}
         <section className="space-y-3">
           <div className="px-1">
-            <h2 className="text-[10px] font-black text-green-800/50 uppercase tracking-[0.2em]">
+            <h2 className="text-xl font-black text-green-950 uppercase italic tracking-tighter leading-none">
               Garden Coach
             </h2>
-            <p className="text-[12px] text-gray-500 font-medium mt-0.5">
-              Ask a garden question or describe what you need help with.
+            <p className="text-[12px] text-gray-500 font-medium mt-1">
+              Ask what to plant, what&apos;s wrong, or what to do next.
             </p>
           </div>
 
@@ -908,15 +916,24 @@ export default function MyGardenDashboard() {
                       </p>
                     )}
 
-                    {item.current_shopping_tags && item.current_shopping_tags.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {item.current_shopping_tags.map((tag) => (
-                          <span key={tag} className="text-[8px] font-black uppercase tracking-widest bg-green-50 text-green-700 px-2.5 py-1 rounded-full border border-green-100">
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                    {(() => {
+                      const supplyTags = enrichShoppingForIssue({
+                        issue: item.current_issue,
+                        remedy: item.current_remedy,
+                        plantName: item.plants?.common_name,
+                        existing: item.current_shopping_tags ?? [],
+                      })
+                      if (supplyTags.length === 0) return null
+                      return (
+                        <div className="flex flex-wrap gap-2">
+                          {supplyTags.map((tag) => (
+                            <span key={tag} className="text-[8px] font-black uppercase tracking-widest bg-green-50 text-green-700 px-2.5 py-1 rounded-full border border-green-100">
+                              {prettySupplyTag(tag)}
+                            </span>
+                          ))}
+                        </div>
+                      )
+                    })()}
 
                     <div className="flex gap-2 pt-1">
                       <button
@@ -953,7 +970,9 @@ export default function MyGardenDashboard() {
               <AlertCircle size={14} className="text-amber-500" strokeWidth={3} />
               <h2 className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em]">Priority Follow-up</h2>
             </div>
-            {followUpAlerts.map((alert) => (
+            {followUpAlerts.map((alert) => {
+              const sickPlant = ownedPlants.find((p) => p.id === alert.user_plant_id)
+              return (
               <div key={alert.id} className="bg-white p-6 rounded-[2.5rem] border-2 border-amber-100 shadow-xl shadow-amber-900/5 relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-1 bg-amber-400" />
                 <div className="flex gap-4 mb-4">
@@ -963,6 +982,14 @@ export default function MyGardenDashboard() {
                     <p className="text-[10px] text-amber-600 mt-1 font-black uppercase tracking-widest italic">{alert.issue_type} check-in</p>
                   </div>
                 </div>
+                {sickPlant?.current_remedy && (
+                  <p className="text-[11px] text-gray-600 leading-relaxed font-medium border-l-2 border-amber-100 pl-3 mb-4">
+                    {sickPlant.current_remedy}
+                  </p>
+                )}
+                <p className="text-[10px] text-gray-400 font-medium italic mb-4">
+                  Check whether this plant has improved. Repeat treatment if needed, or mark as recovered.
+                </p>
                 <div className="flex gap-2">
                   <button onClick={() => handleResolveIssue(alert.id, alert.user_plants?.plants?.common_name, alert.user_plant_id)} className="flex-1 bg-green-800 py-3 rounded-2xl text-[9px] font-black uppercase text-white shadow-lg active:scale-95 transition-all">
                     Recovered!
@@ -972,7 +999,7 @@ export default function MyGardenDashboard() {
                   </Link>
                 </div>
               </div>
-            ))}
+            )})}
           </section>
         )}
 

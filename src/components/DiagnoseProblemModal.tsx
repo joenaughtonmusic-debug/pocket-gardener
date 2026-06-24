@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Search, X } from 'lucide-react'
 import type { UserPlant, PlantRemedy } from '../types/garden'
 import PlantThumbnail from './PlantThumbnail'
+import { enrichShoppingForIssue, prettySupplyTag } from '../lib/taskSupplies'
 
 export interface DiagnoseProblemModalProps {
   open: boolean
@@ -342,6 +343,12 @@ function RemedyCard({
   onSelect: () => void
   saving: boolean
 }) {
+  const displayTags = enrichShoppingForIssue({
+    issue: remedy.issue_type,
+    remedy: remedy.remedy_description ?? remedy.remedy_title,
+    existing: remedy.shopping_tags ?? [],
+  })
+
   return (
     <button
       type="button"
@@ -364,14 +371,14 @@ function RemedyCard({
               {remedy.remedy_description}
             </p>
           )}
-          {remedy.shopping_tags && remedy.shopping_tags.length > 0 && (
+          {displayTags.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-3">
-              {remedy.shopping_tags.map((tag) => (
+              {displayTags.map((tag) => (
                 <span
                   key={tag}
                   className="text-[8px] font-black uppercase tracking-widest bg-green-50 text-green-700 px-2 py-1 rounded-full border border-green-100"
                 >
-                  {tag}
+                  {prettySupplyTag(tag)}
                 </span>
               ))}
             </div>

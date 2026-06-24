@@ -86,6 +86,26 @@ export default function GuidesPage() {
         ))}
       </section>
 
+      {/* VEGETABLE CALENDAR — practical seasonal guide, below main care categories */}
+      <section className="mb-12 relative z-10">
+        <Link
+          href="/guides/vegetable-calendar"
+          className="block no-underline cursor-pointer"
+          onClick={() => trackEvent('guide_opened', { guide_name: 'vegetable-calendar', route: '/guides' })}
+        >
+          <div className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm flex items-center justify-between group active:scale-[0.98] transition-all">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center text-2xl group-active:bg-green-100 transition-colors">🥦</div>
+              <div>
+                <h3 className="font-black text-gray-800 text-sm uppercase tracking-tight">Vegetable Calendar</h3>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Sow, Plant & Harvest by Month</p>
+              </div>
+            </div>
+            <span className="text-gray-200 group-hover:text-green-600 transition-colors text-xl mr-2">→</span>
+          </div>
+        </Link>
+      </section>
+
       {/* INSPIRATION SECTION */}
       <section className="space-y-4">
         <h2 className="text-[12px] font-black text-green-800/40 uppercase tracking-[0.3em] px-2 flex items-center gap-3">

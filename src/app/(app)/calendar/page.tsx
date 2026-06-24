@@ -13,6 +13,16 @@ import {
 import PageHelp from '../../../components/PageHelp'
 import LockedProFeatureCard from '../../../components/LockedProFeatureCard'
 import { trackEvent } from '../../../lib/analytics/trackEvent'
+import {
+  prettySupplyTag,
+  inferToolsFromCareNote,
+  inferShoppingFromCareNote,
+  enrichShoppingForIssue,
+  enrichToolsForIssue,
+  buildSickFollowUpNote,
+  mergeRuleTaskTools,
+  hedgeTrimTools,
+} from '../../../lib/taskSupplies'
 import type {
   TaskCandidate,
   PlantRow,
@@ -41,7 +51,7 @@ function parseArrayField(value: unknown): string[] {
 }
 
 function prettyTag(tag: string): string {
-  return tag.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())
+  return prettySupplyTag(tag)
 }
 
 function buildRuleNote(rule: TaskRuleRow, plant: PlantRow, qty: number): string {
@@ -75,55 +85,6 @@ function buildRuleNote(rule: TaskRuleRow, plant: PlantRow, qty: number): string 
   }
 
   return `Seasonal ${action} task for your ${name.toLowerCase()}.`
-}
-
-function inferToolsFromCareNote(note: string): string[] {
-  const lower = note.toLowerCase()
-  const tools = new Set<string>()
-
-  if (lower.includes('prune') || lower.includes('trim') || lower.includes('cut back')) {
-    tools.add('Secateurs')
-  }
-
-  if (lower.includes('hedge')) {
-    tools.add('Hedge Shears')
-  }
-
-  if (lower.includes('spray')) {
-    tools.add('Sprayer')
-  }
-
-  if (lower.includes('mulch')) {
-    tools.add('Gloves')
-  }
-
-  return Array.from(tools)
-}
-
-function inferShoppingFromCareNote(note: string, plantName?: string | null): string[] {
-  const lower = note.toLowerCase()
-  const shopping = new Set<string>()
-
-  if (lower.includes('feed') || lower.includes('fertilis')) {
-    shopping.add('Granular Fertiliser')
-  }
-
-  if (lower.includes('slug') || lower.includes('snail')) {
-    shopping.add('Slug Pellets')
-  }
-
-  if (
-    plantName &&
-    ['meyer lemon', 'lemon', 'lime', 'mandarin', 'orange', 'grapefruit'].includes(
-      plantName.toLowerCase()
-    ) &&
-    (lower.includes('feed') || lower.includes('spring'))
-  ) {
-    shopping.add('Citrus Fertiliser')
-    shopping.add('Epsom Salts')
-  }
-
-  return Array.from(shopping)
 }
 
 function priorityToUrgency(score: number): 'must' | 'should' | 'could' {
@@ -498,25 +459,19 @@ export default function CalendarPage() {
       if (up.is_sick) {
         const issueText = up.current_issue?.trim()
         const remedyText = up.current_remedy?.trim()
-        const shoppingTags = parseArrayField(up.current_shopping_tags).map(prettyTag)
+        const shoppingTags = enrichShoppingForIssue({
+          issue: issueText,
+          remedy: remedyText,
+          plantName: p.common_name,
+          existing: parseArrayField(up.current_shopping_tags),
+        }).map(prettyTag)
 
-        let sickNote = 'This plant needs attention.'
-        if (issueText && remedyText) {
-          sickNote = `${issueText} — ${remedyText}`
-        } else if (issueText) {
-          sickNote = issueText
-        } else if (remedyText) {
-          sickNote = remedyText
-        }
+        const sickNote = buildSickFollowUpNote(issueText, remedyText)
 
-        const needsSprayer = shoppingTags.some((tag) => {
-          const lower = tag.toLowerCase()
-          return (
-            lower.includes('spray') ||
-            lower.includes('neem') ||
-            lower.includes('oil') ||
-            lower.includes('fungicide')
-          )
+        const sickTools = enrichToolsForIssue({
+          issue: issueText,
+          remedy: remedyText,
+          shopping: shoppingTags,
         })
 
         sickCandidates.push({
@@ -527,7 +482,7 @@ export default function CalendarPage() {
           score: 999,
           urgency: 'must',
           minutes: 15,
-          tools: needsSprayer ? ['Garden Sprayer'] : [],
+          tools: sickTools,
           shopping: shoppingTags,
           canBundle: false,
         })
@@ -579,7 +534,10 @@ export default function CalendarPage() {
           score: monthlyCareScore,
           urgency: priorityToUrgency(monthlyCareScore),
           minutes: Math.max(10, 15 * qty),
-          tools: inferToolsFromCareNote(plantSpecificCare.care_note),
+          tools: inferToolsFromCareNote(plantSpecificCare.care_note, {
+            taskCategory,
+            taskType: 'care',
+          }),
           shopping: inferShoppingFromCareNote(plantSpecificCare.care_note, p.common_name),
           canBundle: false,
         })
@@ -623,7 +581,12 @@ export default function CalendarPage() {
       ? Math.max(10, (up.length_metres || 0) * 15)
       : Math.max(5, (rule.estimated_minutes || 15) * qty),
 
-  tools: parseArrayField(rule.tool_tags).map(prettyTag),
+  tools: mergeRuleTaskTools(
+    parseArrayField(rule.tool_tags).map(prettyTag),
+    taskCategory,
+    rule.task_type || 'care',
+    up.length_metres
+  ),
   shopping: parseArrayField(rule.shopping_tags).map(prettyTag),
   canBundle: true,
 })
@@ -645,7 +608,7 @@ export default function CalendarPage() {
     taskCategory === 'hedge'
       ? Math.max(10, (up.length_metres || 0) * 2)
       : 10,
-  tools: [],
+  tools: taskCategory === 'hedge' ? hedgeTrimTools(up.length_metres) : [],
   shopping: [],
   canBundle: false,
 })
@@ -771,7 +734,7 @@ export default function CalendarPage() {
             onClick={() => setActiveWeek((prev) => Math.max(1, prev - 1))}
             disabled={activeWeek === 1}
             aria-label="Previous week"
-            className="p-4 text-gray-400 disabled:opacity-25 transition-opacity active:scale-90"
+            className="w-14 h-14 flex items-center justify-center text-gray-400 disabled:opacity-25 transition-opacity active:scale-90"
           >
             <ChevronLeft size={24} />
           </button>
@@ -795,7 +758,7 @@ export default function CalendarPage() {
             onClick={() => setActiveWeek((prev) => Math.min(4, prev + 1))}
             disabled={activeWeek === 4}
             aria-label="Next week"
-            className="p-4 text-gray-400 disabled:opacity-25 transition-opacity active:scale-90"
+            className="w-14 h-14 flex items-center justify-center text-gray-400 disabled:opacity-25 transition-opacity active:scale-90"
           >
             <ChevronRight size={24} />
           </button>

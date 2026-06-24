@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useMemo } from 'react'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { createSupabaseBrowserClient } from '../../../lib/supabaseClient'
 import PlantThumbnail from "../../../../components/PlantThumbnail"
 import GardenAreaBadge from "../../../../components/GardenAreaBadge"
@@ -38,6 +39,7 @@ export default function PlantDetailPage() {
   const [gardenAreaId, setGardenAreaId] = useState<string | null>(null)
   const [gardenAreas, setGardenAreas] = useState<{ id: string; name: string }[]>([])
   const [assigningArea, setAssigningArea] = useState(false)
+  const [showAreaPicker, setShowAreaPicker] = useState(false)
 
   // --- SEARCH STATE ---
   const [searchQuery, setSearchQuery] = useState("")
@@ -334,7 +336,8 @@ const { error } = await supabase.from('user_plants').insert([{
     setIsProcessing(false)
   }
 
-  async function handleDirectAdd() {
+  async function handleDirectAdd(areaId?: string | null) {
+    setShowAreaPicker(false)
     setIsProcessing(true)
     const { data: { session } } = await supabase.auth.getSession()
     if (!session?.user) {
@@ -379,24 +382,25 @@ const { error } = await supabase.from('user_plants').insert([{
     }
 
     const safeQuantity = isHedgePlant
-  ? null
-  : Number.isFinite(quantity) && quantity > 0
-  ? quantity
-  : 1
+      ? null
+      : Number.isFinite(quantity) && quantity > 0
+      ? quantity
+      : 1
 
-const safeLengthMetres =
-  isHedgePlant && lengthMetres.trim() !== '' && !Number.isNaN(Number(lengthMetres))
-    ? Number(lengthMetres)
-    : null
+    const safeLengthMetres =
+      isHedgePlant && lengthMetres.trim() !== '' && !Number.isNaN(Number(lengthMetres))
+        ? Number(lengthMetres)
+        : null
 
-const { error } = await supabase.from('user_plants').insert([{
-  user_id: session.user.id,
-  plant_id: Number(id),
-  is_project: false,
-  status: 'Ongoing',
-  quantity: safeQuantity,
-  length_metres: safeLengthMetres,
-}])
+    const { error } = await supabase.from('user_plants').insert([{
+      user_id: session.user.id,
+      plant_id: Number(id),
+      is_project: false,
+      status: 'Ongoing',
+      quantity: safeQuantity,
+      length_metres: safeLengthMetres,
+      garden_area_id: areaId ?? null,
+    }])
 
     if (!error) {
       trackEvent('plant_added_to_garden', {
@@ -590,7 +594,7 @@ const { error } = await supabase.from('user_plants').insert([{
 
                 {!mode && !userPlantRecordId && (
                   <button
-                    onClick={handleDirectAdd}
+                    onClick={() => setShowAreaPicker(true)}
                     disabled={isProcessing}
                     className="w-full py-6 rounded-[2.5rem] bg-[#2d5a3f] text-white font-bold uppercase tracking-[0.2em] text-[11px] shadow-xl active:scale-95 transition-all mt-2"
                   >
@@ -609,7 +613,7 @@ const { error } = await supabase.from('user_plants').insert([{
                     </button>
 
                     <button
-                      onClick={handleDirectAdd}
+                      onClick={() => setShowAreaPicker(true)}
                       disabled={isProcessing}
                       className="text-[10px] font-black text-green-700/50 uppercase tracking-[0.2em] border-b border-green-700/20 pb-1 italic hover:text-green-700 transition-colors"
                     >
@@ -814,6 +818,67 @@ const { error } = await supabase.from('user_plants').insert([{
           </div>
         )}
       </div>
+
+      {/* ── Garden Area Picker Sheet ──────────────────────────────────────── */}
+      {showAreaPicker && (
+        <div className="fixed inset-0 z-[200] flex flex-col justify-end">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setShowAreaPicker(false)}
+          />
+          {/* Sheet */}
+          <div className="relative bg-white rounded-t-[2.5rem] p-6 pb-10 space-y-5 shadow-2xl">
+            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-2" />
+            <div>
+              <h3 className="text-lg font-black uppercase italic tracking-tighter text-green-950 leading-none">
+                Where is this plant going?
+              </h3>
+              <p className="text-[11px] text-gray-400 font-medium mt-1 leading-snug">
+                Choose a Garden Area so Pocket Gardener can organise your plants and reminders.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              {gardenAreas.map((area) => (
+                <button
+                  key={area.id}
+                  onClick={() => handleDirectAdd(area.id)}
+                  disabled={isProcessing}
+                  className="w-full text-left px-5 py-4 bg-[#f0f4f1] rounded-2xl font-black uppercase text-[11px] tracking-widest text-green-950 active:bg-green-100 transition-colors flex items-center justify-between"
+                >
+                  <span>{area.name}</span>
+                  <span className="text-gray-300 text-base">→</span>
+                </button>
+              ))}
+
+              <Link
+                href="/dashboard#garden-areas"
+                onClick={() => setShowAreaPicker(false)}
+                className="block w-full text-center px-5 py-4 border border-dashed border-green-200 rounded-2xl font-black uppercase text-[11px] tracking-widest text-green-700 active:bg-green-50 transition-colors"
+              >
+                {gardenAreas.length > 0 ? '+ Create new Garden Area' : '+ Create your first Garden Area'}
+              </Link>
+
+              <button
+                onClick={() => handleDirectAdd(null)}
+                disabled={isProcessing}
+                className="w-full text-left px-5 py-4 bg-gray-50 rounded-2xl font-black uppercase text-[11px] tracking-widest text-gray-500 active:bg-gray-100 transition-colors flex items-center justify-between"
+              >
+                <span>Not sure yet</span>
+                <span className="text-gray-300 text-base">→</span>
+              </button>
+            </div>
+
+            <button
+              onClick={() => setShowAreaPicker(false)}
+              className="w-full py-3 text-[10px] font-black uppercase tracking-widest text-gray-400"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   )
 }
