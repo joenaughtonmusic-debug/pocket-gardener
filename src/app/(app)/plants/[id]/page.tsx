@@ -8,6 +8,7 @@ import GardenAreaBadge from "../../../../components/GardenAreaBadge"
 import GardenAreaAssignSelect from "../../../../components/GardenAreaAssignSelect"
 import { resolveAreaName } from '../../../../lib/gardenAreas'
 import { Check, Search, Sparkles, Quote } from 'lucide-react'
+import { trackEvent } from '../../../../lib/analytics/trackEvent'
 
 export default function PlantDetailPage() {
   const params = useParams()
@@ -276,7 +277,14 @@ const { error } = await supabase.from('user_plants').insert([{
   length_metres: safeLengthMetres,
 }])
 
-    if (!error) router.push('/dashboard')
+    if (!error) {
+      trackEvent('future_plant_saved', {
+        plant_name: plant?.common_name ?? undefined,
+        source:     'plant_detail',
+        route:      `/plants/${id}`,
+      })
+      router.push('/dashboard')
+    }
     setIsProcessing(false)
   }
 
@@ -344,7 +352,14 @@ const { error } = await supabase.from('user_plants').insert([{
   length_metres: safeLengthMetres,
 }])
 
-    if (!error) router.push('/dashboard')
+    if (!error) {
+      trackEvent('plant_added_to_garden', {
+        plant_name: plant?.common_name ?? undefined,
+        source:     'plant_detail',
+        route:      `/plants/${id}`,
+      })
+      router.push('/dashboard')
+    }
     setIsProcessing(false)
   }
 
@@ -664,7 +679,14 @@ const { error } = await supabase.from('user_plants').insert([{
                 <div className="mt-6 p-6 bg-gray-50 rounded-[2rem] border border-dashed border-gray-200 text-center">
                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 italic">Can't see the issue here?</p>
                   <button
-                    onClick={() => setIsSearching(true)}
+                    onClick={() => {
+                      setIsSearching(true)
+                      trackEvent('plant_problem_searched', {
+                        plant_name: plant?.common_name ?? undefined,
+                        source:     'common_issues',
+                        route:      `/plants/${id}`,
+                      })
+                    }}
                     className="flex items-center gap-2 mx-auto px-6 py-3 bg-white border border-gray-100 rounded-full shadow-sm text-[10px] font-black text-green-800 uppercase tracking-widest active:scale-95 transition-all"
                   >
                     <Search size={12} />

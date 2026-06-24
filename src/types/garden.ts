@@ -75,6 +75,10 @@ export interface PreviewOverlay {
   y: number;
   /** Overlay width as a fraction of the photo container width (0–1). */
   scale: number;
+  /** Single plant (default) or stretched hedge/row preview. */
+  mode?: 'single' | 'row';
+  /** Row span as a fraction of the photo container width (row mode only). */
+  width?: number;
 }
 
 /**

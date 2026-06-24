@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import PageHelp from '../../../components/PageHelp'
 import LockedProFeatureCard from '../../../components/LockedProFeatureCard'
+import { trackEvent } from '../../../lib/analytics/trackEvent'
 import type {
   TaskCandidate,
   PlantRow,
@@ -409,6 +410,12 @@ export default function CalendarPage() {
     }
 
     if (done) {
+      trackEvent('calendar_task_completed', {
+        task_type:  task.taskType,
+        plant_name: task.title,
+        route:      '/calendar',
+      })
+
       const type = (task.taskType || '').toLowerCase()
 
       let message = 'Task completed'

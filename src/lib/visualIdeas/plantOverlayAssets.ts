@@ -102,6 +102,24 @@ const ASSETS: Record<string, OverlayAsset> = {
     defaultWidthFraction: widthFraction(200),
     aspect: 1,
   },
+  'buxus-hedge': {
+    key: 'buxus-hedge',
+    src: '/plant-overlays/buxus-hedge.png',
+    defaultWidthFraction: widthFraction(340),
+    aspect: 1,
+  },
+  'griselinia-hedge': {
+    key: 'griselinia-hedge',
+    src: '/plant-overlays/griselinia-hedge.png',
+    defaultWidthFraction: widthFraction(340),
+    aspect: 1,
+  },
+  'ficus-tuffy-hedge': {
+    key: 'ficus-tuffy-hedge',
+    src: '/plant-overlays/ficus-tuffy-hedge.png',
+    defaultWidthFraction: widthFraction(340),
+    aspect: 1,
+  },
   hedge: {
     key: 'hedge',
     src: '/plant-overlays/hedge-section.svg',
@@ -547,11 +565,13 @@ const SPECIES_RULES: Array<{ pattern: RegExp; assetKey: string }> = [
   { pattern: /phormium|flax|astelia|harakeke|nz flax/i,                assetKey: 'flax' },
   { pattern: /ponga|tree.?fern|dicksonia|cyathea/i,                    assetKey: 'ponga' },
   { pattern: /camellia/i,                                              assetKey: 'camellia' },
+  { pattern: /griselinia/i,                                              assetKey: 'griselinia-hedge' },
+  { pattern: /ficus tuff|ficus tuffy|ficus tuffi/i,                      assetKey: 'ficus-tuffy-hedge' },
+  { pattern: /buxus|box hedge|boxwood/i,                                 assetKey: 'buxus-hedge' },
   { pattern: /lomandra|carex|libertia|dietes|agapanthus/i,             assetKey: 'lomandra' },
   { pattern: /groundcover|ground.?cover|pratia|muehlenbeckia|coprosma/i, assetKey: 'groundcover' },
   // Legacy / category fallbacks for saved concepts and unmatched species
-  { pattern: /griselinia|titoki/i,                                     assetKey: 'hedge' },
-  { pattern: /buxus/i,                                                 assetKey: 'buxus' },
+  { pattern: /titoki/i,                                                 assetKey: 'hedge' },
 ]
 
 /** Detected-intent matching rules. */
@@ -616,6 +636,23 @@ export function resolveOverlayAsset(
 export const PREVIEW_PLANT_OPTIONS: CreateVisualPlantOption[] = CREATE_VISUAL_PLANT_OPTIONS.filter(
   (plant) => APPROVED_OVERLAY_KEYS.has(resolveOverlayAsset([plant.name], plant.detectedIntent).key),
 )
+
+/** Default normalised row span for hedge/row previews. */
+export const DEFAULT_ROW_WIDTH = 0.55
+
+/** Plants available as a hedge/row preview (screening hedges with dedicated PNG assets). */
+export const ROW_PREVIEW_PLANT_OPTIONS: Array<{ name: string; detectedIntent: string }> = [
+  { name: 'Griselinia Hedge', detectedIntent: 'hedge/screening' },
+  { name: 'Ficus Tuffy Hedge', detectedIntent: 'hedge/screening' },
+  { name: 'Buxus Hedge', detectedIntent: 'shrub planting' },
+  { name: 'Titoki', detectedIntent: 'hedge/screening' },
+]
+
+const ROW_PREVIEW_PLANT_NAMES = new Set(ROW_PREVIEW_PLANT_OPTIONS.map((p) => p.name))
+
+export function supportsRowPreview(plantName: string): boolean {
+  return ROW_PREVIEW_PLANT_NAMES.has(plantName)
+}
 
 // TODO: Future hedge mode — support linear metres, desired height, trim frequency,
 // and calendar duration estimates.

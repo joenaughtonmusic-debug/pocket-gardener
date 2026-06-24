@@ -1,6 +1,7 @@
 'use client'
 import Link from "next/link";
 import PageHelp from "../../../components/PageHelp";
+import { trackEvent } from '../../../lib/analytics/trackEvent'
 
 export default function GuidesPage() {
   const categories = [
@@ -29,7 +30,7 @@ export default function GuidesPage() {
 
       {/* FEATURED: PLANTING MASTERCLASS */}
       <section className="mb-6">
-        <Link href="/guides/planting" className="block no-underline">
+        <Link href="/guides/planting" className="block no-underline" onClick={() => trackEvent('guide_opened', { guide_name: 'planting', route: '/guides' })}>
           <div className="bg-[#2d5a3f] p-8 rounded-[2.5rem] text-white shadow-xl relative overflow-hidden active:scale-[0.98] transition-all group">
             <div className="relative z-10">
               <span className="bg-white/20 text-[10px] font-bold px-3 py-1 rounded-full uppercase mb-4 inline-block text-white">Essential Reading</span>
@@ -48,7 +49,7 @@ export default function GuidesPage() {
 
       {/* COMMON WEEDS BUTTON */}
       <section className="mb-4 relative z-10">
-        <Link href="/guides/weeds" className="block no-underline">
+        <Link href="/guides/weeds" className="block no-underline" onClick={() => trackEvent('guide_opened', { guide_name: 'weeds', route: '/guides' })}>
           <div className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm flex items-center justify-between group active:scale-[0.98] transition-all">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-2xl">🥀</div>
@@ -69,6 +70,7 @@ export default function GuidesPage() {
             key={cat.name} 
             href={cat.href} 
             className="block no-underline cursor-pointer"
+            onClick={() => trackEvent('guide_opened', { guide_name: cat.href.replace('/guides/', ''), route: '/guides' })}
           >
             <div className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm flex items-center justify-between group active:scale-[0.98] transition-all">
               <div className="flex items-center gap-4">

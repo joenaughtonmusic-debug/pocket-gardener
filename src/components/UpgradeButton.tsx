@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { trackEvent } from '../lib/analytics/trackEvent'
 
 // Opens a URL in Chrome Custom Tabs on Android (Capacitor native) so that
 // Stripe Checkout runs in a real browser process, not inside the WebView.
@@ -25,6 +26,7 @@ export default function UpgradeButton() {
   const [loading, setLoading] = useState(false);
 
   const handleCheckout = async () => {
+    trackEvent('upgrade_clicked', { source: 'upgrade_button' })
     setLoading(true);
     try {
       const response = await fetch('/api/checkout', {

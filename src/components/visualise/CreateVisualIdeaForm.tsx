@@ -6,6 +6,7 @@ import { createSupabaseBrowserClient } from '../../app/lib/supabaseClient'
 import { Upload, Loader2, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 import type { GardenArea } from '../../types/garden'
+import { trackEvent } from '../../lib/analytics/trackEvent'
 
 interface CreateVisualIdeaFormProps {
   initialAreaId?: string | null
@@ -99,6 +100,7 @@ export default function CreateVisualIdeaForm({ initialAreaId = null }: CreateVis
 
       if (insertError || !concept) throw new Error('Could not save concept. Please try again.')
 
+      trackEvent('visualise_created', { route: '/visualise' })
       router.push(`/visualise/${concept.id}`)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')

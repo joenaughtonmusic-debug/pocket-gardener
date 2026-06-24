@@ -55,6 +55,13 @@ const OVERLAYS: OverlayDef[] = [
     aspect: 1,
   },
   {
+    id: 'buxus-hedge',
+    label: 'Buxus Hedge',
+    file: 'buxus-hedge.png',
+    defaultWidth: 340,
+    aspect: 1,
+  },
+  {
     id: 'camellia',
     label: 'Camellia',
     file: 'camellia_clean_transparent.png',
@@ -94,6 +101,20 @@ const OVERLAYS: OverlayDef[] = [
     label: 'Gardenia v2',
     file: 'gardenia-v2.png',
     defaultWidth: 200,
+    aspect: 1,
+  },
+  {
+    id: 'ficus-tuffy-hedge',
+    label: 'Ficus Tuffy Hedge',
+    file: 'ficus-tuffy-hedge.png',
+    defaultWidth: 340,
+    aspect: 1,
+  },
+  {
+    id: 'griselinia-hedge',
+    label: 'Griselinia Hedge',
+    file: 'griselinia-hedge.png',
+    defaultWidth: 340,
     aspect: 1,
   },
   {

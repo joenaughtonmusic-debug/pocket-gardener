@@ -12,10 +12,39 @@ import {
   resolveOverlayAsset,
   getAssetByKey,
   PREVIEW_PLANT_OPTIONS,
+  ROW_PREVIEW_PLANT_OPTIONS,
+  DEFAULT_ROW_WIDTH,
   type OverlayAsset,
 } from '../../../../lib/visualIdeas/plantOverlayAssets'
+import { trackEvent } from '../../../../lib/analytics/trackEvent'
 
 interface Pos { x: number; y: number }
+
+type PlacementMode = 'single' | 'row'
+
+function getOverlayMode(overlay: PreviewOverlay): 'single' | 'row' {
+  return overlay.mode === 'row' ? 'row' : 'single'
+}
+
+function normalizeOverlayItem(item: PreviewOverlay): PreviewOverlay {
+  const mode = getOverlayMode(item)
+  if (mode === 'row') {
+    return {
+      ...item,
+      mode: 'row',
+      width: typeof item.width === 'number' ? Number(item.width) : DEFAULT_ROW_WIDTH,
+    }
+  }
+  return {
+    id: item.id,
+    assetKey: item.assetKey,
+    plantName: item.plantName,
+    x: Number(item.x),
+    y: Number(item.y),
+    scale: Number(item.scale),
+    mode: 'single',
+  }
+}
 
 function isPreviewOverlayItem(value: unknown): value is PreviewOverlay {
   if (!value || typeof value !== 'object') return false
@@ -35,13 +64,15 @@ function parseOverlayItems(raw: PreviewOverlay[] | unknown | null | undefined): 
 
   const items = raw
     .filter(isPreviewOverlayItem)
-    .map((item) => ({
+    .map((item) => normalizeOverlayItem({
       id: item.id,
       assetKey: item.assetKey,
       plantName: item.plantName,
       x: Number(item.x),
       y: Number(item.y),
       scale: Number(item.scale),
+      mode: item.mode === 'row' ? 'row' : 'single',
+      width: typeof item.width === 'number' ? Number(item.width) : undefined,
     }))
 
   return items.length > 0 ? items : null
@@ -71,6 +102,7 @@ function legacyOverlayFromConcept(concept: VisualConcept): PreviewOverlay | null
     x: concept.overlay_position.x,
     y: concept.overlay_position.y,
     scale: Number(concept.overlay_scale),
+    mode: 'single',
   }
 }
 
@@ -113,14 +145,39 @@ function overlayToPixels(
   containerW: number,
   containerH: number,
   asset: OverlayAsset,
-): { left: number; top: number; width: number } {
+): { left: number; top: number; width: number; height: number } {
+  if (getOverlayMode(overlay) === 'row') {
+    const segmentWidth = overlay.scale * containerW
+    const height = segmentWidth / asset.aspect
+    const width = (overlay.width ?? DEFAULT_ROW_WIDTH) * containerW
+    return {
+      left: overlay.x * containerW - width / 2,
+      top: overlay.y * containerH - height / 2,
+      width,
+      height,
+    }
+  }
+
   const width = overlay.scale * containerW
   const height = width / asset.aspect
   return {
     left: overlay.x * containerW - width / 2,
     top: overlay.y * containerH - height / 2,
     width,
+    height,
   }
+}
+
+/** Horizontal tile overlap for row overlays (reduces visible gaps between segments). */
+const ROW_TILE_OVERLAP_RATIO = 0.12
+/** Crop each row tile's left/right edges to hide lighter seam bands (4–6% per side). */
+const ROW_TILE_EDGE_CROP_RATIO = 0.05
+
+function buildRowTileLayout(rowWidthPx: number, rowHeightPx: number, aspect: number) {
+  const tileWidth = rowHeightPx * aspect
+  const step = tileWidth * (1 - ROW_TILE_OVERLAP_RATIO)
+  const count = Math.max(1, Math.ceil((rowWidthPx - tileWidth) / step + 1))
+  return { tileWidth, step, count }
 }
 
 function createOverlayFromAsset(
@@ -152,6 +209,33 @@ function createOverlayFromAsset(
     x: Math.min(0.95, Math.max(0.05, centerX)),
     y: Math.min(0.95, Math.max(0.05, centerY)),
     scale: width / containerW,
+    mode: 'single',
+  }
+}
+
+function createRowOverlayFromAsset(
+  plantName: string,
+  asset: OverlayAsset,
+  containerW: number,
+  containerH: number,
+  placementPoint: Pos | null,
+  offsetIndex = 0,
+): PreviewOverlay {
+  const base = createOverlayFromAsset(
+    plantName,
+    asset,
+    containerW,
+    containerH,
+    placementPoint,
+    null,
+    null,
+    offsetIndex,
+  )
+
+  return {
+    ...base,
+    mode: 'row',
+    width: DEFAULT_ROW_WIDTH,
   }
 }
 
@@ -213,6 +297,7 @@ export default function VisualConceptDetailPage() {
   const [overlays, setOverlays]           = useState<PreviewOverlay[]>([])
   const [selectedOverlayId, setSelectedOverlayId] = useState<string | null>(null)
   const [plantToAdd, setPlantToAdd]       = useState(PREVIEW_PLANT_OPTIONS[0]?.name ?? '')
+  const [placementMode, setPlacementMode] = useState<PlacementMode>('single')
   const [isDraggingOverlay, setIsDraggingOverlay] = useState(false)
   const overlayDragOrigin                 = useRef<{
     overlayId: string
@@ -239,6 +324,24 @@ export default function VisualConceptDetailPage() {
     if (!selectedOverlay || !previewDims.w) return 0
     return Math.round(selectedOverlay.scale * previewDims.w)
   }, [selectedOverlay, previewDims.w])
+
+  const selectedOverlayRowWidth = useMemo(() => {
+    if (!selectedOverlay || !previewDims.w || getOverlayMode(selectedOverlay) !== 'row') return 0
+    return Math.round((selectedOverlay.width ?? DEFAULT_ROW_WIDTH) * previewDims.w)
+  }, [selectedOverlay, previewDims.w])
+
+  const addPlantOptions = placementMode === 'row'
+    ? ROW_PREVIEW_PLANT_OPTIONS
+    : PREVIEW_PLANT_OPTIONS
+
+  function handlePlacementModeChange(mode: PlacementMode) {
+    setPlacementMode(mode)
+    setPlantToAdd(
+      mode === 'row'
+        ? (ROW_PREVIEW_PLANT_OPTIONS[0]?.name ?? '')
+        : (PREVIEW_PLANT_OPTIONS[0]?.name ?? ''),
+    )
+  }
 
   function updateOverlay(id: string, patch: Partial<PreviewOverlay>) {
     setOverlays((prev) =>
@@ -295,6 +398,31 @@ export default function VisualConceptDetailPage() {
   function handleAddPlant() {
     if (!plantToAdd || !previewDims.w || !previewDims.h || !concept) return
 
+    if (placementMode === 'row') {
+      const rowPlant = ROW_PREVIEW_PLANT_OPTIONS.find((p) => p.name === plantToAdd)
+      if (!rowPlant) return
+
+      const asset = resolveOverlayAsset([rowPlant.name], rowPlant.detectedIntent)
+      const newOverlay = createRowOverlayFromAsset(
+        rowPlant.name,
+        asset,
+        previewDims.w,
+        previewDims.h,
+        concept.placement_point,
+        overlays.length,
+      )
+
+      setOverlays((prev) => [...prev, newOverlay])
+      setSelectedOverlayId(newOverlay.id)
+      trackEvent('plant_added_to_preview', {
+        plant_name:    rowPlant.name,
+        preview_mode:  'row',
+        overlay_count: overlays.length + 1,
+        route:         `/visualise/${id}`,
+      })
+      return
+    }
+
     const plant = PREVIEW_PLANT_OPTIONS.find((p) => p.name === plantToAdd)
     if (!plant) return
 
@@ -312,6 +440,12 @@ export default function VisualConceptDetailPage() {
 
     setOverlays((prev) => [...prev, newOverlay])
     setSelectedOverlayId(newOverlay.id)
+    trackEvent('plant_added_to_preview', {
+      plant_name:    plant.name,
+      preview_mode:  'single',
+      overlay_count: overlays.length + 1,
+      route:         `/visualise/${id}`,
+    })
   }
 
   function handleDeleteOverlay(id: string) {
@@ -326,7 +460,7 @@ export default function VisualConceptDetailPage() {
 
   // ── Drag handlers (selected overlay only) ────────────────────────────────
   const handleOverlayPointerDown = useCallback(
-    (overlayId: string) => (e: React.PointerEvent<HTMLImageElement>) => {
+    (overlayId: string) => (e: React.PointerEvent<HTMLElement>) => {
       if (!previewDims.w || !previewDims.h) return
 
       const overlay = overlays.find((item) => item.id === overlayId)
@@ -352,7 +486,7 @@ export default function VisualConceptDetailPage() {
   )
 
   const handleOverlayPointerMove = useCallback(
-    (e: React.PointerEvent<HTMLImageElement>) => {
+    (e: React.PointerEvent<HTMLElement>) => {
       if (!isDraggingOverlay || !previewDims.w || !previewDims.h) return
 
       const { overlayId, clientX, clientY, posX, posY } = overlayDragOrigin.current
@@ -362,7 +496,12 @@ export default function VisualConceptDetailPage() {
         if (!overlay) return prev
 
         const asset = getAssetByKey(overlay.assetKey)
-        const width = overlay.scale * previewDims.w
+        const { width: widthPx, height: heightPx } = overlayToPixels(
+          overlay,
+          previewDims.w,
+          previewDims.h,
+          asset,
+        )
         const newLeft = posX + e.clientX - clientX
         const newTop = posY + e.clientY - clientY
 
@@ -370,8 +509,8 @@ export default function VisualConceptDetailPage() {
           item.id === overlayId
             ? {
                 ...item,
-                x: (newLeft + width / 2) / previewDims.w,
-                y: (newTop + width / asset.aspect / 2) / previewDims.h,
+                x: (newLeft + widthPx / 2) / previewDims.w,
+                y: (newTop + heightPx / 2) / previewDims.h,
               }
             : item,
         )
@@ -387,9 +526,35 @@ export default function VisualConceptDetailPage() {
     updateOverlay(selectedOverlayId, { scale: width / previewDims.w })
   }
 
+  function handleSelectedOverlayRowWidthChange(width: number) {
+    if (!selectedOverlayId || !previewDims.w) return
+    updateOverlay(selectedOverlayId, { width: width / previewDims.w })
+  }
+
   // ── Reset selected overlay to default placement ──────────────────────────
   function handleResetOverlay() {
     if (!selectedOverlay || !previewDims.w || !previewDims.h || !concept) return
+
+    if (getOverlayMode(selectedOverlay) === 'row') {
+      const rowPlant = ROW_PREVIEW_PLANT_OPTIONS.find((p) => p.name === selectedOverlay.plantName)
+      const asset = getAssetByKey(selectedOverlay.assetKey)
+      const reset = createRowOverlayFromAsset(
+        selectedOverlay.plantName,
+        rowPlant ? resolveOverlayAsset([rowPlant.name], rowPlant.detectedIntent) : asset,
+        previewDims.w,
+        previewDims.h,
+        concept.placement_point,
+      )
+
+      updateOverlay(selectedOverlay.id, {
+        x: reset.x,
+        y: reset.y,
+        scale: reset.scale,
+        width: reset.width,
+        mode: 'row',
+      })
+      return
+    }
 
     const plant = PREVIEW_PLANT_OPTIONS.find((p) => p.name === selectedOverlay.plantName)
     const asset = getAssetByKey(selectedOverlay.assetKey)
@@ -405,6 +570,7 @@ export default function VisualConceptDetailPage() {
       x: reset.x,
       y: reset.y,
       scale: reset.scale,
+      mode: 'single',
     })
   }
 
@@ -414,7 +580,7 @@ export default function VisualConceptDetailPage() {
 
     setSavingPreview(true)
 
-    const overlayItems = overlays.map((overlay) => ({ ...overlay }))
+    const overlayItems = overlays.map((overlay) => normalizeOverlayItem(overlay))
     const primaryOverlay = overlays[0]
     const normalizedPos = { x: primaryOverlay.x, y: primaryOverlay.y }
     const normalizedScale = primaryOverlay.scale
@@ -447,6 +613,11 @@ export default function VisualConceptDetailPage() {
       setFuturePlantsSaved(false)
       setAddPlantsResult(null)
       setShowFuturePlantsModal(true)
+      trackEvent('quick_preview_saved', {
+        overlay_count: overlays.length,
+        preview_mode:  'overlay',
+        route:         `/visualise/${concept.id}`,
+      })
     }
     setSavingPreview(false)
   }
@@ -474,6 +645,12 @@ export default function VisualConceptDetailPage() {
     } else {
       setFuturePlantsSaved(true)
       setAddPlantsResult('Saved to Future Plants')
+      trackEvent('future_plant_saved', {
+        plant_name:    speciesForFuture[0],
+        overlay_count: speciesForFuture.length,
+        source:        'quick_preview',
+        route:         `/visualise/${concept.id}`,
+      })
     }
     setAddingPlants(false)
   }
@@ -558,13 +735,52 @@ export default function VisualConceptDetailPage() {
                   </p>
                 </div>
               )}
+              <div className="px-1 space-y-3">
+                <p className="text-[9px] font-black uppercase tracking-widest text-green-800/40">
+                  Placement
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handlePlacementModeChange('single')}
+                    className={`flex-1 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all ${
+                      placementMode === 'single'
+                        ? 'bg-green-900 text-white border-green-900'
+                        : 'bg-white text-gray-500 border-gray-100'
+                    }`}
+                  >
+                    Single plant
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handlePlacementModeChange('row')}
+                    className={`flex-1 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all ${
+                      placementMode === 'row'
+                        ? 'bg-green-900 text-white border-green-900'
+                        : 'bg-white text-gray-500 border-gray-100'
+                    }`}
+                  >
+                    Hedge / row
+                  </button>
+                </div>
+                {placementMode === 'row' && (
+                  <div className="px-1">
+                    <p className="text-[11px] font-black text-green-950 uppercase tracking-tight">
+                      Hedge / row preview
+                    </p>
+                    <p className="text-[11px] text-gray-500 font-medium mt-1 leading-relaxed">
+                      Adjust width to roughly match the length of hedge or border.
+                    </p>
+                  </div>
+                )}
+              </div>
               <div className="flex flex-col sm:flex-row gap-2">
                 <select
                   value={plantToAdd}
                   onChange={(e) => setPlantToAdd(e.target.value)}
                   className="flex-1 bg-white border border-gray-100 rounded-[1rem] px-4 py-3 text-[12px] font-bold text-green-950 outline-none"
                 >
-                  {PREVIEW_PLANT_OPTIONS.map((plant) => (
+                  {addPlantOptions.map((plant) => (
                     <option key={plant.name} value={plant.name}>
                       {plant.name}
                     </option>
@@ -576,7 +792,7 @@ export default function VisualConceptDetailPage() {
                   disabled={!previewReady || !plantToAdd}
                   className="bg-green-900 text-white px-5 py-3 rounded-[1rem] text-[10px] font-black uppercase tracking-widest active:scale-[0.98] transition-all disabled:opacity-50 whitespace-nowrap"
                 >
-                  Add plant
+                  {placementMode === 'row' ? 'Add row' : 'Add plant'}
                 </button>
               </div>
             </div>
@@ -598,13 +814,77 @@ export default function VisualConceptDetailPage() {
 
               {previewReady && overlays.map((overlay) => {
                 const asset = getAssetByKey(overlay.assetKey)
-                const { left, top, width } = overlayToPixels(
+                const { left, top, width, height } = overlayToPixels(
                   overlay,
                   previewDims.w,
                   previewDims.h,
                   asset,
                 )
                 const isSelected = overlay.id === selectedOverlayId
+                const isRow = getOverlayMode(overlay) === 'row'
+                const sharedStyle = {
+                  position: 'absolute' as const,
+                  left,
+                  top,
+                  cursor: isSelected
+                    ? (isDraggingOverlay ? 'grabbing' : 'grab')
+                    : 'pointer',
+                  userSelect: 'none' as const,
+                  touchAction: 'none' as const,
+                  filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.45))',
+                  background: 'transparent',
+                  zIndex: isSelected ? 20 : 10,
+                  outline: isSelected ? '3px solid rgba(74, 222, 128, 0.95)' : undefined,
+                  outlineOffset: isSelected ? '2px' : undefined,
+                  borderRadius: isSelected ? '6px' : undefined,
+                }
+                const pointerHandlers = {
+                  onPointerDown: handleOverlayPointerDown(overlay.id),
+                  onPointerMove: handleOverlayPointerMove,
+                  onPointerUp: handleOverlayPointerUp,
+                  onPointerCancel: handleOverlayPointerUp,
+                  onClick: (e: React.MouseEvent) => e.stopPropagation(),
+                }
+
+                if (isRow) {
+                  const { tileWidth, step, count } = buildRowTileLayout(width, height, asset.aspect)
+
+                  return (
+                    <div
+                      key={overlay.id}
+                      role="presentation"
+                      aria-label={overlay.plantName}
+                      draggable={false}
+                      style={{
+                        ...sharedStyle,
+                        width,
+                        height,
+                        overflow: 'hidden',
+                      }}
+                      {...pointerHandlers}
+                    >
+                      {Array.from({ length: count }, (_, index) => (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          key={index}
+                          src={asset.src}
+                          alt=""
+                          draggable={false}
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: index * step,
+                            height: '100%',
+                            width: tileWidth,
+                            display: 'block',
+                            pointerEvents: 'none',
+                            clipPath: `inset(0 ${ROW_TILE_EDGE_CROP_RATIO * 100}% 0 ${ROW_TILE_EDGE_CROP_RATIO * 100}%)`,
+                          }}
+                        />
+                      ))}
+                    </div>
+                  )
+                }
 
                 return (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -614,28 +894,11 @@ export default function VisualConceptDetailPage() {
                     alt={overlay.plantName}
                     draggable={false}
                     style={{
-                      position: 'absolute',
-                      left,
-                      top,
+                      ...sharedStyle,
                       width,
                       height: 'auto',
-                      cursor: isSelected
-                        ? (isDraggingOverlay ? 'grabbing' : 'grab')
-                        : 'pointer',
-                      userSelect: 'none',
-                      touchAction: 'none',
-                      filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.45))',
-                      background: 'transparent',
-                      zIndex: isSelected ? 20 : 10,
-                      outline: isSelected ? '3px solid rgba(74, 222, 128, 0.95)' : undefined,
-                      outlineOffset: isSelected ? '2px' : undefined,
-                      borderRadius: isSelected ? '6px' : undefined,
                     }}
-                    onPointerDown={handleOverlayPointerDown(overlay.id)}
-                    onPointerMove={handleOverlayPointerMove}
-                    onPointerUp={handleOverlayPointerUp}
-                    onPointerCancel={handleOverlayPointerUp}
-                    onClick={(e) => e.stopPropagation()}
+                    {...pointerHandlers}
                   />
                 )
               })}
@@ -661,8 +924,9 @@ export default function VisualConceptDetailPage() {
                   className="absolute bottom-3 left-3 text-[10px] text-white/80 font-medium bg-black/40 rounded-full px-3 py-1 pointer-events-none"
                   style={{ zIndex: 30 }}
                 >
-                  {overlays.length} plant{overlays.length === 1 ? '' : 's'}
+                  {overlays.length} item{overlays.length === 1 ? '' : 's'}
                   {selectedOverlay ? ` · ${selectedOverlay.plantName}` : ''}
+                  {selectedOverlay && getOverlayMode(selectedOverlay) === 'row' ? ' · row' : ''}
                 </div>
               )}
             </div>
@@ -685,9 +949,16 @@ export default function VisualConceptDetailPage() {
                             : 'bg-[#f0f4f1] border-gray-100'
                         }`}
                       >
-                        <p className="text-[11px] font-black text-green-950 truncate">
-                          {overlay.plantName}
-                        </p>
+                        <div className="min-w-0">
+                          <p className="text-[11px] font-black text-green-950 truncate">
+                            {overlay.plantName}
+                          </p>
+                          {getOverlayMode(overlay) === 'row' && (
+                            <p className="text-[9px] font-black uppercase tracking-widest text-green-700/70 mt-0.5">
+                              Hedge / row
+                            </p>
+                          )}
+                        </div>
                         <div className="flex items-center gap-2 shrink-0">
                           <button
                             type="button"
@@ -720,10 +991,11 @@ export default function VisualConceptDetailPage() {
               <div>
                 <div className="flex justify-between mb-2">
                   <p className="text-[9px] font-black uppercase tracking-widest text-green-800/40">
-                    Size {selectedOverlay ? `· ${selectedOverlay.plantName}` : ''}
+                    {selectedOverlay && getOverlayMode(selectedOverlay) === 'row' ? 'Height' : 'Size'}
+                    {selectedOverlay ? ` · ${selectedOverlay.plantName}` : ''}
                   </p>
                   <p className="text-[9px] font-mono text-green-800/40">
-                    {selectedOverlay ? `${selectedOverlayWidth}px` : 'Select a plant'}
+                    {selectedOverlay ? `${selectedOverlayWidth}px` : 'Select an item'}
                   </p>
                 </div>
                 <input
@@ -736,6 +1008,30 @@ export default function VisualConceptDetailPage() {
                   className="w-full accent-green-700 disabled:opacity-40"
                 />
               </div>
+
+              {selectedOverlay && getOverlayMode(selectedOverlay) === 'row' && (
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-green-800/40">
+                      Row width
+                    </p>
+                    <p className="text-[9px] font-mono text-green-800/40">
+                      {selectedOverlayRowWidth}px
+                    </p>
+                  </div>
+                  <input
+                    type="range"
+                    min={Math.round((previewDims.w || 400) * 0.15)}
+                    max={Math.round((previewDims.w || 400) * 0.95)}
+                    value={selectedOverlayRowWidth || Math.round((previewDims.w || 400) * DEFAULT_ROW_WIDTH)}
+                    onChange={(e) => handleSelectedOverlayRowWidthChange(Number(e.target.value))}
+                    className="w-full accent-green-700"
+                  />
+                  <p className="text-[10px] text-gray-400 font-medium mt-2 leading-relaxed">
+                    Adjust width to roughly match the length of hedge or border.
+                  </p>
+                </div>
+              )}
 
               <div className="space-y-3">
                 <button

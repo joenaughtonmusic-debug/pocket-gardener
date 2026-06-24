@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useMemo } from 'react'
 import { createSupabaseBrowserClient } from '../../lib/supabaseClient'
 import Link from 'next/link'
-import { Pencil, Camera, ArrowRight, Check, AlertCircle, Search, X } from 'lucide-react'
+import { Pencil, Camera, ArrowRight, Check, AlertCircle, Loader2 } from 'lucide-react'
 import PlantThumbnail from '../../../components/PlantThumbnail'
 import WelcomeOverlay from '../../../components/WelcomeOverlay'
 import UpgradeButton from '../../../components/UpgradeButton'
@@ -11,15 +11,70 @@ import LockedProFeatureCard from '../../../components/LockedProFeatureCard'
 import GardenAreaBadge from '../../../components/GardenAreaBadge'
 import GardenAreaAssignSelect from '../../../components/GardenAreaAssignSelect'
 import GardenAreaSummaryCard from '../../../components/GardenAreaSummaryCard'
+import DiagnoseProblemModal from '../../../components/DiagnoseProblemModal'
 import { resolveAreaName, GENERAL_GARDEN_LABEL } from '../../../lib/gardenAreas'
 import type { UserPlant, PlantRemedy, GardenArea } from '../../../types/garden'
+import { trackEvent } from '../../../lib/analytics/trackEvent'
 
-const STOP_WORDS = new Set([
-  'my', 'the', 'a', 'an', 'is', 'are', 'was', 'were', 'has', 'have', 'had',
-  'got', 'it', 'its', 'this', 'that', 'and', 'or', 'but', 'so', 'for', 'with',
-  'of', 'in', 'on', 'at', 'to', 'by', 'from', 'up', 'into', 'be', 'been',
-  'plant', 'plants',
-])
+// ── Garden Coach types ────────────────────────────────────────────────────────
+interface CoachAction {
+  label: string
+  description?: string
+  href: string
+  initialSearch?: string
+  plantName?: string
+}
+interface CoachResult {
+  reply: string
+  intent: string
+  actions: CoachAction[]
+  outOfScope: boolean
+}
+
+const COACH_EXAMPLES = [
+  "What should I plant by my fence?",
+  "Why are my lemon leaves yellow?",
+  "Can I plant camellia in full sun?",
+  "When should I trim griselinia?",
+]
+
+
+/**
+ * Normalise plant name variants so "ficus tuffi" and "ficus tuffy" both map to
+ * the same token, "lemon" and "citrus" both collapse to "lemon tree", etc.
+ * This is applied to both the needle (API-returned plantName) and the haystack
+ * (ownedPlants common_name / nickname) before the containment check.
+ */
+function normalisePlantName(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/\bficus\s+tuffy?\b/g,  'ficus tuffy')
+    .replace(/\bficus\s+tuffi\b/g,   'ficus tuffy')
+    .replace(/\bbox\s+hedge\b/g,     'buxus')
+    .replace(/\bboxwood\b/g,         'buxus')
+    .replace(/\bcitrus\b/g,          'lemon tree')
+    .replace(/\bphormium\b/g,        'flax')
+    .replace(/\bharakeke\b/g,        'flax')
+    .replace(/\btree\s+fern\b/g,     'ponga')
+    .replace(/\bstrelitzia\b/g,      'bird of paradise')
+    .replace(/\btrachelospermum\b/g, 'star jasmine')
+    .trim()
+}
+
+/**
+ * Try to find a plant in the user's garden that matches the given plant name.
+ * Matching is case-insensitive and handles common name variants / aliases.
+ */
+function findOwnedPlantByName(plantName: string, plants: UserPlant[]): UserPlant | undefined {
+  const needle = normalisePlantName(plantName)
+  if (!needle) return undefined
+  return plants.find((p) => {
+    const candidates = [p.nickname, p.plants?.common_name]
+      .filter((n): n is string => Boolean(n))
+      .map(normalisePlantName)
+    return candidates.some((c) => c.includes(needle) || needle.includes(c))
+  })
+}
 
 export default function MyGardenDashboard() {
   const [ownedPlants, setOwnedPlants] = useState<UserPlant[]>([])
@@ -41,12 +96,14 @@ export default function MyGardenDashboard() {
   const [loadingRemedies, setLoadingRemedies] = useState(false)
   const [savingIssue, setSavingIssue] = useState(false)
 
-  const [symptomQuery, setSymptomQuery] = useState('')
   const [allRemedies, setAllRemedies] = useState<PlantRemedy[] | null>(null)
   const [symptomLoading, setSymptomLoading] = useState(false)
-  const [pendingSymptomRemedy, setPendingSymptomRemedy] = useState<PlantRemedy | null>(null)
-  const [showPlantPicker, setShowPlantPicker] = useState(false)
-  
+
+  const [coachInput,   setCoachInput]   = useState('')
+  const [coachLoading, setCoachLoading] = useState(false)
+  const [coachResult,  setCoachResult]  = useState<CoachResult | null>(null)
+  const [coachError,   setCoachError]   = useState<string | null>(null)
+
   const fileInputRef = useRef<HTMLInputElement>(null)
   const supabase = useMemo(() => createSupabaseBrowserClient(), [])
 
@@ -191,9 +248,9 @@ export default function MyGardenDashboard() {
     getGarden()
   }
 
-  async function openIssueModalForPlant(item: UserPlant) {
+  async function openIssueModalForPlant(item: UserPlant, initialSearch?: string) {
     setSelectedUnhealthyPlant(item)
-    setIssueSearchQuery("")
+    setIssueSearchQuery(initialSearch ?? "")
     setShowIssueModal(true)
     setLoadingRemedies(true)
 
@@ -245,10 +302,7 @@ export default function MyGardenDashboard() {
   }
 }
 
-  async function handleSelectIssue(remedy: PlantRemedy, overridePlant?: UserPlant) {
-    const targetPlant = overridePlant ?? selectedUnhealthyPlant
-    if (!targetPlant) return
-
+  async function handleSelectIssue(remedy: PlantRemedy, targetPlant: UserPlant) {
     setSavingIssue(true)
 
     const remedyText = remedy.remedy_title && remedy.remedy_description
@@ -295,28 +349,6 @@ export default function MyGardenDashboard() {
     getGarden()
   }
 
-  async function handleTrackSymptomIssue(remedy: PlantRemedy) {
-    if (matchedPlantId !== null) {
-      const plant = ownedPlants.find((p) => p.plant_id === matchedPlantId)
-      if (plant) {
-        await handleSelectIssue(remedy, plant)
-        setSymptomQuery('')
-        return
-      }
-    }
-    setPendingSymptomRemedy(remedy)
-    setShowPlantPicker(true)
-  }
-
-  async function handlePickPlantForSymptom(plant: UserPlant) {
-    setShowPlantPicker(false)
-    const remedy = pendingSymptomRemedy
-    setPendingSymptomRemedy(null)
-    if (!remedy) return
-    await handleSelectIssue(remedy, plant)
-    setSymptomQuery('')
-  }
-
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; 
     if (!file) return;
@@ -350,132 +382,6 @@ export default function MyGardenDashboard() {
     }
   }
 
-  // Detect a plant name in the query — lifted out so handlers can read it too.
-  const matchedPlantId = useMemo(() => {
-    if (!symptomQuery.trim()) return null
-    const rawTokens = symptomQuery.toLowerCase().split(/\s+/).filter((t) => t.length >= 3)
-    for (const plant of ownedPlants) {
-      const nameText = [
-        plant.nickname,
-        plant.plants?.common_name,
-        plant.plants?.scientific_name,
-        plant.plants?.botanical_name,
-      ].filter(Boolean).join(' ')
-      const nameTokens = nameText.toLowerCase().split(/[\s\-\/]+/).filter((t) => t.length >= 3)
-      const isMatch = nameTokens.some((nameToken) =>
-        rawTokens.some(
-          (qToken) =>
-            nameToken === qToken ||
-            (nameToken.length >= 4 && qToken.length >= 4 &&
-              (nameToken.startsWith(qToken) || qToken.startsWith(nameToken)))
-        )
-      )
-      if (isMatch) return plant.plant_id
-    }
-    return null
-  }, [symptomQuery, ownedPlants])
-
-  const symptomResults = useMemo(() => {
-    if (!symptomQuery.trim() || !allRemedies) return []
-    const tokens = symptomQuery
-      .toLowerCase()
-      .split(/\s+/)
-      .filter((t) => t.length > 1 && !STOP_WORDS.has(t))
-    if (tokens.length === 0) return []
-
-    // Strip plant name tokens from scoring so "lemon tree bumpy fruit" only
-    // scores on ["bumpy","fruit"], not on ["lemon","tree"].
-    let symptomTokens = tokens
-    if (matchedPlantId !== null) {
-      const matchedPlant = ownedPlants.find((p) => p.plant_id === matchedPlantId)
-      if (matchedPlant) {
-        const plantNameSet = new Set(
-          [
-            matchedPlant.nickname,
-            matchedPlant.plants?.common_name,
-            matchedPlant.plants?.scientific_name,
-            matchedPlant.plants?.botanical_name,
-          ]
-            .filter(Boolean)
-            .join(' ')
-            .toLowerCase()
-            .split(/[\s\-\/]+/)
-            .filter((t) => t.length > 1)
-        )
-        symptomTokens = tokens.filter((t) => !plantNameSet.has(t))
-      }
-    }
-    // If stripping plant-name tokens leaves nothing, the query is plant-name only.
-    // Fall back to the original tokens so plant-specific remedies still surface.
-    if (symptomTokens.length === 0) symptomTokens = tokens
-
-    const scored = allRemedies.map((r) => {
-      const issueType  = (r.issue_type        || '').toLowerCase()
-      const title      = (r.remedy_title       || '').toLowerCase()
-      const desc       = (r.remedy_description || '').toLowerCase()
-      const keywords   = (r.search_keywords    || '').toLowerCase()
-      let score = 0
-      for (const token of symptomTokens) {
-        if (issueType.includes(token))  score += 3
-        if (title.includes(token))      score += 2
-        if (keywords.includes(token))   score += 2
-        if (desc.includes(token))       score += 1
-      }
-
-      // Apply plant-context tier multiplier when a plant was detected in the query.
-      if (matchedPlantId !== null) {
-        const remedyPlantId = r.specific_plant_id ? Number(r.specific_plant_id) : null
-        if (remedyPlantId === matchedPlantId) {
-          score *= 100  // plant-specific for the matched plant — highest priority
-        } else if (remedyPlantId === null) {
-          score *= 10   // universal — second tier
-        }
-        // remedies specific to a different plant keep score × 1 — deprioritised
-      }
-
-      return { remedy: r, score }
-    })
-
-    const candidates = scored
-      .filter((s) => {
-        if (s.score === 0) return false
-        // When a plant is detected, hard-exclude remedies specific to other plants.
-        if (matchedPlantId !== null) {
-          const rPlantId = s.remedy.specific_plant_id ? Number(s.remedy.specific_plant_id) : null
-          if (rPlantId !== null && rPlantId !== matchedPlantId) return false
-        }
-        return true
-      })
-      .sort((a, b) => b.score - a.score)
-
-    // If a plant was detected and at least one plant-specific result exists,
-    // suppress universals — they would only dilute specific results.
-    // If no plant-specific results survive, fall back to universals.
-    let pool = candidates
-    if (matchedPlantId !== null) {
-      const hasSpecific = candidates.some(
-        (s) => s.remedy.specific_plant_id !== null &&
-               Number(s.remedy.specific_plant_id) === matchedPlantId
-      )
-      if (hasSpecific) {
-        pool = candidates.filter(
-          (s) => s.remedy.specific_plant_id !== null &&
-                 Number(s.remedy.specific_plant_id) === matchedPlantId
-        )
-      }
-    }
-
-    const seen = new Set<string>()
-    return pool
-      .filter(({ remedy: r }) => {
-        const key = r.issue_type
-        if (seen.has(key)) return false
-        seen.add(key)
-        return true
-      })
-      .slice(0, 5)
-      .map((s) => s.remedy)
-  }, [symptomQuery, allRemedies, ownedPlants, matchedPlantId])
 
   if (loading) return (
     <div className="min-h-screen bg-[#f0f4f1] flex items-center justify-center p-20 text-center">
@@ -524,25 +430,70 @@ export default function MyGardenDashboard() {
       ]
     : [{ areaId: null, areaName: GENERAL_GARDEN_LABEL, plants: projectPlants }];
 
-  const filteredRemedies = remedies.filter((r) => {
-    if (!issueSearchQuery.trim()) return true
-    const searchString = `${r.issue_type || ''} ${r.remedy_title || ''} ${r.remedy_description || ''} ${r.search_keywords || ''}`.toLowerCase()
-    return searchString.includes(issueSearchQuery.toLowerCase())
-  })
-
-  const specificMatches = filteredRemedies.filter(
-    (r) => Number(r.specific_plant_id) === Number(selectedUnhealthyPlant?.plant_id)
-  )
-  const universalMatches = filteredRemedies.filter(
-    (r) => r.is_universal === true && Number(r.specific_plant_id) !== Number(selectedUnhealthyPlant?.plant_id)
-  )
-
   async function fetchAllRemedies() {
     if (allRemedies !== null) return
     setSymptomLoading(true)
     const { data } = await supabase.from('plant_remedies').select('*')
     setAllRemedies((data ?? []) as PlantRemedy[])
     setSymptomLoading(false)
+  }
+
+  function openGenericDiagnoseModal(initialSearch?: string) {
+    setSelectedUnhealthyPlant(null)
+    setIssueSearchQuery(initialSearch ?? '')
+    fetchAllRemedies()
+    setShowIssueModal(true)
+  }
+
+  /**
+   * Open the diagnosis modal from a Garden Coach action.
+   * When plantName is provided, try to match an owned plant and open in plant mode.
+   * Falls back to generic mode with an optional initialSearch if no match is found.
+   */
+  async function openDiagnoseFromCoach(opts: { initialSearch?: string; plantName?: string }) {
+    const { initialSearch, plantName } = opts
+    if (plantName) {
+      const match = findOwnedPlantByName(plantName, ownedPlants)
+      if (match) {
+        await openIssueModalForPlant(match, initialSearch)
+        return
+      }
+    }
+    openGenericDiagnoseModal(initialSearch)
+  }
+
+  async function handleCoachSubmit() {
+    const message = coachInput.trim()
+    if (!message || coachLoading) return
+
+    setCoachLoading(true)
+    setCoachError(null)
+    setCoachResult(null)
+
+    try {
+      const res = await fetch('/api/garden-coach', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message }),
+      })
+
+      const data: CoachResult = await res.json()
+
+      if (!res.ok) {
+        setCoachError('Something went wrong. Please try again.')
+        return
+      }
+
+      setCoachResult(data)
+      trackEvent('garden_coach_question_submitted', {
+        intent: data.intent,
+        source: 'dashboard',
+      })
+    } catch {
+      setCoachError('Something went wrong. Please try again.')
+    } finally {
+      setCoachLoading(false)
+    }
   }
 
   return (
@@ -622,28 +573,146 @@ export default function MyGardenDashboard() {
 
       <div className="px-6 space-y-8">
 
-        {/* ── 1. Quick Actions row ─────────────────────────────────────── */}
-        <nav aria-label="Quick actions" className="flex items-start gap-3">
-          {([
-            { icon: '🖼️', label: 'Visualise',  href: '/visualise' },
-            { icon: '📅', label: 'Maintain',   href: '/calendar' },
-            { icon: '📚', label: 'Learn',      href: '/guides' },
-            { icon: '🔍', label: 'Find Plants', href: '/match' },
-          ] as const).map(({ icon, label, href }) => (
-            <Link
-              key={href}
-              href={href}
-              className="flex-1 flex flex-col items-center gap-2 active:scale-90 transition-all"
-            >
-              <div className="w-full rounded-[1.125rem] bg-white shadow-sm border border-gray-100 py-4 flex items-center justify-center text-2xl">
-                {icon}
+        {/* ── 1. Garden Coach ──────────────────────────────────────────── */}
+        <section className="space-y-3">
+          <div className="px-1">
+            <h2 className="text-[10px] font-black text-green-800/50 uppercase tracking-[0.2em]">
+              Garden Coach
+            </h2>
+            <p className="text-[12px] text-gray-500 font-medium mt-0.5">
+              Ask a garden question or describe what you need help with.
+            </p>
+          </div>
+
+          <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-5 space-y-4">
+            {/* Input row */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="e.g. What should I plant along my fence?"
+                value={coachInput}
+                onChange={(e) => setCoachInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleCoachSubmit() }}
+                disabled={coachLoading}
+                className="flex-1 min-w-0 bg-[#f0f4f1] border border-transparent rounded-full px-5 py-3 text-[13px] font-medium text-gray-800 placeholder:text-gray-400 outline-none focus:border-green-200 transition-colors disabled:opacity-60"
+              />
+              <button
+                type="button"
+                onClick={handleCoachSubmit}
+                disabled={coachLoading || !coachInput.trim()}
+                className="shrink-0 bg-green-900 text-white px-5 py-3 rounded-full text-[10px] font-black uppercase tracking-widest active:scale-[0.97] transition-all disabled:opacity-40 flex items-center gap-2"
+              >
+                {coachLoading
+                  ? <Loader2 size={13} strokeWidth={3} className="animate-spin" />
+                  : 'Ask'}
+              </button>
+            </div>
+
+            {/* Example prompt chips — shown before first submit */}
+            {!coachResult && !coachLoading && (
+              <div className="flex flex-wrap gap-2">
+                {COACH_EXAMPLES.map((ex) => (
+                  <button
+                    key={ex}
+                    type="button"
+                    onClick={() => setCoachInput(ex)}
+                    className="text-[10px] font-bold text-green-800/70 bg-green-50 border border-green-100 px-3 py-1.5 rounded-full active:bg-green-100 transition-colors leading-none"
+                  >
+                    {ex}
+                  </button>
+                ))}
               </div>
-              <span className="text-[9px] font-black text-green-900/70 uppercase tracking-widest leading-none">
-                {label}
-              </span>
+            )}
+
+            {/* Error state */}
+            {coachError && (
+              <p className="text-[11px] text-red-500 font-medium px-1">{coachError}</p>
+            )}
+
+            {/* Loading skeleton */}
+            {coachLoading && (
+              <div className="space-y-2 pt-1">
+                <div className="h-3 bg-gray-100 rounded-full w-3/4 animate-pulse" />
+                <div className="h-3 bg-gray-100 rounded-full w-1/2 animate-pulse" />
+              </div>
+            )}
+
+            {/* Response */}
+            {coachResult && !coachLoading && (
+              <div className="space-y-4 border-t border-gray-50 pt-4">
+                <p className={`text-[13px] font-medium leading-relaxed ${coachResult.outOfScope ? 'text-orange-700' : 'text-gray-700'}`}>
+                  {coachResult.reply}
+                </p>
+
+                {coachResult.actions.length > 0 && (
+                  <div className="space-y-2">
+                    {coachResult.actions.map((action, i) => {
+                      const isDiagnose =
+                        action.href === '/dashboard#diagnose' ||
+                        action.href === '#diagnose'
+                      const cls = `flex items-center justify-between gap-3 w-full px-5 py-3.5 rounded-[1.25rem] text-[11px] font-black uppercase tracking-widest active:scale-[0.98] transition-all ${
+                        i === 0
+                          ? 'bg-green-900 text-white shadow-sm'
+                          : 'bg-[#f0f4f1] text-green-900 border border-gray-100'
+                      }`
+                      const inner = (
+                        <>
+                          <span>{action.label}</span>
+                          <ArrowRight size={12} strokeWidth={3} className={i === 0 ? 'text-green-300' : 'text-gray-400'} />
+                        </>
+                      )
+                      if (isDiagnose) {
+                        return (
+                          <button
+                            key={action.href + i}
+                            type="button"
+                            onClick={() => openDiagnoseFromCoach({ initialSearch: action.initialSearch, plantName: action.plantName })}
+                            className={cls}
+                          >
+                            {inner}
+                          </button>
+                        )
+                      }
+                      return (
+                        <Link key={action.href + i} href={action.href} className={cls}>
+                          {inner}
+                        </Link>
+                      )
+                    })}
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => { setCoachResult(null); setCoachInput(''); setCoachError(null) }}
+                  className="text-[10px] font-black uppercase tracking-widest text-gray-400 active:text-gray-600 transition-colors"
+                >
+                  Ask another question
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Fallback quick links — always visible */}
+          <div className="flex flex-wrap gap-x-4 gap-y-1.5 px-2">
+            <Link href="/match" className="text-[10px] font-black uppercase tracking-widest text-green-700/60 active:text-green-800 transition-colors">
+              Find plants
             </Link>
-          ))}
-        </nav>
+            <button
+              type="button"
+              onClick={() => openGenericDiagnoseModal()}
+              className="text-[10px] font-black uppercase tracking-widest text-green-700/60 active:text-green-800 transition-colors"
+            >
+              Diagnose a problem
+            </button>
+            <Link href="/visualise" className="text-[10px] font-black uppercase tracking-widest text-green-700/60 active:text-green-800 transition-colors">
+              Visualise
+            </Link>
+            <Link href="/calendar" className="text-[10px] font-black uppercase tracking-widest text-green-700/60 active:text-green-800 transition-colors">
+              Calendar
+            </Link>
+          </div>
+        </section>
 
         {/* ── 2. Empty state — no plants yet ────────────────────────────── */}
         {ownedPlants.length === 0 && !loading && (
@@ -939,86 +1008,7 @@ export default function MyGardenDashboard() {
           </section>
         )}
 
-        {/* ── 7. Symptom search ─────────────────────────────────────────── */}
-        <section className="space-y-3">
-          <p className="text-[10px] font-black text-green-800/50 uppercase tracking-[0.2em] px-1">
-            🔍 Search plant problems
-          </p>
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="My lemon has bumpy fruit..."
-              value={symptomQuery}
-              onFocus={fetchAllRemedies}
-              onChange={(e) => setSymptomQuery(e.target.value)}
-              className="w-full bg-white border border-gray-100 rounded-full px-5 py-4 pr-12 text-sm font-bold text-gray-800 placeholder:text-gray-300 outline-none focus:border-green-200 shadow-sm transition-colors"
-            />
-            <Search size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none" />
-          </div>
-
-          {symptomQuery.trim().length > 0 && (
-            <div className="space-y-2 pt-1">
-              {symptomLoading ? (
-                <p className="text-center text-[10px] font-black uppercase tracking-widest text-gray-400 py-6">
-                  Searching...
-                </p>
-              ) : symptomResults.length === 0 ? (
-                <p className="text-center text-[10px] font-black uppercase tracking-widest text-gray-300 italic py-6">
-                  {matchedPlantId !== null
-                    ? "Add a symptom — e.g. 'lemon tree bumpy fruit'"
-                    : 'No matches found. Try different symptoms.'}
-                </p>
-              ) : (
-                <>
-                  <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 px-1 pb-1">
-                    Possible matches
-                  </p>
-                  {symptomResults.map((r) => (
-                    <div
-                      key={r.id}
-                      className="bg-white rounded-[1.5rem] border border-gray-100 p-4 shadow-sm"
-                    >
-                      <p className="text-[11px] font-black text-orange-700 uppercase tracking-tight">
-                        {r.issue_type}
-                      </p>
-                      {r.remedy_title && (
-                        <p className="text-[10px] font-black text-green-800 uppercase tracking-widest mt-1">
-                          {r.remedy_title}
-                        </p>
-                      )}
-                      {r.remedy_description && (
-                        <p className="text-xs text-gray-500 italic leading-relaxed mt-1.5 line-clamp-2">
-                          {r.remedy_description}
-                        </p>
-                      )}
-                      {r.shopping_tags && r.shopping_tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5 mt-2.5">
-                          {r.shopping_tags.map((tag) => (
-                            <span
-                              key={tag}
-                              className="text-[8px] font-black uppercase tracking-widest bg-green-50 text-green-700 px-2 py-0.5 rounded-full border border-green-100"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                      <button
-                        onClick={() => handleTrackSymptomIssue(r)}
-                        disabled={savingIssue}
-                        className="mt-3 w-full bg-green-800 py-2.5 rounded-2xl text-[9px] font-black uppercase tracking-widest text-white active:scale-[0.98] transition-all disabled:opacity-50"
-                      >
-                        Track Issue
-                      </button>
-                    </div>
-                  ))}
-                </>
-              )}
-            </div>
-          )}
-        </section>
-
-        {/* ── 8. Season Insight ─────────────────────────────────────────── */}
+        {/* ── 7. Season Insight ─────────────────────────────────────────── */}
         {featuredTip && (
           <section>
             <div className="bg-green-900 rounded-[2.5rem] shadow-2xl p-8 border-b-4 border-amber-400">
@@ -1143,191 +1133,17 @@ export default function MyGardenDashboard() {
 
       </div>
 
-      {showIssueModal && selectedUnhealthyPlant && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
-          <div className="w-full max-w-xl bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 overflow-hidden">
-            <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
-              <div>
-                <p className="text-[9px] font-black text-red-400 uppercase tracking-[0.2em] mb-1">
-                  Plant is unhealthy
-                </p>
-                <h3 className="text-lg font-black text-green-950 uppercase italic">
-                  {selectedUnhealthyPlant.nickname || selectedUnhealthyPlant.plants?.common_name}
-                </h3>
-              </div>
-              <button
-                onClick={closeIssueModal}
-                className="w-10 h-10 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search issue or symptom..."
-                  value={issueSearchQuery}
-                  onChange={(e) => setIssueSearchQuery(e.target.value)}
-                  className="w-full bg-gray-50 border border-gray-100 rounded-full px-5 py-4 pr-12 text-sm font-bold outline-none focus:border-orange-200"
-                />
-                <Search size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300" />
-              </div>
-
-              {loadingRemedies ? (
-                <div className="py-10 text-center text-[10px] font-black uppercase tracking-widest text-gray-400">
-                  Loading issues...
-                </div>
-              ) : (
-                <>
-                  {specificMatches.length > 0 && (
-                    <div className="space-y-3">
-                      <div className="text-[10px] font-black text-green-700 uppercase tracking-[0.2em] px-1">
-                        Plant specific
-                      </div>
-                      {specificMatches.map((r) => (
-                        <button
-                          key={r.id}
-                          onClick={() => handleSelectIssue(r)}
-                          disabled={savingIssue}
-                          className="w-full text-left p-4 rounded-[1.5rem] border border-orange-100 bg-orange-50/40 active:scale-[0.98] transition-all"
-                        >
-                          <div className="flex items-start justify-between gap-4">
-                            <div>
-                              <p className="text-[11px] font-black text-orange-800 uppercase tracking-tight">
-                                {r.issue_type}
-                              </p>
-                              {r.remedy_title && (
-                                <p className="text-[10px] font-black text-green-800 uppercase tracking-widest mt-1">
-                                  {r.remedy_title}
-                                </p>
-                              )}
-                              {r.remedy_description && (
-                                <p className="text-xs text-gray-600 italic leading-relaxed mt-2">
-                                  {r.remedy_description}
-                                </p>
-                              )}
-                              {r.shopping_tags && r.shopping_tags.length > 0 && (
-                                <div className="flex flex-wrap gap-2 mt-3">
-                                  {r.shopping_tags.map((tag) => (
-                                    <span
-                                      key={tag}
-                                      className="text-[8px] font-black uppercase tracking-widest bg-green-50 text-green-700 px-2 py-1 rounded-full border border-green-100"
-                                    >
-                                      {tag}
-                                    </span>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                            <div className="text-orange-500 text-[10px] font-black uppercase tracking-widest shrink-0">
-                              Start Treatment
-                            </div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  {universalMatches.length > 0 && (
-                    <div className="space-y-3 pt-2">
-                      <div className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] px-1">
-                        General issues
-                      </div>
-                      {universalMatches.map((r) => (
-                        <button
-                          key={r.id}
-                          onClick={() => handleSelectIssue(r)}
-                          disabled={savingIssue}
-                          className="w-full text-left p-4 rounded-[1.5rem] border border-gray-100 bg-white active:scale-[0.98] transition-all"
-                        >
-                          <div className="flex items-start justify-between gap-4">
-                            <div>
-                              <p className="text-[11px] font-black text-gray-800 uppercase tracking-tight">
-                                {r.issue_type}
-                              </p>
-                              {r.remedy_title && (
-                                <p className="text-[10px] font-black text-green-800 uppercase tracking-widest mt-1">
-                                  {r.remedy_title}
-                                </p>
-                              )}
-                              {r.remedy_description && (
-                                <p className="text-xs text-gray-600 italic leading-relaxed mt-2">
-                                  {r.remedy_description}
-                                </p>
-                              )}
-                              {r.shopping_tags && r.shopping_tags.length > 0 && (
-                                <div className="flex flex-wrap gap-2 mt-3">
-                                  {r.shopping_tags.map((tag) => (
-                                    <span
-                                      key={tag}
-                                      className="text-[8px] font-black uppercase tracking-widest bg-green-50 text-green-700 px-2 py-1 rounded-full border border-green-100"
-                                    >
-                                      {tag}
-                                    </span>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                            <div className="text-orange-500 text-[10px] font-black uppercase tracking-widest shrink-0">
-                              Start Treatment
-                            </div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  {filteredRemedies.length === 0 && (
-                    <div className="py-10 text-center text-[10px] font-black uppercase tracking-widest text-gray-300 italic">
-                      No issue matches your search
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showPlantPicker && pendingSymptomRemedy && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
-          <div className="w-full max-w-xl bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 overflow-hidden">
-            <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
-              <div>
-                <p className="text-[9px] font-black text-orange-500 uppercase tracking-[0.2em] mb-1">
-                  Track Issue
-                </p>
-                <h3 className="text-lg font-black text-green-950 uppercase italic">
-                  Which plant is affected?
-                </h3>
-              </div>
-              <button
-                onClick={() => { setShowPlantPicker(false); setPendingSymptomRemedy(null) }}
-                className="w-10 h-10 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400"
-              >
-                <X size={18} />
-              </button>
-            </div>
-            <div className="p-4 space-y-2 max-h-[60vh] overflow-y-auto">
-              {ownedPlants.map((plant) => (
-                <button
-                  key={plant.id}
-                  onClick={() => handlePickPlantForSymptom(plant)}
-                  disabled={savingIssue}
-                  className="w-full flex items-center gap-3 p-4 rounded-[1.5rem] border border-gray-100 bg-gray-50/40 text-left active:scale-[0.98] transition-all disabled:opacity-50"
-                >
-                  <PlantThumbnail plant={plant.plants} size="sm" />
-                  <span className="text-sm font-black text-green-950 uppercase">
-                    {plant.nickname || plant.plants?.common_name || 'Unknown Plant'}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+      <DiagnoseProblemModal
+        open={showIssueModal}
+        onClose={closeIssueModal}
+        plant={selectedUnhealthyPlant}
+        remedies={selectedUnhealthyPlant ? remedies : (allRemedies ?? [])}
+        loading={selectedUnhealthyPlant ? loadingRemedies : symptomLoading}
+        saving={savingIssue}
+        initialSearch={issueSearchQuery}
+        onSelectIssue={handleSelectIssue}
+        ownedPlants={ownedPlants}
+      />
 
     </main>
   )
