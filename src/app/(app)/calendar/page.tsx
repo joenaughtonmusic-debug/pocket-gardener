@@ -270,6 +270,8 @@ export default function CalendarPage() {
             `
           )
           .eq('user_id', user.id)
+          // TODO: Future Projects — once a project plant is moved to the garden (is_project → false),
+          // remind the user to check in on it during the first relevant care season.
           .eq('is_project', false),
         supabase
           .from('auckland_monthly_care')
@@ -591,6 +593,9 @@ export default function CalendarPage() {
 
       if (matchingRules.length > 0) {
         matchingRules.forEach((rule, ruleIndex) => {
+          // TODO: Future hedge reminders — use trim_cycle (months between trims) and length_metres
+          // to calculate when the hedge is due, and push a notification in the correct week rather
+          // than surfacing trim tasks every month.
           const isHedgeTrim =
             (rule.task_type || '').trim().toLowerCase() === 'trim' &&
             taskCategory === 'hedge'
@@ -916,12 +921,16 @@ export default function CalendarPage() {
 
             {agenda.tasks.length === 0 && (
               <div className="bg-white rounded-[2.5rem] p-6 shadow-sm text-sm text-gray-500 italic">
-                No tasks scheduled for this week. Use the arrows to browse other weeks, or add more plants from the Library to build out your plan.
+                {allPlants.length === 0
+                  ? "Head to the Plant Library to add your first plants — your weekly care plan builds automatically from there."
+                  : "No tasks scheduled for this week. Use the arrows to browse other weeks, or add more plants from the Library to build out your plan."}
               </div>
             )}
           </div>
         </section>
 
+        {/* TODO: Monthly Garden Report — Pro summary of tasks completed vs pending across all 4 weeks,
+             sick plants resolved, and any future/project plants with upcoming planting windows. */}
         {!isPro && (
           <section>
             <LockedProFeatureCard

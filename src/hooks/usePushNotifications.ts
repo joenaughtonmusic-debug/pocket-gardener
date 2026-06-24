@@ -50,16 +50,8 @@ export function usePushNotifications() {
         const tapListener = await PushNotifications.addListener(
           'pushNotificationActionPerformed',
           (action) => {
-            // ── TEMPORARY LOGGING ─────────────────────────────────────────────
-            console.log('[PG_PUSH_TAP] pushNotificationActionPerformed fired');
-            console.log('[PG_PUSH_TAP] full action payload:', JSON.stringify(action));
-            console.log('[PG_PUSH_TAP] action.notification:', JSON.stringify(action.notification));
-            console.log('[PG_PUSH_TAP] action.notification.data:', JSON.stringify(action.notification?.data));
-            // ─────────────────────────────────────────────────────────────────
-
             const { notification } = action;
             const path: string = notification.data?.path ?? '/calendar';
-            console.log(`[PG_PUSH_TAP] resolved path → "${path}" (data.path was: ${JSON.stringify(notification.data?.path)})`);
 
             // Persist path so useNotificationDeepLink can consume it after the
             // cold-start routing race resolves (belt).
@@ -69,9 +61,8 @@ export function usePushNotifications() {
             // where the router is already settled (suspenders).
             try {
               routerRef.current.push(path);
-              console.log('[PG_PUSH_TAP] router.push called successfully');
-            } catch (err) {
-              console.log('[PG_PUSH_TAP] router.push threw (cold start expected):', err);
+            } catch {
+              // Expected on cold start before the router has settled.
             }
           }
         );

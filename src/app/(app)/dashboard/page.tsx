@@ -1115,12 +1115,16 @@ export default function MyGardenDashboard() {
                   description="Planned Pro feature — personalised garden advice, on the way."
                   upgradeHref="#pro-upgrade"
                 />
+                {/* TODO: Monthly Garden Report — Pro summary of completed tasks, resolved sick
+                     plants, and upcoming planting windows for project/future plants. */}
                 <LockedProFeatureCard
                   icon="📊"
                   title="Monthly Garden Review"
                   description="Coming soon — a monthly snapshot of how your garden is tracking."
                   upgradeHref="#pro-upgrade"
                 />
+                {/* TODO: Advanced Reminders — personalised push nudges when hedge trim is due,
+                     sick plants need a follow-up, or a project plant enters its planting season. */}
                 <LockedProFeatureCard
                   icon="🔔"
                   title="Advanced Reminders"

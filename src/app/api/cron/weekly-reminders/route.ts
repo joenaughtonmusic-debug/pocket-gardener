@@ -116,6 +116,11 @@ export async function GET(req: Request) {
       continue;
     }
 
+    // TODO: Future hedge reminders — personalise the notification body by querying the
+    // user's calendar task rules for the current week (hedge trims, sick plants, feeds)
+    // and surfacing task-specific copy rather than the generic "garden needs attention" message.
+    // TODO: Monthly Garden Report — add a separate monthly cron (or variant of this one) that
+    // sends Pro users a summary: tasks completed, sick plants, and upcoming planting windows.
     for (const { id: tokenId, token } of userTokens) {
       try {
         await messaging.send({

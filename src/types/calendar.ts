@@ -9,6 +9,9 @@ export type PlantRow = {
   plant_type: string | null;
   task_category: string | null;
   maintenance_level: string | null;
+  // TODO: Future hedge reminders — trim_cycle (months between trims) and feed_cycle are fetched
+  // but not yet used in task generation. Wire these into the hedge trim scoring to avoid
+  // surfacing trim tasks in months outside the plant's actual trim window.
   trim_cycle: number | null;
   feed_cycle: number | null;
   trim_notes: string | null;
