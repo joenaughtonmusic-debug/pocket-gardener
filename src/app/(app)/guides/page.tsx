@@ -93,7 +93,7 @@ export default function GuidesPage() {
           <span className="h-[1px] bg-green-200 flex-grow"></span>
         </h2>
 
-        <div className="grid grid-cols-1">
+        <div className="grid grid-cols-1 gap-4">
           <Link
             href="/feature"
             className="w-full bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm flex items-center justify-between group active:scale-[0.98] transition-all no-underline"
@@ -103,6 +103,20 @@ export default function GuidesPage() {
               <div>
                 <h3 className="font-black text-gray-800 text-sm uppercase tracking-tight">This Month&apos;s Feature Garden</h3>
                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-tight">Auckland garden inspiration</p>
+              </div>
+            </div>
+            <span className="text-gray-200 group-hover:text-green-600 transition-colors text-xl mr-2">→</span>
+          </Link>
+
+          <Link
+            href="/match"
+            className="w-full bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm flex items-center justify-between group active:scale-[0.98] transition-all no-underline"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center text-2xl">🌿</div>
+              <div>
+                <h3 className="font-black text-gray-800 text-sm uppercase tracking-tight">Plant Finder</h3>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-tight">Find plants for a fence, pot or bare space</p>
               </div>
             </div>
             <span className="text-gray-200 group-hover:text-green-600 transition-colors text-xl mr-2">→</span>

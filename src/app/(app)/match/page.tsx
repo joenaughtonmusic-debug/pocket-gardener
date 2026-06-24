@@ -1,28 +1,17 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback, Suspense } from 'react'
-import type { ReactNode } from 'react'
+import { useState, useEffect, useMemo, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createSupabaseBrowserClient } from '../../lib/supabaseClient'
 import {
-  Sun, Droplets, Shovel, ChevronRight, Plus, X,
-  Ruler, TrendingUp, Pencil, Trash2, ChevronDown, ChevronUp, Sparkles, ArrowRight,
+  Sun, Droplets, Shovel, ChevronRight, X,
+  Ruler, TrendingUp, Plus,
 } from 'lucide-react'
 import Link from 'next/link'
 import PlantThumbnail from '../../../components/PlantThumbnail'
 import PageHelp from '../../../components/PageHelp'
-import LockedProFeatureCard from '../../../components/LockedProFeatureCard'
-import type { GardenArea } from '../../../types/garden'
-import {
-  GARDEN_AREA_STYLE_OPTIONS,
-  GARDEN_AREA_GOAL_OPTIONS,
-  rankPlantsForArea,
-  STYLE_INFO,
-  type RankedPlantMatch,
-} from '../../../lib/gardenAreaRecommendations'
-import type { Plant } from '../../../types/plants'
 
-// ─── Plant Finder slider option constants (unchanged — match plants table values) ─
+// ─── Condition option constants (match plants table values) ───────────────────
 const SUN_OPTIONS   = ['Full Sun', 'Part Shade', 'Full Shade']
 const SOIL_OPTIONS  = ['Healthy/loam', 'Clay', 'Sandy', 'Potting Mix']
 const WATER_OPTIONS = ['Holds Water', 'Drains Well', 'Dry', 'Under a Roof']
@@ -30,7 +19,7 @@ const SIZE_OPTIONS  = ['<1m', '1-2m', '2-4m', '4m+']
 const SLOPE_OPTIONS = ['flat', 'gentle', 'moderate', 'steep']
 const SLOPE_LABELS  = ['Flat', 'Gentle Slope', 'Moderate Slope', 'Steep Slope']
 
-// ─── Image assets for Plant Finder sliders (unchanged) ───────────────────────
+// ─── Slider image assets ──────────────────────────────────────────────────────
 const SUN_IMAGES = [
   'https://img.freepik.com/free-photo/penang-malaysia-march-25-2024_58702-16918.jpg?semt=ais_incoming&w=740&q=80',
   'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80',
@@ -61,143 +50,8 @@ const SLOPE_IMAGES = [
   'https://sonxnuxhrivzgcevtdtc.supabase.co/storage/v1/object/public/garden%20assets/Slope%20files/slope_steep%20v1.png',
 ]
 
-// ─── Friendly display maps for condition pills ────────────────────────────────
-const WATER_DISPLAY: Record<string, string> = {
-  'Holds Water': 'Poor drainage',
-  'Drains Well': 'Well drained',
-  'Dry': 'Dry',
-  'Under a Roof': 'Under cover',
-}
-const SOIL_DISPLAY: Record<string, string> = {
-  'Healthy/loam': 'Rich / loam',
-  'Clay': 'Clay',
-  'Sandy': 'Sandy',
-  'Potting Mix': 'Potting mix',
-}
-const SLOPE_DISPLAY: Record<string, string> = {
-  flat: 'Flat', gentle: 'Gentle slope', moderate: 'Moderate slope', steep: 'Steep slope',
-}
-
-// ─── Simple dropdown field for area form ─────────────────────────────────────
-function FormDropdown({
-  label,
-  hint,
-  value,
-  onChange,
-  options,
-}: {
-  label: string
-  hint?: string
-  value: string
-  onChange: (v: string) => void
-  options: { value: string; label: string }[]
-}) {
-  return (
-    <div className="space-y-1.5">
-      <div className="flex items-baseline justify-between">
-        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">
-          {label}
-        </label>
-        {hint && (
-          <span className="text-[9px] text-gray-300 font-medium italic">{hint}</span>
-        )}
-      </div>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-3.5 text-sm font-bold text-gray-700 outline-none focus:border-green-200 appearance-none transition-colors"
-      >
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
-    </div>
-  )
-}
-
-// ─── Condition pill (display only, unchanged logic) ───────────────────────────
-function ConditionPill({
-  icon,
-  value,
-  displayMap,
-  variant = 'condition',
-}: {
-  icon?: ReactNode
-  value: string | null | undefined
-  displayMap?: Record<string, string>
-  variant?: 'condition' | 'planning'
-}) {
-  if (!value) return null
-  const label = displayMap ? (displayMap[value] ?? value) : value
-  const styles =
-    variant === 'planning'
-      ? 'bg-green-50 text-green-700 border-green-100'
-      : 'bg-gray-50 text-gray-500 border-gray-100'
-  return (
-    <span className={`inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wide border px-2 py-1 rounded-full ${styles}`}>
-      {icon} {label}
-    </span>
-  )
-}
-
-// ─── Option chips for style/goal ──────────────────────────────────────────────
-function OptionChips({
-  label,
-  optional,
-  options,
-  value,
-  onChange,
-}: {
-  label: string
-  optional?: boolean
-  options: readonly string[]
-  value: string | null
-  onChange: (v: string | null) => void
-}) {
-  return (
-    <div>
-      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
-        {label}{' '}
-        {optional && (
-          <span className="text-gray-300 font-medium normal-case tracking-normal">(optional)</span>
-        )}
-      </label>
-      <div className="flex flex-wrap gap-2">
-        {options.map((opt) => {
-          const selected = value === opt
-          return (
-            <button
-              key={opt}
-              type="button"
-              onClick={() => onChange(selected ? null : opt)}
-              className={`text-[9px] font-black uppercase tracking-wide px-3 py-2 rounded-full border transition-all active:scale-95 ${
-                selected
-                  ? 'bg-green-900 text-white border-green-900'
-                  : 'bg-gray-50 text-gray-500 border-gray-100'
-              }`}
-            >
-              {opt}
-            </button>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
-function areaPlanningHint(area: GardenArea): string | null {
-  const parts = [area.style, area.goal].filter(
-    (v) => v && v.toLowerCase() !== 'not sure',
-  ) as string[]
-  if (parts.length === 0) return null
-  return `Prioritised for ${parts.join(' · ').toLowerCase()}.`
-}
-
 // ─── Main page ────────────────────────────────────────────────────────────────
 function MatchPageInner() {
-  // ── Plant Finder (legacy) slider state ────────────────────────────────────
   const [sunIdx,        setSunIdx]        = useState(0)
   const [soilIdx,       setSoilIdx]       = useState(0)
   const [waterIdx,      setWaterIdx]      = useState(1)
@@ -207,246 +61,22 @@ function MatchPageInner() {
   const [loading,       setLoading]       = useState(false)
   const [selectedPlant, setSelectedPlant] = useState<any | null>(null)
 
-  // ── Garden Areas state ───────────────────────────────────────────────────
-  const [areas,           setAreas]           = useState<GardenArea[]>([])
-  const [areaMatches,     setAreaMatches]     = useState<Record<string, RankedPlantMatch[]>>({})
-  const [areasLoading,    setAreasLoading]    = useState(true)
-  const [projectPlantIds, setProjectPlantIds] = useState<number[]>([])
-  const [showAreaForm,    setShowAreaForm]    = useState(false)
-  const [editingArea,     setEditingArea]     = useState<GardenArea | null>(null)
-  const [deletingAreaId,  setDeletingAreaId]  = useState<string | null>(null)
-  const [addingToArea,    setAddingToArea]    = useState<string | null>(null)
-  const [isPro,           setIsPro]           = useState(false)
+  const supabase          = useMemo(() => createSupabaseBrowserClient(), [])
+  const searchParams      = useSearchParams()
+  // TODO: Future — use mode=suitability to pre-select suitability-focused filters.
+  const isSuitabilityMode = searchParams.get('mode') === 'suitability'
 
-  // Area form fields — string-based, not index-based
-  const [formName,        setFormName]        = useState('')
-  const [formSun,         setFormSun]         = useState('')
-  const [formSoil,        setFormSoil]        = useState('')
-  const [formWater,       setFormWater]       = useState('')
-  const [formNotes,       setFormNotes]       = useState('')
-  const [formStyle,       setFormStyle]       = useState<string | null>(null)
-  const [formGoal,        setFormGoal]        = useState<string | null>(null)
-  const [savingArea,      setSavingArea]      = useState(false)
-  const [showConditions,  setShowConditions]  = useState(false)
-
-  const supabase     = useMemo(() => createSupabaseBrowserClient(), [])
-  const searchParams = useSearchParams()
-
-  const styleParam    = searchParams.get('style')
-  const areaIdParam   = searchParams.get('areaId')
-  const editAreaParam = searchParams.get('editArea')
-
-  const initialStyle = useMemo(() => {
-    if (!styleParam) return null
-    return GARDEN_AREA_STYLE_OPTIONS.includes(styleParam as any) ? styleParam : null
-  }, [styleParam])
-
-  const [highlightedAreaId, setHighlightedAreaId] = useState<string | null>(null)
-
-  // ── Null-safe matchmaker query ────────────────────────────────────────────
-  // Only applies conditions that are actually set, so partial conditions work.
-  const fetchMatchesForConditions = useCallback(
-    async (
-      sun:   string | null,
-      soil:  string | null,
-      water: string | null,
-      size:  string | null,
-      slope: string | null,
-    ): Promise<any[]> => {
-      let query = supabase.from('plants').select('*')
-      if (sun)   query = query.contains('sun_requirement',   [sun])
-      if (soil)  query = query.contains('soil_type',         [soil])
-      if (water) query = query.contains('water_behavior',    [water])
-      if (size)  query = query.contains('mature_size',       [size])
-      if (slope) query = query.contains('slope_suitability', [slope])
-      const { data } = await query
-      return (data || []).sort((a, b) =>
-        (a.common_name || '').localeCompare(b.common_name || ''),
-      )
-    },
-    [supabase],
-  )
-
-  // ── Load areas + recommendations ──────────────────────────────────────────
-  const loadAreas = useCallback(async () => {
-    setAreasLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { setAreasLoading(false); return }
-
-    const [areasRes, projectRes, profileRes] = await Promise.all([
-      supabase.from('garden_areas').select('*').eq('user_id', user.id).order('created_at', { ascending: true }),
-      supabase.from('user_plants').select('plant_id').eq('user_id', user.id).eq('is_project', true),
-      supabase.from('profiles').select('is_pro').eq('id', user.id).maybeSingle(),
-    ])
-
-    if (profileRes.data) setIsPro(profileRes.data.is_pro)
-
-    const loadedAreas = (areasRes.data || []) as GardenArea[]
-    setAreas(loadedAreas)
-    setProjectPlantIds((projectRes.data || []).map((p: any) => Number(p.plant_id)))
-
-    // Fetch recommendations if any condition or style/goal is set
-    const matchMap: Record<string, RankedPlantMatch[]> = {}
-    await Promise.all(
-      loadedAreas.map(async (area) => {
-        const hasAnyCondition =
-          area.sun_condition || area.soil_condition || area.water_condition ||
-          area.size_condition || area.slope_condition || area.style || area.goal
-        if (hasAnyCondition) {
-          const all = await fetchMatchesForConditions(
-            area.sun_condition,
-            area.soil_condition,
-            area.water_condition,
-            area.size_condition,
-            area.slope_condition,
-          )
-          matchMap[area.id] = rankPlantsForArea(all as Plant[], area.style, area.goal).slice(0, 5)
-        } else {
-          matchMap[area.id] = []
-        }
-      }),
-    )
-    setAreaMatches(matchMap)
-    setAreasLoading(false)
-  }, [supabase, fetchMatchesForConditions])
-
-  useEffect(() => { loadAreas() }, [loadAreas])
-
-  useEffect(() => {
-    if (initialStyle && !areasLoading) openCreateForm()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [areasLoading])
-
-  useEffect(() => {
-    if (!areaIdParam || areasLoading) return
-    setHighlightedAreaId(areaIdParam)
-    setTimeout(() => {
-      const el = document.getElementById(`area-${areaIdParam}`)
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }, 120)
-    const clear = setTimeout(() => setHighlightedAreaId(null), 2800)
-    return () => clearTimeout(clear)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [areasLoading])
-
-  useEffect(() => {
-    if (!editAreaParam || areasLoading) return
-    const target = areas.find((a) => a.id === editAreaParam)
-    if (target) openEditForm(target)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [areasLoading])
-
-  // ── Form helpers ───────────────────────────────────────────────────────────
-  function openCreateForm() {
-    setEditingArea(null)
-    setFormName('')
-    setFormSun('')
-    setFormSoil('')
-    setFormWater('')
-    setFormNotes('')
-    setFormStyle(initialStyle)
-    setFormGoal(null)
-    setShowConditions(false)
-    setShowAreaForm(true)
-  }
-
-  function openEditForm(area: GardenArea) {
-    setEditingArea(area)
-    setFormName(area.name)
-    setFormSun(area.sun_condition || '')
-    setFormSoil(area.soil_condition || '')
-    setFormWater(area.water_condition || '')
-    setFormNotes(area.notes || '')
-    setFormStyle(area.style || null)
-    setFormGoal(area.goal || null)
-    setShowConditions(!!(area.sun_condition || area.soil_condition || area.water_condition))
-    setShowAreaForm(true)
-  }
-
-  async function handleSaveArea() {
-    if (!formName.trim()) return
-    setSavingArea(true)
-
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { setSavingArea(false); return }
-
-    const areaData: Record<string, string | null> = {
-      name:            formName.trim(),
-      sun_condition:   formSun  || null,
-      soil_condition:  formSoil || null,
-      water_condition: formWater || null,
-      notes:           formNotes.trim() || null,
-      style:           formStyle || null,
-      goal:            formGoal  || null,
-    }
-
-    // When creating, explicitly null the fields not in the simplified form.
-    // When editing, preserve existing size_condition and slope_condition.
-    if (!editingArea) {
-      areaData.size_condition  = null
-      areaData.slope_condition = null
-    }
-
-    if (editingArea) {
-      await supabase.from('garden_areas').update(areaData).eq('id', editingArea.id)
-    } else {
-      await supabase.from('garden_areas').insert([{ user_id: user.id, ...areaData }])
-    }
-
-    setSavingArea(false)
-    setShowAreaForm(false)
-    await loadAreas()
-  }
-
-  async function handleDeleteArea(areaId: string, areaName: string) {
-    if (!window.confirm(
-      `Delete "${areaName}"?\n\nPlants already added to your planting ideas will not be removed.`,
-    )) return
-    setDeletingAreaId(areaId)
-    await supabase.from('garden_areas').delete().eq('id', areaId)
-    setDeletingAreaId(null)
-    setAreas((prev) => prev.filter((a) => a.id !== areaId))
-    setAreaMatches((prev) => { const next = { ...prev }; delete next[areaId]; return next })
-  }
-
-  async function handleAddToAreaPlan(plantId: number, areaId: string) {
-    const key = `${plantId}-${areaId}`
-    setAddingToArea(key)
-
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session?.user) { setAddingToArea(null); return }
-
-    const { data: existing } = await supabase
-      .from('user_plants').select('id')
-      .eq('user_id', session.user.id).eq('plant_id', plantId).eq('is_project', true)
-      .maybeSingle()
-
-    if (!existing) {
-      const { error } = await supabase.from('user_plants').insert([{
-        user_id:        session.user.id,
-        plant_id:       plantId,
-        is_project:     true,
-        status:         'Planning',
-        garden_area_id: areaId,
-      }])
-      if (!error) setProjectPlantIds((prev) => [...prev, plantId])
-    } else {
-      setProjectPlantIds((prev) => (prev.includes(plantId) ? prev : [...prev, plantId]))
-    }
-
-    setAddingToArea(null)
-  }
-
+  // ── Save plant to Future Plants ───────────────────────────────────────────
   const handleAddToProject = async (plantId: string) => {
     const { data: { session }, error: sessionError } = await supabase.auth.getSession()
     if (sessionError || !session?.user) { alert('Please log in first!'); return }
 
-    const { data: existingProject } = await supabase
+    const { data: existing } = await supabase
       .from('user_plants').select('id')
       .eq('user_id', session.user.id).eq('plant_id', Number(plantId)).eq('is_project', true)
       .maybeSingle()
 
-    if (existingProject) { alert('Already in your planting ideas.'); return }
+    if (existing) { alert('Already in your planting ideas.'); return }
 
     const { error } = await supabase.from('user_plants').insert([{
       user_id:    session.user.id,
@@ -458,7 +88,7 @@ function MatchPageInner() {
     if (!error) { alert('Saved as a Future Plant!'); setSelectedPlant(null) }
   }
 
-  // ── Plant Finder live query (unchanged) ──────────────────────────────────
+  // ── Live condition-based plant query ─────────────────────────────────────
   useEffect(() => {
     async function getLiveMatches() {
       setLoading(true)
@@ -483,275 +113,29 @@ function MatchPageInner() {
       <div className="max-w-2xl mx-auto p-6">
 
         {/* ── Page header ─────────────────────────────────────────────────── */}
-        <header className="mb-8 pt-4 flex justify-between items-center">
+        <header className="mb-6 pt-4 flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-black text-green-950 tracking-tighter italic uppercase leading-none">
-              Find Plants
+              {isSuitabilityMode ? 'Check Suitability' : 'Plant Finder'}
             </h1>
             <p className="text-[10px] text-green-700/60 font-black uppercase tracking-[0.2em] mt-2">
-              Garden areas, conditions, and plant suggestions.
+              {isSuitabilityMode
+                ? 'Choose a plant and conditions to check whether it could suit your space.'
+                : 'Choose style, goal and conditions to find plants for your space.'}
             </p>
           </div>
           <PageHelp
-            title="Find Plants"
-            description="Set up garden areas, add conditions, and browse plant suggestions. Use Visualise to preview plants in your own photo."
+            title="Plant Finder"
+            description="Dial in sun, soil, drainage and slope to see plants that suit that spot. Tap any plant to save it as a Future Plant."
             bullets={[
-              'Add areas like Front Garden, Back Fence, or Patio Pots',
-              'Set style and goals to get relevant plant ideas',
-              'Use Visualise to preview plants in your garden photo',
+              'Adjust the sliders to match your garden conditions',
+              'Tap a plant to see details and save to Future Plants',
+              'Use Visualise to preview plants in your own garden photo',
             ]}
           />
         </header>
 
-        <p className="text-[11px] text-gray-400 font-medium mb-8 -mt-4">
-          Prefer a photo preview?{' '}
-          <Link href="/visualise" className="text-green-700 font-black uppercase tracking-widest">
-            Open Visualise →
-          </Link>
-        </p>
-
-        {/* ── Saved Visual Ideas — secondary link ──────────────────────────── */}
-        <Link
-          href="/visualise/saved"
-          className="flex items-center gap-3 bg-white rounded-[1.5rem] px-5 py-4 border border-gray-100 shadow-sm active:scale-[0.98] transition-all"
-        >
-          <div className="w-8 h-8 bg-green-50 rounded-[0.75rem] flex items-center justify-center text-base shrink-0">
-            🎨
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-black uppercase tracking-widest text-green-900 leading-none">
-              Saved Visual Ideas
-            </p>
-            <p className="text-[10px] text-gray-400 font-medium mt-0.5">
-              View and re-edit your saved concepts
-            </p>
-          </div>
-          <ArrowRight size={14} className="text-gray-300 shrink-0" strokeWidth={2.5} />
-        </Link>
-
-        {/* ── Section divider ──────────────────────────────────────────────── */}
-        <div className="flex items-center gap-3 pt-2">
-          <div className="h-px bg-gray-100 flex-1" />
-          <p className="text-[9px] font-black uppercase tracking-widest text-gray-300 whitespace-nowrap">
-            Garden areas &amp; plant ideas
-          </p>
-          <div className="h-px bg-gray-100 flex-1" />
-        </div>
-
-        {/* ══ GARDEN AREAS ════════════════════════════════════════════════════ */}
-        <section className="mb-12">
-          <div className="flex justify-between items-center mb-2">
-            <h2 className="text-[10px] font-black text-green-900 uppercase tracking-[0.2em]">
-              My Garden Areas
-            </h2>
-            <button
-              onClick={openCreateForm}
-              className="flex items-center gap-1.5 bg-green-900 text-white text-[9px] font-black uppercase tracking-widest px-4 py-2 rounded-full shadow-sm active:scale-95 transition-all"
-            >
-              <Plus size={12} strokeWidth={3} /> New Area
-            </button>
-          </div>
-          <p className="text-[11px] text-gray-400 font-medium leading-snug mb-5 px-1">
-            Name each part of your garden. Add style and goal to get plant ideas, then use Visualise to preview how it could look.
-          </p>
-
-          {areasLoading ? (
-            <div className="py-8 text-center text-[10px] font-black uppercase tracking-widest text-gray-300 animate-pulse">
-              Loading your garden areas…
-            </div>
-          ) : areas.length === 0 ? (
-            <div className="bg-white rounded-[2.5rem] border border-dashed border-gray-200 p-8 text-center space-y-3">
-              <p className="text-sm font-black text-green-950 uppercase tracking-tight">
-                No garden areas yet
-              </p>
-              <p className="text-[12px] text-gray-400 leading-relaxed font-medium max-w-xs mx-auto">
-                Add an area and we&apos;ll suggest plants. Use Visualise when you&apos;re ready to preview in a photo.
-              </p>
-              <p className="text-[11px] text-gray-300 font-medium max-w-[16rem] mx-auto leading-snug">
-                Try: Front Garden, Back Fence, Shady Corner, or Patio Pots.
-              </p>
-              <button
-                onClick={openCreateForm}
-                className="inline-flex items-center gap-2 bg-green-900 text-white text-[10px] font-black uppercase tracking-widest px-7 py-3 rounded-full shadow-sm active:scale-95 transition-all mt-2"
-              >
-                <Plus size={14} strokeWidth={3} /> Add First Area
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-5">
-              {areas.map((area) => {
-                const recs        = areaMatches[area.id] ?? []
-                const isDeleting  = deletingAreaId === area.id
-
-                return (
-                  <div
-                    key={area.id}
-                    id={`area-${area.id}`}
-                    className={`bg-white rounded-[2.5rem] border shadow-sm overflow-hidden transition-all duration-700 ${
-                      highlightedAreaId === area.id
-                        ? 'border-green-400 shadow-lg shadow-green-100/80 ring-2 ring-green-300/40'
-                        : 'border-gray-100'
-                    }`}
-                  >
-                    {/* Area header */}
-                    <div className="p-6 pb-4">
-                      <div className="flex items-start justify-between gap-3 mb-3">
-                        <h3 className="font-black text-green-950 uppercase text-sm tracking-tight leading-tight">
-                          {area.name}
-                        </h3>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <button
-                            onClick={() => openEditForm(area)}
-                            title="Edit area"
-                            className="w-8 h-8 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 active:scale-90 transition-all"
-                          >
-                            <Pencil size={13} />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteArea(area.id, area.name)}
-                            disabled={isDeleting}
-                            title="Delete area"
-                            className="w-8 h-8 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 active:scale-90 transition-all disabled:opacity-40"
-                          >
-                            <Trash2 size={13} />
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Condition pills */}
-                      <div className="flex flex-wrap gap-1.5">
-                        <ConditionPill icon={<Sun size={9} />} value={area.sun_condition} />
-                        <ConditionPill icon={<Droplets size={9} />} value={area.water_condition} displayMap={WATER_DISPLAY} />
-                        <ConditionPill icon={<Shovel size={9} />} value={area.soil_condition} displayMap={SOIL_DISPLAY} />
-                        {/* Show size/slope only if saved from legacy form */}
-                        <ConditionPill icon={<Ruler size={9} />} value={area.size_condition} />
-                        <ConditionPill
-                          icon={<TrendingUp size={9} />}
-                          value={area.slope_condition}
-                          displayMap={SLOPE_DISPLAY}
-                        />
-                      </div>
-
-                      {(area.style || area.goal) && (
-                        <div className="flex flex-wrap gap-1.5 mt-2">
-                          <ConditionPill value={area.style} variant="planning" />
-                          <ConditionPill value={area.goal} variant="planning" />
-                        </div>
-                      )}
-
-                      {area.notes && (
-                        <p className="mt-3 text-[11px] text-gray-400 italic leading-snug border-t border-gray-50 pt-3">
-                          {area.notes}
-                        </p>
-                      )}
-
-                      {/* Create Visual Idea for this area */}
-                      <Link
-                        href={`/visualise?areaId=${area.id}`}
-                        className="mt-4 inline-flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-green-700 bg-green-50 border border-green-100 px-4 py-2.5 rounded-full active:scale-95 transition-all"
-                      >
-                        <Sparkles size={10} strokeWidth={2.5} />
-                        Visualise this area
-                      </Link>
-                    </div>
-
-                    {/* Suggested plants / Future Plants for this area */}
-                    <div className="border-t border-gray-50 px-6 pb-6 pt-4">
-                      <p className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400 mb-1">
-                        Plant ideas for this area{recs.length > 0 ? ` · ${recs.length} suggestions` : ''}
-                      </p>
-                      {areaPlanningHint(area) && (
-                        <p className="text-[10px] text-gray-400 font-medium italic leading-snug mb-3">
-                          {areaPlanningHint(area)}
-                        </p>
-                      )}
-
-                      {recs.length === 0 ? (
-                        <div className="space-y-2">
-                          <p className="text-[11px] text-gray-400 font-medium leading-snug">
-                            {area.style || area.goal
-                              ? 'No matched plants found. Try a different style or goal.'
-                              : 'Add a style or goal to get plant suggestions for this area.'}
-                          </p>
-                          <button
-                            onClick={() => openEditForm(area)}
-                            className="inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-green-700 bg-green-50 border border-green-100 px-3 py-1.5 rounded-full active:scale-95 transition-all"
-                          >
-                            <Pencil size={9} strokeWidth={2.5} /> Edit area details
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          {recs.map(({ plant, matchLabel }) => {
-                            const inPlan   = projectPlantIds.includes(plant.id)
-                            const addKey   = `${plant.id}-${area.id}`
-                            const isAdding = addingToArea === addKey
-
-                            return (
-                              <div
-                                key={plant.id}
-                                className="flex items-center gap-3 p-3 bg-gray-50/60 rounded-2xl border border-gray-100"
-                              >
-                                <div className="w-10 h-10 flex-shrink-0">
-                                  <PlantThumbnail plant={plant} size="sm" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-[11px] font-black uppercase text-green-950 leading-none truncate">
-                                    {plant.common_name}
-                                  </p>
-                                  <p className="text-[9px] text-gray-400 font-bold uppercase italic mt-0.5">
-                                    {matchLabel || plant.plant_type}
-                                  </p>
-                                </div>
-
-                                {inPlan ? (
-                                  <span className="text-[8px] font-black uppercase tracking-widest text-green-700 bg-green-50 border border-green-100 px-2.5 py-1 rounded-full shrink-0">
-                                    Saved ✓
-                                  </span>
-                                ) : (
-                                  <button
-                                    onClick={() => handleAddToAreaPlan(plant.id, area.id)}
-                                    disabled={isAdding}
-                                    className="flex items-center gap-1 text-[8px] font-black uppercase tracking-widest text-white bg-green-800 px-3 py-1.5 rounded-full shrink-0 active:scale-95 transition-all disabled:opacity-50"
-                                  >
-                                    {isAdding ? '…' : <><Plus size={9} strokeWidth={3} /> Save plant</>}
-                                  </button>
-                                )}
-                              </div>
-                            )
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </section>
-
-        {!isPro && (
-          <section className="mb-10">
-            <LockedProFeatureCard
-              icon="📋"
-              title="Planting Plan Export"
-              description="Coming soon — export your garden areas and planting ideas as a shareable PDF."
-            />
-          </section>
-        )}
-
-        {/* ── Section divider before Plant Finder ─────────────────────────── */}
-        <div className="border-t border-green-900/5 mb-10" />
-        <div className="mb-8 text-center space-y-1">
-          <p className="text-[10px] font-black text-green-900/30 uppercase tracking-[0.3em]">
-            Plant Finder
-          </p>
-          <p className="text-[11px] text-gray-400 font-medium max-w-xs mx-auto leading-snug">
-            Explore plants by conditions — a quick tool to discover what works in each spot.
-          </p>
-        </div>
-
-        {/* ══ PLANT FINDER SLIDERS (unchanged) ═════════════════════════════════ */}
+        {/* ── Condition sliders ────────────────────────────────────────────── */}
         <div className="space-y-10 mb-12">
 
           {/* SUN */}
@@ -870,16 +254,17 @@ function MatchPageInner() {
           </div>
         </div>
 
-        {/* ── Plant Finder results (unchanged) ────────────────────────────── */}
+        {/* ── Plant results ────────────────────────────────────────────────── */}
         <section className="relative pt-8 border-t border-green-900/5">
           <div className="flex justify-between items-center mb-6 px-1">
             <h3 className="text-[10px] font-black text-green-900 uppercase tracking-[0.2em]">
-              All Matches ({matches.length})
+              Matching plants ({matches.length})
             </h3>
             {loading && (
               <div className="w-4 h-4 border-2 border-green-900/20 border-t-green-900 rounded-full animate-spin" />
             )}
           </div>
+
           {!loading && matches.length === 0 && (
             <div className="py-6 text-center space-y-1.5">
               <p className="text-[12px] text-gray-400 font-medium">
@@ -890,6 +275,7 @@ function MatchPageInner() {
               </p>
             </div>
           )}
+
           <div className="space-y-3">
             {matches.map((p) => (
               <button
@@ -915,9 +301,23 @@ function MatchPageInner() {
             ))}
           </div>
         </section>
+
+        {/* ── Visualise CTA ────────────────────────────────────────────────── */}
+        <div className="mt-10 pt-8 border-t border-green-900/5 text-center space-y-2">
+          <p className="text-[11px] text-gray-400 font-medium">
+            Want to see how plants could look?
+          </p>
+          <Link
+            href="/visualise"
+            className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-green-700 active:text-green-900 transition-colors"
+          >
+            Open Visualise →
+          </Link>
+        </div>
+
       </div>
 
-      {/* ── Plant detail modal (unchanged) ──────────────────────────────────── */}
+      {/* ── Plant detail modal ───────────────────────────────────────────────── */}
       {selectedPlant && (
         <div className="fixed inset-0 z-[60] flex items-end justify-center p-4 sm:items-center">
           <div
@@ -962,185 +362,6 @@ function MatchPageInner() {
             >
               <Plus size={16} strokeWidth={3} /> Save as Future Plant
             </button>
-          </div>
-        </div>
-      )}
-
-      {/* ── Garden Area form overlay ────────────────────────────────────────── */}
-      {showAreaForm && (
-        <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center sm:p-4">
-          <div
-            className="absolute inset-0 bg-green-950/60 backdrop-blur-sm"
-            onClick={() => { if (!savingArea) setShowAreaForm(false) }}
-          />
-          <div className="relative w-full max-w-lg bg-white rounded-t-[3rem] sm:rounded-[3rem] shadow-2xl max-h-[95vh] overflow-y-auto animate-in slide-in-from-bottom-10">
-
-            {/* Sticky header */}
-            <div className="sticky top-0 bg-white z-10 px-7 pt-7 pb-4 border-b border-gray-50 flex items-center justify-between">
-              <h2 className="text-xl font-black text-green-950 uppercase italic tracking-tight">
-                {editingArea ? 'Edit Area' : 'New Garden Area'}
-              </h2>
-              <button
-                onClick={() => { if (!savingArea) setShowAreaForm(false) }}
-                className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 active:scale-90 transition-all"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="px-7 py-6 space-y-6">
-
-              {/* "Use This Style" journey banner */}
-              {initialStyle && !editingArea && (() => {
-                const info = STYLE_INFO[initialStyle]
-                return (
-                  <div className="bg-green-50 border border-green-100 rounded-2xl p-5 space-y-3">
-                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-green-700/70">
-                      Create a garden area inspired by this style
-                    </p>
-                    <p className="text-base font-black text-green-950 uppercase italic tracking-tight leading-none">
-                      {initialStyle}
-                    </p>
-                    {info && (
-                      <>
-                        <p className="text-[12px] text-green-800 font-medium leading-snug">
-                          {info.description}
-                        </p>
-                        <div className="flex flex-wrap gap-1.5 pt-1">
-                          {info.useCases.map((uc) => (
-                            <span
-                              key={uc}
-                              className="text-[9px] font-black uppercase tracking-wide bg-green-100/70 text-green-700 px-2.5 py-1 rounded-full"
-                            >
-                              {uc}
-                            </span>
-                          ))}
-                        </div>
-                      </>
-                    )}
-                    <p className="text-[10px] text-green-700/60 font-medium pt-1">
-                      Give the area a name, choose a goal, then save.
-                    </p>
-                  </div>
-                )
-              })()}
-
-              {/* Area name — required */}
-              <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
-                  Area name
-                </label>
-                <p className="text-[10px] text-gray-300 font-medium mb-2">
-                  This is the only required field.
-                </p>
-                <input
-                  type="text"
-                  value={formName}
-                  onChange={(e) => setFormName(e.target.value)}
-                  placeholder="e.g. Front garden, Back fence, Patio pots"
-                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-sm font-bold text-gray-800 placeholder:text-gray-300 outline-none focus:border-green-200 transition-colors"
-                />
-              </div>
-
-              {/* Style */}
-              <OptionChips
-                label="Style"
-                optional
-                options={GARDEN_AREA_STYLE_OPTIONS}
-                value={formStyle}
-                onChange={setFormStyle}
-              />
-
-              {/* Goal */}
-              <OptionChips
-                label="Goal"
-                optional
-                options={GARDEN_AREA_GOAL_OPTIONS}
-                value={formGoal}
-                onChange={setFormGoal}
-              />
-
-              {/* Optional conditions toggle */}
-              <div>
-                <button
-                  type="button"
-                  onClick={() => setShowConditions((v) => !v)}
-                  className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-green-800/60 active:scale-95 transition-all"
-                >
-                  {showConditions ? <ChevronUp size={12} strokeWidth={3} /> : <ChevronDown size={12} strokeWidth={3} />}
-                  {showConditions ? 'Hide conditions' : 'Add conditions (optional)'}
-                </button>
-                <p className="text-[10px] text-gray-300 font-medium mt-1 pl-5">
-                  Sun, drainage, and soil help find more precise plants.
-                </p>
-              </div>
-
-              {showConditions && (
-                <div className="space-y-4 bg-gray-50/60 rounded-2xl p-4 border border-gray-100">
-                  <FormDropdown
-                    label="Sun exposure"
-                    hint="Full sun = 6+ hrs direct"
-                    value={formSun}
-                    onChange={setFormSun}
-                    options={[
-                      { value: '',           label: 'Not sure' },
-                      { value: 'Full Sun',   label: 'Full sun — 6+ hours direct' },
-                      { value: 'Part Shade', label: 'Part shade — morning sun or filtered light' },
-                      { value: 'Full Shade', label: 'Full shade — little direct sun' },
-                    ]}
-                  />
-                  <FormDropdown
-                    label="Drainage"
-                    hint="Well drained = water moves through quickly"
-                    value={formWater}
-                    onChange={setFormWater}
-                    options={[
-                      { value: '',             label: 'Not sure' },
-                      { value: 'Holds Water',  label: 'Poor / stays wet after rain' },
-                      { value: 'Drains Well',  label: 'Well drained — water does not sit' },
-                      { value: 'Dry',          label: 'Dry — rarely holds moisture' },
-                      { value: 'Under a Roof', label: 'Under cover / roof overhang' },
-                    ]}
-                  />
-                  <FormDropdown
-                    label="Soil"
-                    value={formSoil}
-                    onChange={setFormSoil}
-                    options={[
-                      { value: '',              label: 'Not sure' },
-                      { value: 'Healthy/loam',  label: 'Rich / loam — good garden soil' },
-                      { value: 'Clay',          label: 'Clay — heavy, holds water' },
-                      { value: 'Sandy',         label: 'Sandy — free-draining, poor nutrients' },
-                      { value: 'Potting Mix',   label: 'Potting mix / raised bed' },
-                    ]}
-                  />
-                </div>
-              )}
-
-              {/* Notes */}
-              <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
-                  Notes{' '}
-                  <span className="text-gray-300 font-medium normal-case tracking-normal">(optional)</span>
-                </label>
-                <textarea
-                  value={formNotes}
-                  onChange={(e) => setFormNotes(e.target.value)}
-                  placeholder="e.g. Currently overgrown, needs clearing first"
-                  rows={3}
-                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-sm font-medium text-gray-700 placeholder:text-gray-300 outline-none focus:border-green-200 transition-colors resize-none"
-                />
-              </div>
-
-              {/* Save */}
-              <button
-                onClick={handleSaveArea}
-                disabled={savingArea || !formName.trim()}
-                className="w-full bg-green-900 text-white font-black uppercase py-5 rounded-2xl text-[11px] tracking-widest shadow-lg active:scale-95 transition-all disabled:opacity-50"
-              >
-                {savingArea ? 'Saving…' : editingArea ? 'Save Changes' : 'Create Area'}
-              </button>
-            </div>
           </div>
         </div>
       )}
