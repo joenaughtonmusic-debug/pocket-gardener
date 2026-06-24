@@ -150,6 +150,20 @@ export default function PlantDetailPage() {
     }
   }
 
+  async function handleSaveLengthMetres() {
+    if (!userPlantRecordId) return
+    const parsed = parseFloat(lengthMetres)
+    const safe = !Number.isNaN(parsed) && parsed >= 0 ? parsed : null
+    const { error } = await supabase
+      .from('user_plants')
+      .update({ length_metres: safe })
+      .eq('id', userPlantRecordId)
+    if (error) {
+      console.error('Error saving hedge length:', error)
+      alert('Could not save hedge length. Please try again.')
+    }
+  }
+
   useEffect(() => {
     async function fetchPlantAndStatus() {
       if (!id) return
@@ -214,6 +228,13 @@ export default function PlantDetailPage() {
   setIsProcessing(true)
 
   const { data: { user } } = await supabase.auth.getUser()
+
+  // Close any prior Ongoing logs so we don't accumulate duplicates for the same plant.
+  await supabase
+    .from('plant_logs')
+    .update({ status: 'Resolved', resolved_at: new Date().toISOString() })
+    .eq('user_plant_id', userPlantRecordId)
+    .eq('status', 'Ongoing')
 
   const { error } = await supabase.from('plant_logs').insert([{
     user_id: user?.id,
@@ -500,6 +521,33 @@ const { error } = await supabase.from('user_plants').insert([{
                   </a>
                   {' '}to add areas and organise your plants by location.
                 </p>
+              )}
+              {isHedgePlant && (
+                <div className="pt-2 border-t border-green-100">
+                  <label className="block text-[10px] font-black text-green-700/60 uppercase tracking-[0.2em] mb-2">
+                    Hedge Length (Lineal Metres)
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      min={0}
+                      step="0.1"
+                      value={lengthMetres}
+                      onChange={(e) => setLengthMetres(e.target.value)}
+                      placeholder="e.g. 5"
+                      className="flex-1 p-3 bg-white border border-green-200 rounded-2xl text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 ring-green-300"
+                    />
+                    <button
+                      onClick={handleSaveLengthMetres}
+                      className="px-4 py-3 bg-green-800 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl active:scale-95 transition-all"
+                    >
+                      Save
+                    </button>
+                  </div>
+                  <p className="mt-1.5 text-[10px] font-bold text-green-700/40 italic">
+                    Used to calculate hedge trim time in your calendar.
+                  </p>
+                </div>
               )}
             </div>
           )}

@@ -103,31 +103,40 @@ export async function GET(req: Request) {
   let failed = 0;
 
   for (const [userId, userTokens] of tokensByUser) {
-    // Only notify users who have at least one owned (non-project) plant.
-    const { count } = await supabaseAdmin
+    // Fetch owned plants (non-project) including sick status for personalised copy.
+    const { data: ownedPlants } = await supabaseAdmin
       .from('user_plants')
-      .select('id', { count: 'exact', head: true })
+      .select('id, is_sick')
       .eq('user_id', userId)
       .eq('is_project', false);
 
-    if (!count || count === 0) {
+    if (!ownedPlants || ownedPlants.length === 0) {
       console.log(`⏭️  Skipping user ${userId} — no owned plants`);
       skipped++;
       continue;
     }
 
-    // TODO: Future hedge reminders — personalise the notification body by querying the
-    // user's calendar task rules for the current week (hedge trims, sick plants, feeds)
-    // and surfacing task-specific copy rather than the generic "garden needs attention" message.
-    // TODO: Monthly Garden Report — add a separate monthly cron (or variant of this one) that
-    // sends Pro users a summary: tasks completed, sick plants, and upcoming planting windows.
+    const sickCount = ownedPlants.filter((p: { is_sick: boolean | null }) => p.is_sick).length;
+
+    // Build notification copy — mention sick plants if any are flagged.
+    // TODO: Future hedge reminders — extend personalisation using plant_task_rules for the current
+    // week (hedge trims, feeds) and surface task-specific copy instead of the generic message.
+    // TODO: Monthly Garden Report — add a separate monthly cron (or Pro variant) that sends a
+    // summary: tasks completed, sick plants resolved, and upcoming planting windows.
+    const notifTitle = 'Your garden needs attention 🌿';
+    const notifBody = sickCount > 0
+      ? sickCount === 1
+        ? "One of your plants still needs a follow-up check. See this week's tasks in the Calendar."
+        : `${sickCount} of your plants need follow-up checks. See this week's tasks in the Calendar.`
+      : "Open your care calendar to see this week's tasks.";
+
     for (const { id: tokenId, token } of userTokens) {
       try {
         await messaging.send({
           token,
           notification: {
-            title: 'Your garden needs attention 🌿',
-            body: "Open your care calendar to see this week's tasks.",
+            title: notifTitle,
+            body: notifBody,
           },
           data: { path: '/calendar' },
           android: {

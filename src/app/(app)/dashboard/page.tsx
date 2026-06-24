@@ -295,6 +295,13 @@ export default function MyGardenDashboard() {
     .eq('id', item.id)
 
   if (!error) {
+    // Resolve Ongoing logs so the sick-followup cron won't ping for this plant.
+    await supabase
+      .from('plant_logs')
+      .update({ status: 'Resolved', resolved_at: new Date().toISOString() })
+      .eq('user_plant_id', item.id)
+      .eq('status', 'Ongoing')
+
     setOwnedPlants((prev) =>
       prev.map((plant) => (plant.id === item.id ? { ...plant, is_sick: false } : plant))
     )
@@ -310,6 +317,14 @@ export default function MyGardenDashboard() {
       : remedy.remedy_description || remedy.remedy_title || null
 
     const { data: { user } } = await supabase.auth.getUser()
+
+    // Close any prior Ongoing logs before opening a new one — prevents duplicate
+    // plant_logs rows accumulating when the user re-diagnoses the same plant.
+    await supabase
+      .from('plant_logs')
+      .update({ status: 'Resolved', resolved_at: new Date().toISOString() })
+      .eq('user_plant_id', targetPlant.id)
+      .eq('status', 'Ongoing')
 
     const [updateRes, logRes] = await Promise.all([
       supabase
