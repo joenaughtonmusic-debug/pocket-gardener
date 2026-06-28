@@ -8,8 +8,44 @@
 
 import { REGISTERED_OVERLAY_PATHS } from '../visualIdeas/plantOverlayAssets'
 import { GENERATED_NEW_BATCH_TEST_OVERLAYS } from './devOverlayManifest.generated'
+import {
+  enrichHeldOverlay,
+  enrichLatestBatchOverlay,
+  enrichOldQaOverlay,
+  enrichProductionOverlay,
+  enrichRawArchiveOverlay,
+} from './devOverlayCatalog'
 
-export type DevOverlayGroup = 'registered' | 'dev_qa_variants' | 'new_batch' | 'svg_placeholder'
+export type DevOverlayGroup =
+  | 'production'
+  | 'latest_batch'
+  | 'held'
+  | 'raw_archive'
+  | 'old_qa'
+  | 'fallbacks'
+
+export type DevOverlayTag =
+  | 'production'
+  | 'spot'
+  | 'hedge'
+  | 'latest'
+  | 'unwired'
+  | 'held'
+  | 'raw-archive'
+  | 'old-qa'
+  | 'fallback'
+  | 'pair-spot'
+  | 'pair-hedge'
+
+export type DevOverlayFilterId =
+  | 'all'
+  | 'production'
+  | 'latest'
+  | 'unwired'
+  | 'hedge'
+  | 'held'
+  | 'archive'
+  | 'fallbacks'
 
 export interface DevOverlayDef {
   id: string
@@ -19,6 +55,11 @@ export interface DevOverlayDef {
   defaultWidth: number
   aspect: number
   group: DevOverlayGroup
+  tags?: DevOverlayTag[]
+  /** Paired spot/hedge filename when applicable. */
+  pairWith?: string
+  pairLabel?: string
+  statusNote?: string
   /** Bust browser cache when a PNG was reprocessed in place (dev QA only). */
   cacheBust?: string
 }
@@ -62,6 +103,16 @@ const REGISTERED_FILE_LABELS: Record<string, string> = {
   'corokia-geentys-green-hedge.png': 'Corokia Geentys Green Hedge',
   'corokia-virgata-hedge.png': 'Corokia Virgata Hedge',
   'eugenia.png': 'Eugenia',
+  'flame-tree.png': 'Flame Tree',
+  'flax-lily.png': 'Flax Lily',
+  'forest-pansy.png': 'Forest Pansy',
+  'fortnight-lily.png': 'Fortnight Lily',
+  'foxtail-agave.png': 'Foxtail Agave',
+  'hardenbergia.png': 'Hardenbergia',
+  'hellebore.png': 'Hellebore',
+  'hen-and-chicken-fern.png': 'Hen and Chicken Fern',
+  'hibiscus.png': 'Hibiscus',
+  'himalayan-birch.png': 'Himalayan Birch',
   'buxus.png': 'Buxus',
   'buxus-hedge.png': 'Buxus Hedge',
   'griselinia-hedge.png': 'Griselinia Hedge',
@@ -88,130 +139,53 @@ function registeredOverlays(): DevOverlayDef[] {
   return REGISTERED_OVERLAY_PATHS.map((src) => {
     const file = fileFromRegisteredPath(src)
     const isSvg = file.endsWith('.svg')
-    return {
+    const base: DevOverlayDef = {
       id: `reg-${file.replace(/[^a-z0-9]+/gi, '-')}`,
       label: REGISTERED_FILE_LABELS[file] ?? file,
       file,
       defaultWidth: isSvg ? (file.includes('hedge') ? 300 : 200) : 220,
       aspect: file === 'lomandra.png' ? 4576 / 3056 : isSvg && file.includes('hedge') ? 320 / 200 : isSvg && file.includes('strappy') ? 200 / 250 : isSvg ? 200 / 230 : 1,
-      group: isSvg ? 'svg_placeholder' : 'registered',
+      group: isSvg ? 'fallbacks' : 'production',
     }
+    return enrichProductionOverlay(base)
   })
 }
 
+type QaArchiveKind = 'held' | 'raw' | 'old_qa'
+
+interface QaOverlayInput {
+  id: string
+  label: string
+  file: string
+  defaultWidth: number
+  aspect: number
+  archiveKind: QaArchiveKind
+}
+
+function buildQaOverlay(input: QaOverlayInput): DevOverlayDef {
+  const base: DevOverlayDef = {
+    id: input.id,
+    label: input.label,
+    file: input.file,
+    defaultWidth: input.defaultWidth,
+    aspect: input.aspect,
+    group: input.archiveKind === 'held' ? 'held' : input.archiveKind === 'raw' ? 'raw_archive' : 'old_qa',
+  }
+
+  if (input.archiveKind === 'held') return enrichHeldOverlay(base)
+  if (input.archiveKind === 'raw') return enrichRawArchiveOverlay(base)
+  return enrichOldQaOverlay(base)
+}
+
 /** Processed variants and unwired candidates — QA only, not in production registry. */
-const DEV_QA_VARIANT_OVERLAYS: DevOverlayDef[] = [
+const DEV_QA_VARIANT_INPUTS: QaOverlayInput[] = [
   {
-    id: 'qa-bird-white',
-    label: 'Bird of Paradise (white proc.)',
-    file: 'birds of paradies white.png',
+    id: 'qa-ficus-pumila-held',
+    label: 'Ficus Pumila',
+    file: 'ficus pumilia.png',
     defaultWidth: 260,
     aspect: 1,
-    group: 'dev_qa_variants',
-  },
-  {
-    id: 'qa-buxus-hedge-v2',
-    label: 'Buxus Hedge v2',
-    file: 'buxus-hedge-v2.png',
-    defaultWidth: 320,
-    aspect: 1,
-    group: 'dev_qa_variants',
-  },
-  {
-    id: 'qa-citrus',
-    label: 'Citrus / Lemon Tree',
-    file: 'lemon white.png',
-    defaultWidth: 300,
-    aspect: 1,
-    group: 'dev_qa_variants',
-  },
-  {
-    id: 'qa-clivia-white',
-    label: 'Clivia (white proc.)',
-    file: 'clivia white.png',
-    defaultWidth: 200,
-    aspect: 1,
-    group: 'dev_qa_variants',
-  },
-  {
-    id: 'qa-gardenia',
-    label: 'Gardenia (white proc.)',
-    file: 'Gardenia white.png',
-    defaultWidth: 200,
-    aspect: 1,
-    group: 'dev_qa_variants',
-  },
-  {
-    id: 'qa-gardenia-v2',
-    label: 'Gardenia v2',
-    file: 'gardenia-v2.png',
-    defaultWidth: 200,
-    aspect: 1,
-    group: 'dev_qa_variants',
-  },
-  {
-    id: 'qa-hebe-white',
-    label: 'Hebe (white proc.)',
-    file: 'hebe white.png',
-    defaultWidth: 180,
-    aspect: 1,
-    group: 'dev_qa_variants',
-  },
-  {
-    id: 'qa-hydrangea-white',
-    label: 'Hydrangea (white proc.)',
-    file: 'Hydrangea white.png',
-    defaultWidth: 220,
-    aspect: 1,
-    group: 'dev_qa_variants',
-  },
-  {
-    id: 'qa-lavender',
-    label: 'Lavender',
-    file: 'lavender white.png',
-    defaultWidth: 180,
-    aspect: 1,
-    group: 'dev_qa_variants',
-  },
-  {
-    id: 'qa-nikau-white',
-    label: 'Nikau (white proc.)',
-    file: 'Nikau white.png',
-    defaultWidth: 320,
-    aspect: 1,
-    group: 'dev_qa_variants',
-  },
-  {
-    id: 'qa-renga-white',
-    label: 'Renga Renga (white proc.)',
-    file: 'Renga renga white.png',
-    defaultWidth: 220,
-    aspect: 1,
-    group: 'dev_qa_variants',
-  },
-  {
-    id: 'qa-star-jasmine-white',
-    label: 'Star Jasmine (white proc.)',
-    file: 'star jasmine white.png',
-    defaultWidth: 260,
-    aspect: 1,
-    group: 'dev_qa_variants',
-  },
-  {
-    id: 'qa-griselinia-src',
-    label: 'Griselinia (unwired src)',
-    file: 'griselinia.png',
-    defaultWidth: 340,
-    aspect: 1,
-    group: 'dev_qa_variants',
-  },
-  {
-    id: 'qa-ficus-src',
-    label: 'Ficus tuffi (unwired src)',
-    file: 'ficus tuffi.png',
-    defaultWidth: 340,
-    aspect: 1,
-    group: 'dev_qa_variants',
+    archiveKind: 'held',
   },
   {
     id: 'qa-apple-raw',
@@ -219,7 +193,7 @@ const DEV_QA_VARIANT_OVERLAYS: DevOverlayDef[] = [
     file: 'Apple-raw.png',
     defaultWidth: 300,
     aspect: 1,
-    group: 'dev_qa_variants',
+    archiveKind: 'raw',
   },
   {
     id: 'qa-avocado-raw',
@@ -227,7 +201,7 @@ const DEV_QA_VARIANT_OVERLAYS: DevOverlayDef[] = [
     file: 'Avocado-raw.png',
     defaultWidth: 300,
     aspect: 1,
-    group: 'dev_qa_variants',
+    archiveKind: 'raw',
   },
   {
     id: 'qa-bottlebrush-raw',
@@ -235,7 +209,7 @@ const DEV_QA_VARIANT_OVERLAYS: DevOverlayDef[] = [
     file: 'Bottlebrush-raw.png',
     defaultWidth: 240,
     aspect: 1,
-    group: 'dev_qa_variants',
+    archiveKind: 'raw',
   },
   {
     id: 'qa-akeake-raw',
@@ -243,7 +217,7 @@ const DEV_QA_VARIANT_OVERLAYS: DevOverlayDef[] = [
     file: 'akeake-raw.png',
     defaultWidth: 260,
     aspect: 1,
-    group: 'dev_qa_variants',
+    archiveKind: 'raw',
   },
   {
     id: 'qa-begonia-raw',
@@ -251,7 +225,7 @@ const DEV_QA_VARIANT_OVERLAYS: DevOverlayDef[] = [
     file: 'begonia-raw.png',
     defaultWidth: 200,
     aspect: 1,
-    group: 'dev_qa_variants',
+    archiveKind: 'raw',
   },
   {
     id: 'qa-blueberry-raw',
@@ -259,7 +233,7 @@ const DEV_QA_VARIANT_OVERLAYS: DevOverlayDef[] = [
     file: 'blueberry-raw.png',
     defaultWidth: 180,
     aspect: 1,
-    group: 'dev_qa_variants',
+    archiveKind: 'raw',
   },
   {
     id: 'qa-boxelder-raw',
@@ -267,7 +241,7 @@ const DEV_QA_VARIANT_OVERLAYS: DevOverlayDef[] = [
     file: 'boxelder-raw.png',
     defaultWidth: 300,
     aspect: 1,
-    group: 'dev_qa_variants',
+    archiveKind: 'raw',
   },
   {
     id: 'qa-bromeliad-raw',
@@ -275,7 +249,7 @@ const DEV_QA_VARIANT_OVERLAYS: DevOverlayDef[] = [
     file: 'bromeliad-raw.png',
     defaultWidth: 220,
     aspect: 1,
-    group: 'dev_qa_variants',
+    archiveKind: 'raw',
   },
   {
     id: 'qa-cabbage-tree-raw',
@@ -283,7 +257,119 @@ const DEV_QA_VARIANT_OVERLAYS: DevOverlayDef[] = [
     file: 'cabbage-tree-raw.png',
     defaultWidth: 280,
     aspect: 1,
-    group: 'dev_qa_variants',
+    archiveKind: 'raw',
+  },
+  {
+    id: 'qa-bird-white',
+    label: 'Bird of Paradise (white proc.)',
+    file: 'birds of paradies white.png',
+    defaultWidth: 260,
+    aspect: 1,
+    archiveKind: 'old_qa',
+  },
+  {
+    id: 'qa-buxus-hedge-v2',
+    label: 'Buxus Hedge v2',
+    file: 'buxus-hedge-v2.png',
+    defaultWidth: 320,
+    aspect: 1,
+    archiveKind: 'old_qa',
+  },
+  {
+    id: 'qa-citrus',
+    label: 'Citrus / Lemon Tree',
+    file: 'lemon white.png',
+    defaultWidth: 300,
+    aspect: 1,
+    archiveKind: 'old_qa',
+  },
+  {
+    id: 'qa-clivia-white',
+    label: 'Clivia (white proc.)',
+    file: 'clivia white.png',
+    defaultWidth: 200,
+    aspect: 1,
+    archiveKind: 'old_qa',
+  },
+  {
+    id: 'qa-gardenia',
+    label: 'Gardenia (white proc.)',
+    file: 'Gardenia white.png',
+    defaultWidth: 200,
+    aspect: 1,
+    archiveKind: 'old_qa',
+  },
+  {
+    id: 'qa-gardenia-v2',
+    label: 'Gardenia v2',
+    file: 'gardenia-v2.png',
+    defaultWidth: 200,
+    aspect: 1,
+    archiveKind: 'old_qa',
+  },
+  {
+    id: 'qa-hebe-white',
+    label: 'Hebe (white proc.)',
+    file: 'hebe white.png',
+    defaultWidth: 180,
+    aspect: 1,
+    archiveKind: 'old_qa',
+  },
+  {
+    id: 'qa-hydrangea-white',
+    label: 'Hydrangea (white proc.)',
+    file: 'Hydrangea white.png',
+    defaultWidth: 220,
+    aspect: 1,
+    archiveKind: 'old_qa',
+  },
+  {
+    id: 'qa-lavender',
+    label: 'Lavender',
+    file: 'lavender white.png',
+    defaultWidth: 180,
+    aspect: 1,
+    archiveKind: 'old_qa',
+  },
+  {
+    id: 'qa-nikau-white',
+    label: 'Nikau (white proc.)',
+    file: 'Nikau white.png',
+    defaultWidth: 320,
+    aspect: 1,
+    archiveKind: 'old_qa',
+  },
+  {
+    id: 'qa-renga-white',
+    label: 'Renga Renga (white proc.)',
+    file: 'Renga renga white.png',
+    defaultWidth: 220,
+    aspect: 1,
+    archiveKind: 'old_qa',
+  },
+  {
+    id: 'qa-star-jasmine-white',
+    label: 'Star Jasmine (white proc.)',
+    file: 'star jasmine white.png',
+    defaultWidth: 260,
+    aspect: 1,
+    archiveKind: 'old_qa',
+  },
+  {
+    id: 'qa-griselinia-src',
+    label: 'Griselinia (unwired src)',
+    file: 'griselinia.png',
+    defaultWidth: 340,
+    aspect: 1,
+    archiveKind: 'old_qa',
+  },
+  {
+    id: 'qa-ficus-src',
+    label: 'Ficus tuffi (unwired src)',
+    file: 'ficus tuffi.png',
+    defaultWidth: 340,
+    aspect: 1,
+    archiveKind: 'old_qa',
   },
   {
     id: 'qa-corokia-geentys-src',
@@ -291,7 +377,7 @@ const DEV_QA_VARIANT_OVERLAYS: DevOverlayDef[] = [
     file: 'corokia geentys green.png',
     defaultWidth: 220,
     aspect: 1,
-    group: 'dev_qa_variants',
+    archiveKind: 'old_qa',
   },
   {
     id: 'qa-corokia-virgata-src',
@@ -299,7 +385,7 @@ const DEV_QA_VARIANT_OVERLAYS: DevOverlayDef[] = [
     file: 'corokia virgata.png',
     defaultWidth: 220,
     aspect: 1,
-    group: 'dev_qa_variants',
+    archiveKind: 'old_qa',
   },
   {
     id: 'qa-holly-src',
@@ -307,7 +393,7 @@ const DEV_QA_VARIANT_OVERLAYS: DevOverlayDef[] = [
     file: 'holly.png',
     defaultWidth: 240,
     aspect: 1,
-    group: 'dev_qa_variants',
+    archiveKind: 'old_qa',
   },
   {
     id: 'qa-boston-ivy-src',
@@ -315,7 +401,7 @@ const DEV_QA_VARIANT_OVERLAYS: DevOverlayDef[] = [
     file: 'boston ivy.png',
     defaultWidth: 260,
     aspect: 1,
-    group: 'dev_qa_variants',
+    archiveKind: 'old_qa',
   },
   {
     id: 'qa-canna-lily-src',
@@ -323,7 +409,7 @@ const DEV_QA_VARIANT_OVERLAYS: DevOverlayDef[] = [
     file: 'canna lilly.png',
     defaultWidth: 220,
     aspect: 1,
-    group: 'dev_qa_variants',
+    archiveKind: 'old_qa',
   },
   {
     id: 'qa-cherry-tree-src',
@@ -331,7 +417,7 @@ const DEV_QA_VARIANT_OVERLAYS: DevOverlayDef[] = [
     file: 'cherry tree.png',
     defaultWidth: 300,
     aspect: 1,
-    group: 'dev_qa_variants',
+    archiveKind: 'old_qa',
   },
   {
     id: 'qa-cordyline-stricta-src',
@@ -339,7 +425,7 @@ const DEV_QA_VARIANT_OVERLAYS: DevOverlayDef[] = [
     file: 'cordyline stricta showoff.png',
     defaultWidth: 260,
     aspect: 1,
-    group: 'dev_qa_variants',
+    archiveKind: 'old_qa',
   },
   {
     id: 'qa-crepe-myrtle-src',
@@ -347,7 +433,7 @@ const DEV_QA_VARIANT_OVERLAYS: DevOverlayDef[] = [
     file: 'crepe myrtle.png',
     defaultWidth: 280,
     aspect: 1,
-    group: 'dev_qa_variants',
+    archiveKind: 'old_qa',
   },
   {
     id: 'qa-camellia-legacy',
@@ -355,7 +441,7 @@ const DEV_QA_VARIANT_OVERLAYS: DevOverlayDef[] = [
     file: 'camellia_clean_transparent.png',
     defaultWidth: 200,
     aspect: 1,
-    group: 'dev_qa_variants',
+    archiveKind: 'old_qa',
   },
   {
     id: 'qa-corokia-geentys-hedge-src',
@@ -363,7 +449,7 @@ const DEV_QA_VARIANT_OVERLAYS: DevOverlayDef[] = [
     file: 'corokia geentys green hedge.png',
     defaultWidth: 340,
     aspect: 1,
-    group: 'dev_qa_variants',
+    archiveKind: 'old_qa',
   },
   {
     id: 'qa-corokia-virgata-hedge-src',
@@ -371,17 +457,67 @@ const DEV_QA_VARIANT_OVERLAYS: DevOverlayDef[] = [
     file: 'corokia virgata hedge.png',
     defaultWidth: 340,
     aspect: 1,
-    group: 'dev_qa_variants',
+    archiveKind: 'old_qa',
   },
   {
-    id: 'qa-ficus-pumila-held',
-    label: 'Ficus Pumila (held — weak cutout)',
-    file: 'ficus pumilia.png',
+    id: 'qa-flame-tree-src',
+    label: 'Flame Tree (spaced src)',
+    file: 'flame tree.png',
+    defaultWidth: 300,
+    aspect: 1,
+    archiveKind: 'old_qa',
+  },
+  {
+    id: 'qa-flax-lily-src',
+    label: 'Flax Lily (spaced src)',
+    file: 'flax lilly.png',
+    defaultWidth: 240,
+    aspect: 1,
+    archiveKind: 'old_qa',
+  },
+  {
+    id: 'qa-forest-pansy-src',
+    label: 'Forest Pansy (spaced src)',
+    file: 'forest pansy.png',
+    defaultWidth: 280,
+    aspect: 1,
+    archiveKind: 'old_qa',
+  },
+  {
+    id: 'qa-fortnight-lily-src',
+    label: 'Fortnight Lily (spaced src)',
+    file: 'dietes fortnight lilly.png',
+    defaultWidth: 220,
+    aspect: 1,
+    archiveKind: 'old_qa',
+  },
+  {
+    id: 'qa-foxtail-agave-src',
+    label: 'Foxtail Agave (spaced src)',
+    file: 'foxtail agave.png',
     defaultWidth: 260,
     aspect: 1,
-    group: 'dev_qa_variants',
+    archiveKind: 'old_qa',
+  },
+  {
+    id: 'qa-hen-chicken-src',
+    label: 'Hen and Chicken Fern (spaced src)',
+    file: 'hen and chicken fern.png',
+    defaultWidth: 240,
+    aspect: 1,
+    archiveKind: 'old_qa',
+  },
+  {
+    id: 'qa-himalayan-birch-src',
+    label: 'Himalayan Birch (spaced src)',
+    file: 'himalayan birch.png',
+    defaultWidth: 280,
+    aspect: 1,
+    archiveKind: 'old_qa',
   },
 ]
+
+const DEV_QA_VARIANT_OVERLAYS: DevOverlayDef[] = DEV_QA_VARIANT_INPUTS.map(buildQaOverlay)
 
 /** Filenames in static dev QA variants — excluded from auto-generated new batch. */
 export const DEV_QA_OVERLAY_FILES: readonly string[] = DEV_QA_VARIANT_OVERLAYS.map(
@@ -389,45 +525,23 @@ export const DEV_QA_OVERLAY_FILES: readonly string[] = DEV_QA_VARIANT_OVERLAYS.m
 )
 
 /** Latest processed batch — auto-generated; run npm run refresh:dev-overlays to update. */
-export const NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = GENERATED_NEW_BATCH_TEST_OVERLAYS
+export const NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = GENERATED_NEW_BATCH_TEST_OVERLAYS.map(
+  enrichLatestBatchOverlay,
+)
 
-export const DEV_OVERLAY_GROUPS: Array<{
-  key: DevOverlayGroup
-  title: string
-  description: string
-}> = [
-  {
-    key: 'registered',
-    title: 'Registered / production assets',
-    description: 'Files referenced in plantOverlayAssets.ts ASSETS registry.',
-  },
-  {
-    key: 'dev_qa_variants',
-    title: 'Dev QA variants (unwired)',
-    description: 'Processed PNGs on disk — not in production registry or selector.',
-  },
-  {
-    key: 'new_batch',
-    title: 'New processed test batch',
-    description: 'Latest process:plant-overlays output — reprocessed retries listed first.',
-  },
-  {
-    key: 'svg_placeholder',
-    title: 'SVG fallbacks',
-    description: 'Generic placeholder shapes used when no PNG matches.',
-  },
-]
-
-/** All dev overlay options, grouped for /dev-overlay UI. */
+/** All dev overlay options for /dev-overlay UI. */
 export function getDevOverlayCatalog(): DevOverlayDef[] {
   const registered = registeredOverlays()
-  const registeredFiles = new Set(registered.map((o) => o.file))
-  const qaVariants = DEV_QA_VARIANT_OVERLAYS.filter((o) => !registeredFiles.has(o.file))
+  const registeredFiles = new Set(registered.map((overlay) => overlay.file))
+  const qaVariants = DEV_QA_VARIANT_OVERLAYS.filter((overlay) => !registeredFiles.has(overlay.file))
   return [...registered, ...qaVariants, ...NEW_BATCH_TEST_OVERLAYS]
 }
 
 export function getDevOverlaysByGroup(group: DevOverlayGroup): DevOverlayDef[] {
-  return getDevOverlayCatalog().filter((o) => o.group === group)
+  return getDevOverlayCatalog().filter((overlay) => overlay.group === group)
 }
 
-export const DEFAULT_DEV_OVERLAY: DevOverlayDef = getDevOverlayCatalog()[0]
+export const DEFAULT_DEV_OVERLAY: DevOverlayDef =
+  getDevOverlayCatalog().find((overlay) => overlay.group === 'latest_batch') ??
+  getDevOverlayCatalog().find((overlay) => overlay.tags?.includes('production')) ??
+  getDevOverlayCatalog()[0]

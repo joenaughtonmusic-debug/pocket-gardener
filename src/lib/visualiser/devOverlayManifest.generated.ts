@@ -12,7 +12,7 @@ export const GENERATED_NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = [
     file: 'akeake.png',
     defaultWidth: 220,
     aspect: 1,
-    group: 'new_batch' as const,
+    group: 'latest_batch' as const,
   },
   {
     id: 'batch-apple',
@@ -20,7 +20,7 @@ export const GENERATED_NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = [
     file: 'Apple.png',
     defaultWidth: 220,
     aspect: 1,
-    group: 'new_batch' as const,
+    group: 'latest_batch' as const,
   },
   {
     id: 'batch-avocado',
@@ -28,7 +28,7 @@ export const GENERATED_NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = [
     file: 'Avocado.png',
     defaultWidth: 220,
     aspect: 1,
-    group: 'new_batch' as const,
+    group: 'latest_batch' as const,
   },
   {
     id: 'batch-birds-of-paradise',
@@ -36,7 +36,7 @@ export const GENERATED_NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = [
     file: 'birds of paradise.png',
     defaultWidth: 220,
     aspect: 1,
-    group: 'new_batch' as const,
+    group: 'latest_batch' as const,
   },
   {
     id: 'batch-bottlebrush',
@@ -44,7 +44,7 @@ export const GENERATED_NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = [
     file: 'Bottlebrush.png',
     defaultWidth: 220,
     aspect: 1,
-    group: 'new_batch' as const,
+    group: 'latest_batch' as const,
   },
   {
     id: 'batch-boxelder',
@@ -52,7 +52,7 @@ export const GENERATED_NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = [
     file: 'boxelder.png',
     defaultWidth: 220,
     aspect: 1,
-    group: 'new_batch' as const,
+    group: 'latest_batch' as const,
   },
   {
     id: 'batch-buxus-ball',
@@ -60,7 +60,7 @@ export const GENERATED_NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = [
     file: 'Buxus ball.png',
     defaultWidth: 220,
     aspect: 1,
-    group: 'new_batch' as const,
+    group: 'latest_batch' as const,
   },
   {
     id: 'batch-buxus-hedge',
@@ -68,7 +68,7 @@ export const GENERATED_NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = [
     file: 'Buxus hedge.png',
     defaultWidth: 220,
     aspect: 1,
-    group: 'new_batch' as const,
+    group: 'latest_batch' as const,
   },
   {
     id: 'batch-european-beech',
@@ -76,7 +76,7 @@ export const GENERATED_NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = [
     file: 'european beech.png',
     defaultWidth: 220,
     aspect: 1,
-    group: 'new_batch' as const,
+    group: 'latest_batch' as const,
   },
   {
     id: 'batch-european-hornbeam',
@@ -84,7 +84,7 @@ export const GENERATED_NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = [
     file: 'european hornbeam.png',
     defaultWidth: 220,
     aspect: 1,
-    group: 'new_batch' as const,
+    group: 'latest_batch' as const,
   },
   {
     id: 'batch-evergreen-ash',
@@ -92,7 +92,7 @@ export const GENERATED_NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = [
     file: 'evergreen ash.png',
     defaultWidth: 220,
     aspect: 1,
-    group: 'new_batch' as const,
+    group: 'latest_batch' as const,
   },
   {
     id: 'batch-hydrangea',
@@ -100,7 +100,7 @@ export const GENERATED_NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = [
     file: 'Hydrangea.png',
     defaultWidth: 220,
     aspect: 1,
-    group: 'new_batch' as const,
+    group: 'latest_batch' as const,
   },
   {
     id: 'batch-lavender',
@@ -108,7 +108,7 @@ export const GENERATED_NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = [
     file: 'lavender.png',
     defaultWidth: 220,
     aspect: 1,
-    group: 'new_batch' as const,
+    group: 'latest_batch' as const,
   },
   {
     id: 'batch-lemon',
@@ -116,7 +116,7 @@ export const GENERATED_NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = [
     file: 'lemon.png',
     defaultWidth: 220,
     aspect: 1,
-    group: 'new_batch' as const,
+    group: 'latest_batch' as const,
   },
   {
     id: 'batch-nikau',
@@ -124,7 +124,7 @@ export const GENERATED_NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = [
     file: 'Nikau.png',
     defaultWidth: 220,
     aspect: 1,
-    group: 'new_batch' as const,
+    group: 'latest_batch' as const,
   },
   {
     id: 'batch-renga-renga',
@@ -132,7 +132,7 @@ export const GENERATED_NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = [
     file: 'Renga renga.png',
     defaultWidth: 220,
     aspect: 1,
-    group: 'new_batch' as const,
+    group: 'latest_batch' as const,
   },
   {
     id: 'batch-star-jasmine',
@@ -140,6 +140,6 @@ export const GENERATED_NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = [
     file: 'star jasmine.png',
     defaultWidth: 220,
     aspect: 1,
-    group: 'new_batch' as const,
+    group: 'latest_batch' as const,
   }
 ]

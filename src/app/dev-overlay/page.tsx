@@ -9,14 +9,19 @@
  * Route: /dev-overlay
  */
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useMemo } from 'react'
 import {
   DEFAULT_DEV_OVERLAY,
-  DEV_OVERLAY_GROUPS,
   devOverlaySrc,
-  getDevOverlaysByGroup,
+  getDevOverlayCatalog,
   type DevOverlayDef,
+  type DevOverlayFilterId,
 } from '../../lib/visualiser/devOverlayAssets'
+import {
+  DEV_OVERLAY_FILTERS,
+  getDevOverlaySections,
+  overlayButtonStyleTags,
+} from '../../lib/visualiser/devOverlayCatalog'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -27,7 +32,7 @@ interface Pos { x: number; y: number }
 type PreviewMode = 'single' | 'row'
 
 /** Matches production row tiling defaults (visualise detail page). */
-const ROW_TILE_OVERLAP_DEFAULT = 0.12
+const ROW_TILE_OVERLAP_DEFAULT = 0.2
 const ROW_TILE_EDGE_CROP_RATIO = 0.05
 
 function buildRowLayout(tileWidth: number, tileCount: number, overlapRatio: number) {
@@ -52,9 +57,19 @@ export default function DevOverlayPage() {
   const [rowEdgeCrop, setRowEdgeCrop] = useState(true)
   const [showTileSeams, setShowTileSeams] = useState(true)
 
+  const [activeFilter, setActiveFilter] = useState<DevOverlayFilterId>('latest')
+
   const dragOrigin = useRef({ clientX: 0, clientY: 0, posX: 0, posY: 0 })
 
-  const allOverlays = DEV_OVERLAY_GROUPS.flatMap((g) => getDevOverlaysByGroup(g.key))
+  const catalog = useMemo(() => getDevOverlayCatalog(), [])
+  const sections = useMemo(
+    () => getDevOverlaySections(catalog, activeFilter),
+    [catalog, activeFilter],
+  )
+  const visibleOverlays = useMemo(
+    () => sections.flatMap((section) => section.items),
+    [sections],
+  )
   const isPng = selected.file.toLowerCase().endsWith('.png')
   const effectiveMode: PreviewMode = isPng ? previewMode : 'single'
 
@@ -123,38 +138,90 @@ export default function DevOverlayPage() {
       {/* ── Controls ── */}
       <div style={styles.controls}>
 
-        {/* Overlay picker — grouped */}
+        {/* Overlay picker — filters + grouped sections */}
         <div style={{ ...styles.controlGroup, flex: '1 1 100%' }}>
-          <span style={styles.label}>Overlay</span>
-          {DEV_OVERLAY_GROUPS.map((group) => {
-            const items = getDevOverlaysByGroup(group.key)
-            if (items.length === 0) return null
-            return (
-              <div key={group.key} style={styles.overlaySection}>
+          <span style={styles.label}>Overlay library</span>
+          <div style={styles.filterRow}>
+            {DEV_OVERLAY_FILTERS.map((filter) => (
+              <button
+                key={filter.id}
+                type="button"
+                title={filter.hint}
+                onClick={() => setActiveFilter(filter.id)}
+                style={{
+                  ...styles.filterBtn,
+                  ...(activeFilter === filter.id ? styles.filterBtnActive : {}),
+                }}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
+          <div style={styles.legendRow}>
+            <span style={styles.legendItem}><span style={styles.badgeSpot}>Spot</span> spot / preview</span>
+            <span style={styles.legendItem}><span style={styles.badgeHedge}>Hedge</span> row / tile</span>
+            <span style={styles.legendItem}><span style={styles.badgeHeld}>Held</span> not approved</span>
+            <span style={styles.legendItem}><span style={styles.badgeLatest}>Latest</span> new batch</span>
+          </div>
+          {sections.length === 0 ? (
+            <p style={styles.emptyFilter}>No overlays match this filter.</p>
+          ) : (
+            sections.map((section) => (
+              <div key={section.key} style={styles.overlaySection}>
                 <div style={styles.sectionHeader}>
-                  <span style={styles.sectionTitle}>{group.title}</span>
-                  <span style={styles.sectionDesc}>{group.description}</span>
+                  <span style={styles.sectionTitle}>{section.title}</span>
+                  <span style={styles.sectionCount}>{section.items.length}</span>
+                  <span style={styles.sectionDesc}>{section.description}</span>
                 </div>
                 <div style={styles.btnRow}>
-                  {items.map((ov) => (
-                    <button
-                      key={ov.id}
-                      type="button"
-                      onClick={() => selectOverlay(ov)}
-                      style={{
-                        ...styles.btn,
-                        ...(ov.group === 'new_batch' ? styles.btnNewBatch : {}),
-                        ...(selected.id === ov.id ? styles.btnActive : {}),
-                      }}
-                      title={ov.file}
-                    >
-                      {ov.label}
-                    </button>
-                  ))}
+                  {section.items.map((ov) => {
+                    const badge = overlayButtonStyleTags(ov.tags)
+                    return (
+                      <button
+                        key={ov.id}
+                        type="button"
+                        onClick={() => selectOverlay(ov)}
+                        style={{
+                          ...styles.btn,
+                          ...(ov.group === 'latest_batch' ? styles.btnLatest : {}),
+                          ...(ov.group === 'held' ? styles.btnHeld : {}),
+                          ...(badge.hedge ? styles.btnHedge : {}),
+                          ...(selected.id === ov.id ? styles.btnActive : {}),
+                        }}
+                        title={[ov.file, ov.statusNote, ov.pairWith ? `Pair: ${ov.pairWith}` : '']
+                          .filter(Boolean)
+                          .join(' · ')}
+                      >
+                        <span style={styles.btnLabel}>{ov.label}</span>
+                        <span style={styles.btnBadges}>
+                          {badge.spot && <span style={styles.badgeSpot}>Spot</span>}
+                          {badge.hedge && <span style={styles.badgeHedge}>Hedge</span>}
+                          {badge.held && <span style={styles.badgeHeld}>Held</span>}
+                          {badge.latest && <span style={styles.badgeLatest}>New</span>}
+                          {ov.pairLabel && !badge.spot && !badge.hedge && badge.unwired && ov.tags?.includes('hedge') && (
+                            <span style={styles.badgeHedge}>Hedge?</span>
+                          )}
+                        </span>
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
-            )
-          })}
+            ))
+          )}
+          {selected.statusNote && (
+            <p style={styles.selectedMeta}>
+              <span style={styles.mono}>{selected.file}</span>
+              {' — '}
+              {selected.statusNote}
+              {selected.pairWith && (
+                <>
+                  {' · Pair: '}
+                  <span style={styles.mono}>{selected.pairWith}</span>
+                </>
+              )}
+            </p>
+          )}
         </div>
 
         {/* Preview mode */}
@@ -431,11 +498,12 @@ export default function DevOverlayPage() {
 
       <p style={styles.footer}>
         Smoke test only — no saving, no database, no fal.ai calls.
-        {' '}{allOverlays.filter((ov) => ov.file.endsWith('.png')).length} PNG overlays
-        plus {allOverlays.filter((ov) => ov.file.endsWith('.svg')).length} SVG placeholders.
+        {' '}{visibleOverlays.filter((ov) => ov.file.endsWith('.png')).length} PNG overlays visible
+        ({catalog.filter((ov) => ov.file.endsWith('.png')).length} total)
+        plus {visibleOverlays.filter((ov) => ov.file.endsWith('.svg')).length} SVG placeholders in view.
         Assets live in <code style={{ color: '#9090c0' }}>public/plant-overlays/</code>.
-        Use <strong style={{ color: '#9090c0', fontWeight: 600 }}>Hedge row</strong> mode to QA tile blending before approving row-mode assets.
-        New batch items are not in the production Visualise selector until manually approved and wired.
+        Use filters above to separate production, latest batch, hedge candidates, and held assets.
+        Run <code style={{ color: '#9090c0' }}>npm run refresh:dev-overlays</code> after processing new PNGs.
       </p>
     </div>
   )
@@ -546,6 +614,132 @@ const styles = {
   btnNewBatch: {
     border: '1px solid #3d5a80',
     background: '#1a2438',
+  } as React.CSSProperties,
+
+  btnLatest: {
+    border: '1px solid #3d5a80',
+    background: '#1a2438',
+  } as React.CSSProperties,
+
+  btnHeld: {
+    border: '1px solid #8b3a3a',
+    background: '#2a1414',
+  } as React.CSSProperties,
+
+  btnHedge: {
+    borderLeft: '3px solid #60a5fa',
+  } as React.CSSProperties,
+
+  filterRow: {
+    display: 'flex',
+    flexWrap: 'wrap' as const,
+    gap: 8,
+    marginBottom: 10,
+  } as React.CSSProperties,
+
+  filterBtn: {
+    padding: '6px 12px',
+    borderRadius: 999,
+    border: '1px solid #3a3a58',
+    cursor: 'pointer',
+    fontWeight: 600,
+    fontSize: 12,
+    background: '#1a1a2e',
+    color: '#b0b0cc',
+  } as React.CSSProperties,
+
+  filterBtnActive: {
+    background: '#4ade80',
+    color: '#0a1a0a',
+    border: '1px solid #4ade80',
+  } as React.CSSProperties,
+
+  legendRow: {
+    display: 'flex',
+    flexWrap: 'wrap' as const,
+    gap: '8px 14px',
+    marginBottom: 12,
+    fontSize: 11,
+    color: '#707090',
+  } as React.CSSProperties,
+
+  legendItem: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 6,
+  } as React.CSSProperties,
+
+  badgeSpot: {
+    display: 'inline-block',
+    padding: '1px 6px',
+    borderRadius: 4,
+    fontSize: 10,
+    fontWeight: 700,
+    background: '#1a3d2a',
+    color: '#86efac',
+  } as React.CSSProperties,
+
+  badgeHedge: {
+    display: 'inline-block',
+    padding: '1px 6px',
+    borderRadius: 4,
+    fontSize: 10,
+    fontWeight: 700,
+    background: '#1a2840',
+    color: '#93c5fd',
+  } as React.CSSProperties,
+
+  badgeHeld: {
+    display: 'inline-block',
+    padding: '1px 6px',
+    borderRadius: 4,
+    fontSize: 10,
+    fontWeight: 700,
+    background: '#3d1a1a',
+    color: '#fca5a5',
+  } as React.CSSProperties,
+
+  badgeLatest: {
+    display: 'inline-block',
+    padding: '1px 6px',
+    borderRadius: 4,
+    fontSize: 10,
+    fontWeight: 700,
+    background: '#2a2240',
+    color: '#c4b5fd',
+  } as React.CSSProperties,
+
+  btnLabel: {
+    display: 'block',
+  } as React.CSSProperties,
+
+  btnBadges: {
+    display: 'flex',
+    flexWrap: 'wrap' as const,
+    gap: 4,
+    marginTop: 4,
+  } as React.CSSProperties,
+
+  sectionCount: {
+    fontSize: 11,
+    fontWeight: 700,
+    color: '#8080a8',
+    background: '#1e1e32',
+    padding: '2px 8px',
+    borderRadius: 999,
+  } as React.CSSProperties,
+
+  selectedMeta: {
+    margin: '8px 0 0',
+    fontSize: 12,
+    color: '#9090b0',
+    maxWidth: 900,
+  } as React.CSSProperties,
+
+  emptyFilter: {
+    fontSize: 13,
+    color: '#707090',
+    margin: '4px 0 0',
   } as React.CSSProperties,
 
   btnActive: {

@@ -26,16 +26,16 @@ Runtime resolution is unchanged — `resolveOverlayAsset()` in `plantOverlayAsse
 | Metric | Count |
 |--------|------:|
 | **Total plants in database** | 120 |
-| **Visualiser-relevant** | 98 |
-| **Exact asset ready** | 40 |
-| **Close shared asset OK** | 12 |
+| **Visualiser-relevant** | 100 |
+| **Exact asset ready** | 50 |
+| **Close shared asset OK** | 10 |
 | **Temporary fallback only** | 1 |
-| **Needs new asset** | 45 |
-| **Not visualiser relevant** | 22 |
+| **Needs new asset** | 39 |
+| **Not visualiser relevant** | 20 |
 | **High manual cutout risk** | 1 |
 | **White/pale flower risk flagged** | 42 |
 | **Broken registry paths** | 0 |
-| **Registered overlay keys** | 49 |
+| **Registered overlay keys** | 59 |
 
 ### Visualise selector (spot mode)
 
@@ -84,8 +84,18 @@ Excluded examples (must NOT be added): Lomandra, Agapanthus, NZ Flax, Phormium, 
 - Evergreen Ash
 - Feijoa
 - Ficus Tuffi
+- Flame Tree
+- Flax Lily
+- Forest Pansy
+- Fortnight Lily (Dietes)
+- Foxtail Agave
 - Griselinia
+- Hardenbergia
 - Hebe (Koromiko)
+- Hellebore (Winter Rose)
+- Hen and Chicken Fern
+- Hibiscus
+- Himalayan Birch
 - Hydrangea
 - Japanese Box
 - Lomandra
@@ -97,7 +107,6 @@ Excluded examples (must NOT be added): Lomandra, Agapanthus, NZ Flax, Phormium, 
 
 ### Soon after launch
 
-- Fortnight Lily (Dietes) — Fortnight Lily (Dietes) shares lomandra
 - Gardenia — gardenia-v2
 - Kentia Palm — Kentia Palm — intent/palm rules may map to ponga/nikau; not all palms suit Nikau silhouette
 - King Palm — King Palm — shares palm/feature resolution; dedicated palm asset later
@@ -112,13 +121,6 @@ Excluded examples (must NOT be added): Lomandra, Agapanthus, NZ Flax, Phormium, 
 ### Later
 
 - Ficus Pumila
-- Flax Lily
-- Forest Pansy
-- Foxtail Agave
-- Hardenbergia
-- Hellebore (Winter Rose)
-- Hen and Chicken Fern
-- Hibiscus
 - Iresine
 - Japanese Maple
 - Kōwhai
@@ -244,19 +246,19 @@ Gardenia is **needs_new_asset** (not exact_asset_ready). `gardenia-v2.png` exist
 | Feijoa | Acca sellowiana | Fruit | feijoa | exact_asset_ready | launch | none | — | Dedicated feijoa.png overlay — spot mode only. |
 | Ficus Pumila | Ficus pumila | Climber | star-jasmine | needs_new_asset | later | none | — | Ficus Pumila — held; ficus pumilia.png cutout too transparent/weak for production. |
 | Ficus Tuffi | Ficus Tuffi | Hedge | ficus-tuffy-hedge | exact_asset_ready | launch | none | — | Maps to ficus-tuffy-hedge.png. Row mode + spot hedge rule. |
-| Flame Tree | Brachychiton acerifolia | Tree | nikau | not_visualiser_relevant | not_needed | none | Yes | Large deciduous tree — out of scope. White/pale flowers may need manual cutout or a non-white source background. |
-| Flax Lily | Dianella | Shrub | flax | close_shared_asset_ok | later | none | — | Flax Lily (Dianella) — strappy; no dedicated asset, lomandra share if wired. |
-| Forest Pansy | Cercis chinensis | Tree | nikau | needs_new_asset | later | none | — | Forest Pansy — small tree. |
-| Fortnight Lily (Dietes) | Dietes grandiflora | Flower | lomandra | close_shared_asset_ok | soon | likely | Yes | Fortnight Lily (Dietes) shares lomandra.png. White flowers — distinct form from Lomandra. White/pale flowers may need manual cutout or a non-white source background. |
-| Foxtail Agave | Agave attenuata | Succulent | lomandra | needs_new_asset | later | none | — | Foxtail Agave — succulent rosette; no overlay. |
+| Flame Tree | Brachychiton acerifolia | Tree | flame-tree | exact_asset_ready | launch | none | Yes | Dedicated flame-tree.png overlay. White/pale flowers may need manual cutout or a non-white source background. |
+| Flax Lily | Dianella | Shrub | flax-lily | exact_asset_ready | launch | none | — | Dedicated flax-lily.png overlay (Dianella). |
+| Forest Pansy | Cercis chinensis | Tree | forest-pansy | exact_asset_ready | launch | none | — | Dedicated forest-pansy.png overlay. |
+| Fortnight Lily (Dietes) | Dietes grandiflora | Flower | fortnight-lily | exact_asset_ready | launch | likely | Yes | Dedicated fortnight-lily.png overlay. White flowers passed QA. White/pale flowers may need manual cutout or a non-white source background. |
+| Foxtail Agave | Agave attenuata | Succulent | foxtail-agave | exact_asset_ready | launch | none | — | Dedicated foxtail-agave.png overlay. |
 | Gardenia | Gardeniat jasminoides | Flower | camellia | needs_new_asset | soon | high | Yes | gardenia-v2.png on disk but NOT registered — auto cutout likely removes white flowers. Manual cutout or non-white source background required before wiring. Do NOT mark exact until QA passes. White/pale flowers may need manual cutout or a non-white source background. |
 | Griselinia | Griselinia littoralis | Hedge | griselinia-hedge | exact_asset_ready | launch | none | — | Maps to griselinia-hedge.png. Row mode + spot hedge rule. |
-| Hardenbergia | Hardenbergia violacea | Climber | star-jasmine | needs_new_asset | later | none | — | Hardenbergia — climber; no overlay. |
+| Hardenbergia | Hardenbergia violacea | Climber | hardenbergia | exact_asset_ready | launch | none | — | Dedicated hardenbergia.png overlay. |
 | Hebe (Koromiko) | Hebe koromiko | Shrub | hebe | exact_asset_ready | launch | none | — | Dedicated hebe.png. |
-| Hellebore (Winter Rose) | Helleborus x hybridus | Perennial | camellia | needs_new_asset | later | likely | Yes | Hellebore — white/cream flowers; low perennial. White/pale flowers may need manual cutout or a non-white source background. |
-| Hen and Chicken Fern | Asplenium bulbiferum | Fern | nikau | needs_new_asset | later | none | — | Hen and Chicken Fern — ground fern; not tree-fern scale. |
-| Hibiscus | Hibiscus rosa-sinensis | Shrub | camellia | needs_new_asset | later | none | — | Hibiscus — subtropical shrub; no overlay. |
-| Himalayan Birch | Betula utilis | Tree | nikau | not_visualiser_relevant | not_needed | none | Yes | Large deciduous tree — out of scope. White/pale flowers may need manual cutout or a non-white source background. |
+| Hellebore (Winter Rose) | Helleborus x hybridus | Perennial | hellebore | exact_asset_ready | launch | likely | Yes | Dedicated hellebore.png overlay. White/cream flowers passed QA. White/pale flowers may need manual cutout or a non-white source background. |
+| Hen and Chicken Fern | Asplenium bulbiferum | Fern | hen-and-chicken-fern | exact_asset_ready | launch | none | — | Dedicated hen-and-chicken-fern.png overlay. |
+| Hibiscus | Hibiscus rosa-sinensis | Shrub | hibiscus | exact_asset_ready | launch | none | — | Dedicated hibiscus.png overlay. |
+| Himalayan Birch | Betula utilis | Tree | himalayan-birch | exact_asset_ready | launch | none | Yes | Dedicated himalayan-birch.png overlay — distinct from Erman's Birch (birch.png). White/pale flowers may need manual cutout or a non-white source background. |
 | Hydrangea | Hydrangea macrophylla | Shrub | hydrangea | exact_asset_ready | launch | none | — | Dedicated hydrangea.png. |
 | Iresine | Iresine herbstii | Perennial | camellia | needs_new_asset | later | none | — | Iresine — colourful foliage perennial; low priority. |
 | Japanese Box | Buxus microphylla | Hedge / Shrub | hedge | exact_asset_ready | launch | none | — | Japanese Box → buxus-hedge.png via species rule. |

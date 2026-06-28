@@ -86,7 +86,7 @@ function main(): void {
     file: '${escapeString(file)}',
     defaultWidth: 220,
     aspect: 1,
-    group: 'new_batch' as const,
+    group: 'latest_batch' as const,
   }`
   })
 

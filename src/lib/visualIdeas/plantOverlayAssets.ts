@@ -275,6 +275,66 @@ const ASSETS: Record<string, OverlayAsset> = {
     defaultWidthFraction: widthFraction(340),
     aspect: 1,
   },
+  'flame-tree': {
+    key: 'flame-tree',
+    src: '/plant-overlays/flame-tree.png',
+    defaultWidthFraction: widthFraction(300),
+    aspect: 1,
+  },
+  'flax-lily': {
+    key: 'flax-lily',
+    src: '/plant-overlays/flax-lily.png',
+    defaultWidthFraction: widthFraction(240),
+    aspect: 1,
+  },
+  'forest-pansy': {
+    key: 'forest-pansy',
+    src: '/plant-overlays/forest-pansy.png',
+    defaultWidthFraction: widthFraction(280),
+    aspect: 1,
+  },
+  'fortnight-lily': {
+    key: 'fortnight-lily',
+    src: '/plant-overlays/fortnight-lily.png',
+    defaultWidthFraction: widthFraction(220),
+    aspect: 1,
+  },
+  'foxtail-agave': {
+    key: 'foxtail-agave',
+    src: '/plant-overlays/foxtail-agave.png',
+    defaultWidthFraction: widthFraction(260),
+    aspect: 1,
+  },
+  hardenbergia: {
+    key: 'hardenbergia',
+    src: '/plant-overlays/hardenbergia.png',
+    defaultWidthFraction: widthFraction(260),
+    aspect: 1,
+  },
+  hellebore: {
+    key: 'hellebore',
+    src: '/plant-overlays/hellebore.png',
+    defaultWidthFraction: widthFraction(200),
+    aspect: 1,
+  },
+  'hen-and-chicken-fern': {
+    key: 'hen-and-chicken-fern',
+    src: '/plant-overlays/hen-and-chicken-fern.png',
+    defaultWidthFraction: widthFraction(240),
+    aspect: 1,
+  },
+  hibiscus: {
+    key: 'hibiscus',
+    src: '/plant-overlays/hibiscus.png',
+    defaultWidthFraction: widthFraction(260),
+    aspect: 1,
+  },
+  'himalayan-birch': {
+    key: 'himalayan-birch',
+    src: '/plant-overlays/himalayan-birch.png',
+    defaultWidthFraction: widthFraction(280),
+    aspect: 1,
+  },
   // Legacy / category fallbacks — kept for saved concepts and non-approved species
   buxus: {
     key: 'buxus',
@@ -359,6 +419,16 @@ export const APPROVED_OVERLAY_KEYS = new Set<string>([
   'evergreen-ash',
   'feijoa',
   'oak',
+  'flame-tree',
+  'flax-lily',
+  'forest-pansy',
+  'fortnight-lily',
+  'foxtail-agave',
+  'hardenbergia',
+  'hellebore',
+  'hen-and-chicken-fern',
+  'hibiscus',
+  'himalayan-birch',
 ])
 
 const FALLBACK_ASSET: OverlayAsset = ASSETS['rounded-shrub']
@@ -1026,6 +1096,156 @@ export const CREATE_VISUAL_PLANT_OPTIONS: CreateVisualPlantOption[] = [
       wind: ['moderate', 'exposed'],
     },
   },
+  {
+    name: 'Flame Tree',
+    description: 'Deciduous tree with maple-like leaves and summer flame-red flowers.',
+    notes: 'Bold seasonal colour; suits warm dry sites.',
+    detectedIntent: 'feature tree',
+    style: 'Feature tree',
+    gardenStyles: ['Subtropical', 'Cottage'],
+    plantTypes: ['Tree'],
+    conditions: {
+      sun: ['full sun'],
+      moisture: ['average', 'dry'],
+      drainage: ['well drained'],
+      wind: ['moderate'],
+    },
+  },
+  {
+    name: 'Flax Lily',
+    description: 'Strappy evergreen perennial with blue flowers and berry-like fruit.',
+    notes: 'Neat border or mass planting; low maintenance.',
+    detectedIntent: 'general planting',
+    style: 'Border planting',
+    gardenStyles: ['Native', 'Coastal', 'Low maintenance'],
+    plantTypes: ['Grass / strappy plant', 'Shrub'],
+    conditions: {
+      sun: ['full sun', 'part shade'],
+      moisture: ['average', 'dry'],
+      drainage: ['well drained'],
+      wind: ['moderate'],
+    },
+  },
+  {
+    name: 'Forest Pansy',
+    description: 'Small deciduous tree with heart-shaped purple-red foliage.',
+    notes: 'Understorey feature tree; spring blossom.',
+    detectedIntent: 'feature tree',
+    style: 'Feature tree',
+    gardenStyles: ['Formal', 'Cottage'],
+    plantTypes: ['Tree'],
+    conditions: {
+      sun: ['part shade', 'full sun'],
+      moisture: ['average', 'moist'],
+      drainage: ['well drained'],
+      wind: ['sheltered', 'moderate'],
+    },
+  },
+  {
+    name: 'Fortnight Lily (Dietes)',
+    description: 'Hardy strappy clump with iris-like white flowers through summer.',
+    notes: 'Dry-tolerant edging plant; repeats bloom in fortnightly flushes.',
+    detectedIntent: 'general planting',
+    style: 'Border planting',
+    gardenStyles: ['Coastal', 'Low maintenance', 'Formal'],
+    plantTypes: ['Grass / strappy plant'],
+    conditions: {
+      sun: ['full sun', 'part shade'],
+      moisture: ['average', 'dry'],
+      drainage: ['well drained'],
+      wind: ['moderate', 'exposed'],
+    },
+  },
+  {
+    name: 'Foxtail Agave',
+    description: 'Sculptural succulent rosette with soft arching grey-green leaves.',
+    notes: 'Drought-tolerant accent; suits contemporary and subtropical gardens.',
+    detectedIntent: 'general planting',
+    style: 'Feature planting',
+    gardenStyles: ['Subtropical', 'Coastal', 'Low maintenance'],
+    plantTypes: ['Shrub'],
+    conditions: {
+      sun: ['full sun'],
+      moisture: ['dry', 'average'],
+      drainage: ['well drained'],
+      wind: ['moderate'],
+    },
+  },
+  {
+    name: 'Hardenbergia',
+    description: 'Native climber or groundcover with pea-like purple flowers in winter.',
+    notes: 'Fast cover for fences and pergolas; also works as a spillover groundcover.',
+    detectedIntent: 'climber planting',
+    style: 'Climbers',
+    gardenStyles: ['Native', 'Cottage'],
+    plantTypes: ['Climber', 'Groundcover'],
+    conditions: {
+      sun: ['full sun', 'part shade'],
+      moisture: ['average', 'moist'],
+      drainage: ['well drained'],
+      wind: ['moderate'],
+    },
+  },
+  {
+    name: 'Hellebore (Winter Rose)',
+    description: 'Shade-loving perennial with nodding winter flowers above bold foliage.',
+    notes: 'Valuable winter colour in woodland borders.',
+    detectedIntent: 'shrub planting',
+    style: 'Shrubs',
+    gardenStyles: ['Cottage', 'Formal'],
+    plantTypes: ['Shrub'],
+    conditions: {
+      sun: ['part shade', 'full shade'],
+      moisture: ['moist'],
+      drainage: ['well drained'],
+      wind: ['sheltered'],
+    },
+  },
+  {
+    name: 'Hen and Chicken Fern',
+    description: 'Native ground fern with arching fronds and plantlets on mature leaves.',
+    notes: 'Shady understory or ponga companion; moist humus-rich soil.',
+    detectedIntent: 'general planting',
+    style: 'Border planting',
+    gardenStyles: ['Native', 'Cottage'],
+    plantTypes: ['Groundcover'],
+    conditions: {
+      sun: ['part shade', 'full shade'],
+      moisture: ['moist'],
+      drainage: ['average', 'well drained'],
+      wind: ['sheltered'],
+    },
+  },
+  {
+    name: 'Hibiscus',
+    description: 'Tropical evergreen shrub with large colourful flowers.',
+    notes: 'Sheltered sunny spot; suits subtropical and coastal gardens.',
+    detectedIntent: 'shrub planting',
+    style: 'Shrubs',
+    gardenStyles: ['Subtropical', 'Coastal'],
+    plantTypes: ['Shrub'],
+    conditions: {
+      sun: ['full sun', 'part shade'],
+      moisture: ['average', 'moist'],
+      drainage: ['well drained'],
+      wind: ['sheltered', 'moderate'],
+    },
+  },
+  {
+    name: 'Himalayan Birch',
+    description: 'Small to medium tree with striking white peeling bark.',
+    notes: 'Distinct from Erman’s Birch; suits cool moist gardens.',
+    detectedIntent: 'feature tree',
+    style: 'Feature tree',
+    gardenStyles: ['Formal', 'Cottage'],
+    plantTypes: ['Tree'],
+    conditions: {
+      sun: ['full sun', 'part shade'],
+      moisture: ['moist'],
+      drainage: ['well drained'],
+      wind: ['moderate'],
+    },
+  },
 ]
 
 export interface SpotConditions {
@@ -1157,6 +1377,16 @@ const SPECIES_RULES: Array<{ pattern: RegExp; assetKey: string }> = [
   { pattern: /renga.?renga|arthropodium/i,                             assetKey: 'renga-renga-lily' },
   { pattern: /clivia/i,                                                assetKey: 'clivia' },
   { pattern: /star jasmine|trachelospermum/i,                          assetKey: 'star-jasmine' },
+  { pattern: /flax lily|dianella/i,                                    assetKey: 'flax-lily' },
+  { pattern: /fortnight lily|dietes/i,                                 assetKey: 'fortnight-lily' },
+  { pattern: /himalayan birch|betula utilis/i,                          assetKey: 'himalayan-birch' },
+  { pattern: /flame tree|brachychiton/i,                               assetKey: 'flame-tree' },
+  { pattern: /forest pansy|cercis/i,                                   assetKey: 'forest-pansy' },
+  { pattern: /foxtail agave|agave attenuata/i,                         assetKey: 'foxtail-agave' },
+  { pattern: /hardenbergia/i,                                          assetKey: 'hardenbergia' },
+  { pattern: /hellebore|helleborus/i,                                 assetKey: 'hellebore' },
+  { pattern: /hen and chicken|asplenium bulbiferum/i,                  assetKey: 'hen-and-chicken-fern' },
+  { pattern: /hibiscus/i,                                             assetKey: 'hibiscus' },
   { pattern: /phormium|flax|astelia|harakeke|nz flax/i,                assetKey: 'flax' },
   { pattern: /ponga|tree.?fern|dicksonia|cyathea/i,                    assetKey: 'ponga' },
   { pattern: /camellia hedge/i,                                         assetKey: 'camellia-hedge' },
@@ -1195,7 +1425,7 @@ const SPECIES_RULES: Array<{ pattern: RegExp; assetKey: string }> = [
   { pattern: /griselinia/i,                                              assetKey: 'griselinia-hedge' },
   { pattern: /ficus tuff|ficus tuffy|ficus tuffi/i,                      assetKey: 'ficus-tuffy-hedge' },
   { pattern: /buxus|box hedge|boxwood/i,                                 assetKey: 'buxus-hedge' },
-  { pattern: /lomandra|carex|libertia|dietes|agapanthus/i,             assetKey: 'lomandra' },
+  { pattern: /lomandra|carex|libertia|agapanthus/i,             assetKey: 'lomandra' },
   { pattern: /groundcover|ground.?cover|pratia|muehlenbeckia|coprosma/i, assetKey: 'groundcover' },
   // Legacy / category fallbacks for saved concepts and unmatched species
   { pattern: /titoki/i,                                                 assetKey: 'hedge' },
@@ -1289,6 +1519,41 @@ export function supportsRowPreview(plantName: string): boolean {
 export const REGISTERED_OVERLAY_PATHS: readonly string[] = Object.values(ASSETS).map(
   (asset) => asset.src,
 )
+
+/** Dev /dev-overlay QA — production row/hedge asset keys (read-only). */
+export const PRODUCTION_HEDGE_OVERLAY_KEYS = new Set(
+  Object.values(ASSETS)
+    .filter((asset) => asset.key.endsWith('-hedge') || asset.key === 'eugenia')
+    .map((asset) => asset.key),
+)
+
+/** Dev /dev-overlay QA — map registry filename to asset key (read-only). */
+export function overlayFilenameToAssetKey(filename: string): string | undefined {
+  const src = `/plant-overlays/${filename}`
+  for (const asset of Object.values(ASSETS)) {
+    if (asset.src === src) return asset.key
+  }
+  return undefined
+}
+
+/** Dev /dev-overlay QA — spot PNG paired with a hedge-row PNG (read-only). */
+export const SPOT_HEDGE_OVERLAY_PAIRS: ReadonlyArray<{
+  label: string
+  spotFile: string
+  hedgeFile: string
+}> = [
+  { label: 'Camellia', spotFile: 'camellia.png', hedgeFile: 'camellia-hedge.png' },
+  {
+    label: 'Corokia Geentys Green',
+    spotFile: 'corokia-geentys-green.png',
+    hedgeFile: 'corokia-geentys-green-hedge.png',
+  },
+  {
+    label: 'Corokia Virgata',
+    spotFile: 'corokia-virgata.png',
+    hedgeFile: 'corokia-virgata-hedge.png',
+  },
+]
 
 // TODO: Future hedge mode — support linear metres, desired height, trim frequency,
 // and calendar duration estimates.

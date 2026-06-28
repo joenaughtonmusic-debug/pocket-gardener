@@ -15,12 +15,12 @@ Last generated: 2026-06-28
 
 | Metric | Count |
 |--------|------:|
-| Total production items | 56 |
-| Batch 1 (highest launch value) | 13 |
-| Batch 2 (soon after launch) | 15 |
-| Batch 3 (later) | 28 |
-| Manual cutout / pale flower track | 18 |
-| Pale flower risk flagged | 18 |
+| Total production items | 49 |
+| Batch 1 (highest launch value) | 12 |
+| Batch 2 (soon after launch) | 13 |
+| Batch 3 (later) | 24 |
+| Manual cutout / pale flower track | 16 |
+| Pale flower risk flagged | 16 |
 | Visualise selector gaps | 3 |
 
 ---
@@ -83,7 +83,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 ## Batch 1 — Highest launch value
 
-13 assets.
+12 assets.
 
 ### 1. Agapanthus
 
@@ -139,25 +139,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** Shares groundcover.png. White flowers — manual cutout may be needed. White/pale flowers may need manual cutout or a non-white source background.
 
-### 4. Fortnight Lily (Dietes)
-
-| Field | Value |
-|-------|-------|
-| Scientific name | Dietes grandiflora |
-| Visual form | `strappy_clump` |
-| Asset type | **spot** |
-| Classification | close_shared_asset_ok |
-| QA status | `needed` |
-| Pale flower risk | **Yes** |
-| Manual cutout risk | Likely |
-| Current fallback | `lomandra (/plant-overlays/lomandra.png)` |
-| Flags | — |
-
-**Source image guidance:** Full plant visible — whole plant inside frame; Front-on or near front-on angle (not extreme top-down); No pot, no soil, no nursery label; Muted grey-green background (not pure white); Strong edge contrast between foliage and background; No flowers touching the image edge. Show full clump including base; strap leaves radiating naturally. Include flower stems if species has them (e.g. Agapanthus). PALE FLOWERS: use warm cream petals or mid-grey-green background — never white-on-white.
-
-**Notes:** Fortnight Lily (Dietes) shares lomandra.png. White flowers — distinct form from Lomandra. White/pale flowers may need manual cutout or a non-white source background.
-
-### 5. Gardenia
+### 4. Gardenia
 
 | Field | Value |
 |-------|-------|
@@ -175,7 +157,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** gardenia-v2.png on disk but NOT registered — auto cutout likely removes white flowers. Manual cutout or non-white source background required before wiring. Do NOT mark exact until QA passes. White/pale flowers may need manual cutout or a non-white source background.
 
-### 6. Kentia Palm
+### 5. Kentia Palm
 
 | Field | Value |
 |-------|-------|
@@ -193,7 +175,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** Kentia Palm — intent/palm rules may map to ponga/nikau; not all palms suit Nikau silhouette.
 
-### 7. King Palm
+### 6. King Palm
 
 | Field | Value |
 |-------|-------|
@@ -211,7 +193,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** King Palm — shares palm/feature resolution; dedicated palm asset later.
 
-### 8. Lavender
+### 7. Lavender
 
 | Field | Value |
 |-------|-------|
@@ -229,7 +211,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** lavender white.png on disk, unregistered. Process and QA before registry.
 
-### 9. Muehlenbeckia
+### 8. Muehlenbeckia
 
 | Field | Value |
 |-------|-------|
@@ -247,7 +229,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** Muehlenbeckia shares groundcover.png.
 
-### 10. Sago Palm
+### 9. Sago Palm
 
 | Field | Value |
 |-------|-------|
@@ -265,7 +247,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** Sago Palm — palm-like; may share nikau/ponga intent asset.
 
-### 11. Silver Flax (Astelia)
+### 10. Silver Flax (Astelia)
 
 | Field | Value |
 |-------|-------|
@@ -283,7 +265,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** Silver Flax (Astelia) shares flax.png.
 
-### 12. Sugar Cane Palm
+### 11. Sugar Cane Palm
 
 | Field | Value |
 |-------|-------|
@@ -301,7 +283,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** Sugar Cane Palm — palm silhouette share.
 
-### 13. Titoki
+### 12. Titoki
 
 | Field | Value |
 |-------|-------|
@@ -323,45 +305,9 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 ## Batch 2 — Soon after launch
 
-15 assets.
+13 assets.
 
-### 1. Hellebore (Winter Rose)
-
-| Field | Value |
-|-------|-------|
-| Scientific name | Helleborus x hybridus |
-| Visual form | `rounded_flowering_shrub` |
-| Asset type | **spot** |
-| Classification | needs_new_asset |
-| QA status | `needed` |
-| Pale flower risk | **Yes** |
-| Manual cutout risk | Likely |
-| Current fallback | `camellia (/plant-overlays/camellia.png)` |
-| Flags | — |
-
-**Source image guidance:** Full plant visible — whole plant inside frame; Front-on or near front-on angle (not extreme top-down); No pot, no soil, no nursery label; Muted grey-green background (not pure white); Strong edge contrast between foliage and background; No flowers touching the image edge. Rounded shrub silhouette with visible flowers; foliage fills lower two-thirds of frame. PALE FLOWERS: use warm cream petals or mid-grey-green background — never white-on-white.
-
-**Notes:** Hellebore — white/cream flowers; low perennial. White/pale flowers may need manual cutout or a non-white source background.
-
-### 2. Hibiscus
-
-| Field | Value |
-|-------|-------|
-| Scientific name | Hibiscus rosa-sinensis |
-| Visual form | `unknown` |
-| Asset type | **spot** |
-| Classification | needs_new_asset |
-| QA status | `needed` |
-| Pale flower risk | No |
-| Manual cutout risk | None |
-| Current fallback | `camellia (/plant-overlays/camellia.png)` |
-| Flags | — |
-
-**Source image guidance:** Full plant visible — whole plant inside frame; Front-on or near front-on angle (not extreme top-down); No pot, no soil, no nursery label; Muted grey-green background (not pure white); Strong edge contrast between foliage and background; No flowers touching the image edge. Match natural garden scale for spot overlay.
-
-**Notes:** Hibiscus — subtropical shrub; no overlay.
-
-### 3. Kōwhai
+### 1. Kōwhai
 
 | Field | Value |
 |-------|-------|
@@ -379,7 +325,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** Kōwhai — native feature tree; needs dedicated asset.
 
-### 4. Ligustrum
+### 2. Ligustrum
 
 | Field | Value |
 |-------|-------|
@@ -397,7 +343,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** Ligustrum hedge — white flower spikes; needs hedge PNG. White/pale flowers may need manual cutout or a non-white source background.
 
-### 5. Manuka
+### 3. Manuka
 
 | Field | Value |
 |-------|-------|
@@ -415,7 +361,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** Manuka (Leptospermum) — fine-textured native shrub. White/pale flowers may need manual cutout or a non-white source background.
 
-### 6. Michelia Bubbles
+### 4. Michelia Bubbles
 
 | Field | Value |
 |-------|-------|
@@ -433,7 +379,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** Michelia Bubbles — white flowers; manual cutout likely. White/pale flowers may need manual cutout or a non-white source background.
 
-### 7. Murraya
+### 5. Murraya
 
 | Field | Value |
 |-------|-------|
@@ -451,7 +397,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** Murraya hedge — no dedicated PNG.
 
-### 8. Olive Tree
+### 6. Olive Tree
 
 | Field | Value |
 |-------|-------|
@@ -469,7 +415,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** Olive — silvery tree/shrub; no overlay.
 
-### 9. Pittosporum
+### 7. Pittosporum
 
 | Field | Value |
 |-------|-------|
@@ -487,7 +433,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** Pittosporum hedge — common NZ screen; needs dedicated PNG.
 
-### 10. Pohutukawa
+### 8. Pohutukawa
 
 | Field | Value |
 |-------|-------|
@@ -505,7 +451,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** Large coastal tree — poor fit for spot overlay scale without dedicated asset.
 
-### 11. Port Wine Magnolia
+### 9. Port Wine Magnolia
 
 | Field | Value |
 |-------|-------|
@@ -523,7 +469,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** Port Wine Magnolia hedge — no overlay. White/pale flowers may need manual cutout or a non-white source background.
 
-### 12. Rhododendron
+### 10. Rhododendron
 
 | Field | Value |
 |-------|-------|
@@ -541,7 +487,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** Rhododendron shrub — no species rule.
 
-### 13. Rhododendron Vireya
+### 11. Rhododendron Vireya
 
 | Field | Value |
 |-------|-------|
@@ -559,7 +505,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** Vireya rhododendron — no species rule.
 
-### 14. Rose
+### 12. Rose
 
 | Field | Value |
 |-------|-------|
@@ -577,7 +523,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** Rose — cottage shrub; no overlay.
 
-### 15. Westringia
+### 13. Westringia
 
 | Field | Value |
 |-------|-------|
@@ -599,7 +545,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 ## Batch 3 — Later
 
-28 assets.
+24 assets.
 
 ### 1. Ficus Pumila
 
@@ -619,79 +565,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** Ficus Pumila — held; ficus pumilia.png cutout too transparent/weak for production.
 
-### 2. Forest Pansy
-
-| Field | Value |
-|-------|-------|
-| Scientific name | Cercis chinensis |
-| Visual form | `unknown` |
-| Asset type | **spot** |
-| Classification | needs_new_asset |
-| QA status | `needed` |
-| Pale flower risk | No |
-| Manual cutout risk | None |
-| Current fallback | `nikau (/plant-overlays/nikau.png)` |
-| Flags | — |
-
-**Source image guidance:** Full plant visible — whole plant inside frame; Front-on or near front-on angle (not extreme top-down); No pot, no soil, no nursery label; Muted grey-green background (not pure white); Strong edge contrast between foliage and background; No flowers touching the image edge. Match natural garden scale for spot overlay.
-
-**Notes:** Forest Pansy — small tree.
-
-### 3. Foxtail Agave
-
-| Field | Value |
-|-------|-------|
-| Scientific name | Agave attenuata |
-| Visual form | `unknown` |
-| Asset type | **spot** |
-| Classification | needs_new_asset |
-| QA status | `needed` |
-| Pale flower risk | No |
-| Manual cutout risk | None |
-| Current fallback | `lomandra (/plant-overlays/lomandra.png)` |
-| Flags | — |
-
-**Source image guidance:** Full plant visible — whole plant inside frame; Front-on or near front-on angle (not extreme top-down); No pot, no soil, no nursery label; Muted grey-green background (not pure white); Strong edge contrast between foliage and background; No flowers touching the image edge. Match natural garden scale for spot overlay.
-
-**Notes:** Foxtail Agave — succulent rosette; no overlay.
-
-### 4. Hardenbergia
-
-| Field | Value |
-|-------|-------|
-| Scientific name | Hardenbergia violacea |
-| Visual form | `unknown` |
-| Asset type | **spot** |
-| Classification | needs_new_asset |
-| QA status | `needed` |
-| Pale flower risk | No |
-| Manual cutout risk | None |
-| Current fallback | `star-jasmine (/plant-overlays/star-jasmine.png)` |
-| Flags | — |
-
-**Source image guidance:** Full plant visible — whole plant inside frame; Front-on or near front-on angle (not extreme top-down); No pot, no soil, no nursery label; Muted grey-green background (not pure white); Strong edge contrast between foliage and background; No flowers touching the image edge. Match natural garden scale for spot overlay.
-
-**Notes:** Hardenbergia — climber; no overlay.
-
-### 5. Hen and Chicken Fern
-
-| Field | Value |
-|-------|-------|
-| Scientific name | Asplenium bulbiferum |
-| Visual form | `fern` |
-| Asset type | **spot** |
-| Classification | needs_new_asset |
-| QA status | `needed` |
-| Pale flower risk | No |
-| Manual cutout risk | None |
-| Current fallback | `nikau (/plant-overlays/nikau.png)` |
-| Flags | — |
-
-**Source image guidance:** Full plant visible — whole plant inside frame; Front-on or near front-on angle (not extreme top-down); No pot, no soil, no nursery label; Muted grey-green background (not pure white); Strong edge contrast between foliage and background; No flowers touching the image edge. Fronds arching from crown; soft edges need strong background contrast.
-
-**Notes:** Hen and Chicken Fern — ground fern; not tree-fern scale.
-
-### 6. Iresine
+### 2. Iresine
 
 | Field | Value |
 |-------|-------|
@@ -709,7 +583,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** Iresine — colourful foliage perennial; low priority.
 
-### 7. Japanese Maple
+### 3. Japanese Maple
 
 | Field | Value |
 |-------|-------|
@@ -727,7 +601,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** Japanese Maple — deciduous feature; large tree overlay.
 
-### 8. Lemon Tree
+### 4. Lemon Tree
 
 | Field | Value |
 |-------|-------|
@@ -745,7 +619,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** Citrus — tree overlay needed. White/pale flowers may need manual cutout or a non-white source background.
 
-### 9. Lime Tree
+### 5. Lime Tree
 
 | Field | Value |
 |-------|-------|
@@ -763,7 +637,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** Citrus — tree overlay needed. White/pale flowers may need manual cutout or a non-white source background.
 
-### 10. Magnolia (Deciduous)
+### 6. Magnolia (Deciduous)
 
 | Field | Value |
 |-------|-------|
@@ -781,7 +655,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** Deciduous magnolia — large tree overlay. White/pale flowers may need manual cutout or a non-white source background.
 
-### 11. Magnolia (Evergreen)
+### 7. Magnolia (Evergreen)
 
 | Field | Value |
 |-------|-------|
@@ -799,7 +673,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** Evergreen magnolia — large tree overlay. White/pale flowers may need manual cutout or a non-white source background.
 
-### 12. Mandarin Tree
+### 8. Mandarin Tree
 
 | Field | Value |
 |-------|-------|
@@ -817,7 +691,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** Citrus — tree overlay needed. White/pale flowers may need manual cutout or a non-white source background.
 
-### 13. Meyer Lemon
+### 9. Meyer Lemon
 
 | Field | Value |
 |-------|-------|
@@ -835,7 +709,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** lemon white.png on disk, unregistered. Citrus tree-scale overlay needed. White/pale flowers may need manual cutout or a non-white source background.
 
-### 14. Mondo Grass
+### 10. Mondo Grass
 
 | Field | Value |
 |-------|-------|
@@ -853,7 +727,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** Mondo Grass — too low for spot overlay.
 
-### 15. Orange Trumpet Vine
+### 11. Orange Trumpet Vine
 
 | Field | Value |
 |-------|-------|
@@ -871,7 +745,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** Orange Trumpet Vine — climber; no overlay.
 
-### 16. Pink Rhaphiolepis
+### 12. Pink Rhaphiolepis
 
 | Field | Value |
 |-------|-------|
@@ -889,7 +763,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** Pink Rhaphiolepis — shrub; no overlay.
 
-### 17. Pūriri
+### 13. Pūriri
 
 | Field | Value |
 |-------|-------|
@@ -907,7 +781,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** Large native tree — defer dedicated asset.
 
-### 18. Rain Lily
+### 14. Rain Lily
 
 | Field | Value |
 |-------|-------|
@@ -925,7 +799,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** Rain Lily — small bulb; poor overlay scale.
 
-### 19. Redbud
+### 15. Redbud
 
 | Field | Value |
 |-------|-------|
@@ -943,7 +817,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** Redbud — small flowering tree. White/pale flowers may need manual cutout or a non-white source background.
 
-### 20. Silver Bush
+### 16. Silver Bush
 
 | Field | Value |
 |-------|-------|
@@ -961,7 +835,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** Silver Bush — white flowers; low shrub. White/pale flowers may need manual cutout or a non-white source background.
 
-### 21. Silver Falls
+### 17. Silver Falls
 
 | Field | Value |
 |-------|-------|
@@ -979,7 +853,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** Silver Falls — trailing groundcover; poor overlay scale.
 
-### 22. Silver Lady Fern
+### 18. Silver Lady Fern
 
 | Field | Value |
 |-------|-------|
@@ -997,7 +871,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** Silver Lady Fern — shade fern; no overlay.
 
-### 23. Smoke Bush
+### 19. Smoke Bush
 
 | Field | Value |
 |-------|-------|
@@ -1015,7 +889,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** Smoke Bush — large shrub/small tree.
 
-### 24. Spanish Shawl
+### 20. Spanish Shawl
 
 | Field | Value |
 |-------|-------|
@@ -1033,7 +907,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** Spanish Shawl — groundcover; low priority.
 
-### 25. Tecomanthe
+### 21. Tecomanthe
 
 | Field | Value |
 |-------|-------|
@@ -1051,7 +925,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** Tecomanthe — native climber; no overlay.
 
-### 26. Tractor Seat Plant
+### 22. Tractor Seat Plant
 
 | Field | Value |
 |-------|-------|
@@ -1069,7 +943,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** Tractor Seat — bold leaf perennial; low overlay priority.
 
-### 27. Virginia Creeper
+### 23. Virginia Creeper
 
 | Field | Value |
 |-------|-------|
@@ -1087,7 +961,7 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 **Notes:** Virginia Creeper — climber; no overlay.
 
-### 28. Xanadu
+### 24. Xanadu
 
 | Field | Value |
 |-------|-------|
@@ -1111,15 +985,13 @@ Pale flowers may branch to `manual_cutout_needed` before `approved`.
 
 ## Manual cutout / pale flower risk track
 
-Plants requiring extra care when shooting or processing (18 items). Many also appear in batches above.
+Plants requiring extra care when shooting or processing (16 items). Many also appear in batches above.
 
 | Plant | Batch | Cutout risk | Pale flowers | QA status | Fallback key |
 |-------|------:|-------------|--------------|-----------|--------------|
 | Agapanthus | 1 | likely | Yes | `needed` | `lomandra` |
 | Pratia | 1 | likely | Yes | `needed` | `groundcover` |
-| Fortnight Lily (Dietes) | 1 | likely | Yes | `needed` | `lomandra` |
 | Gardenia | 1 | high | Yes | `manual_cutout_needed` | `camellia` |
-| Hellebore (Winter Rose) | 2 | likely | Yes | `needed` | `camellia` |
 | Ligustrum | 2 | likely | Yes | `needed` | `hedge` |
 | Manuka | 2 | likely | Yes | `needed` | `camellia` |
 | Michelia Bubbles | 2 | likely | Yes | `needed` | `camellia` |
