@@ -8,6 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "test:visual-prompts": "npx tsx scripts/testVisualIdeaPrompts.ts",
+    "validate:overlay-paths": "tsx scripts/validateOverlayPaths.ts",
+    "export:plant-catalog": "tsx scripts/exportPlantCatalog.ts",
+    "generate:coverage-doc": "tsx scripts/generateCoverageMarkdown.ts",
+    "generate:production-checklist": "tsx scripts/generateProductionChecklist.ts",
     "process:plant-overlays": "tsx scripts/processPlantOverlayAssets.ts"
   },
   "dependencies": {

@@ -11,198 +11,13 @@
  */
 
 import { useState, useRef, useCallback } from 'react'
-
-// ---------------------------------------------------------------------------
-// Overlay definitions
-// ---------------------------------------------------------------------------
-
-interface OverlayDef {
-  id: string
-  label: string
-  /** Filename under public/plant-overlays/ */
-  file: string
-  /** Sensible starting width in px */
-  defaultWidth: number
-  /** viewBox aspect ratio (w / h) for height-auto sizing guidance */
-  aspect: number
-}
-
-function overlaySrc(file: string): string {
-  return `/plant-overlays/${encodeURIComponent(file)}`
-}
-
-const OVERLAYS: OverlayDef[] = [
-  // ── Processed PNGs (background-removed) ──────────────────────────────────
-  {
-    id: 'bird-of-paradise',
-    label: 'Bird of Paradise',
-    file: 'birds of paradies white.png',
-    defaultWidth: 260,
-    aspect: 1,
-  },
-  {
-    id: 'buxus',
-    label: 'Buxus',
-    file: 'buxus.png',
-    defaultWidth: 200,
-    aspect: 1,
-  },
-  {
-    id: 'buxus-hedge-v2',
-    label: 'Buxus Hedge v2',
-    file: 'buxus-hedge-v2.png',
-    defaultWidth: 320,
-    aspect: 1,
-  },
-  {
-    id: 'buxus-hedge',
-    label: 'Buxus Hedge',
-    file: 'buxus-hedge.png',
-    defaultWidth: 340,
-    aspect: 1,
-  },
-  {
-    id: 'camellia',
-    label: 'Camellia',
-    file: 'camellia_clean_transparent.png',
-    defaultWidth: 200,
-    aspect: 1,
-  },
-  {
-    id: 'citrus',
-    label: 'Citrus / Lemon Tree',
-    file: 'lemon white.png',
-    defaultWidth: 300,
-    aspect: 1,
-  },
-  {
-    id: 'clivia',
-    label: 'Clivia',
-    file: 'clivia white.png',
-    defaultWidth: 200,
-    aspect: 1,
-  },
-  {
-    id: 'flax',
-    label: 'Flax',
-    file: 'flax.png',
-    defaultWidth: 240,
-    aspect: 1,
-  },
-  {
-    id: 'gardenia',
-    label: 'Gardenia',
-    file: 'Gardenia white.png',
-    defaultWidth: 200,
-    aspect: 1,
-  },
-  {
-    id: 'gardenia-v2',
-    label: 'Gardenia v2',
-    file: 'gardenia-v2.png',
-    defaultWidth: 200,
-    aspect: 1,
-  },
-  {
-    id: 'ficus-tuffy-hedge',
-    label: 'Ficus Tuffy Hedge',
-    file: 'ficus-tuffy-hedge.png',
-    defaultWidth: 340,
-    aspect: 1,
-  },
-  {
-    id: 'griselinia-hedge',
-    label: 'Griselinia Hedge',
-    file: 'griselinia-hedge.png',
-    defaultWidth: 340,
-    aspect: 1,
-  },
-  {
-    id: 'groundcover',
-    label: 'Groundcover',
-    file: 'groundcover.png',
-    defaultWidth: 160,
-    aspect: 1,
-  },
-  {
-    id: 'hebe',
-    label: 'Hebe',
-    file: 'hebe white.png',
-    defaultWidth: 180,
-    aspect: 1,
-  },
-  {
-    id: 'hydrangea',
-    label: 'Hydrangea',
-    file: 'Hydrangea white.png',
-    defaultWidth: 220,
-    aspect: 1,
-  },
-  {
-    id: 'lavender',
-    label: 'Lavender',
-    file: 'lavender white.png',
-    defaultWidth: 180,
-    aspect: 1,
-  },
-  {
-    id: 'lomandra',
-    label: 'Lomandra',
-    file: 'lomandra.png',
-    defaultWidth: 220,
-    aspect: 4576 / 3056,
-  },
-  {
-    id: 'nikau',
-    label: 'Nikau',
-    file: 'Nikau white.png',
-    defaultWidth: 320,
-    aspect: 1,
-  },
-  {
-    id: 'ponga',
-    label: 'Ponga',
-    file: 'ponga.png',
-    defaultWidth: 280,
-    aspect: 1,
-  },
-  {
-    id: 'renga-renga',
-    label: 'Renga Renga Lily',
-    file: 'Renga renga white.png',
-    defaultWidth: 220,
-    aspect: 1,
-  },
-  {
-    id: 'star-jasmine',
-    label: 'Star Jasmine',
-    file: 'star jasmine white.png',
-    defaultWidth: 260,
-    aspect: 1,
-  },
-  // ── SVG placeholders ─────────────────────────────────────────────────────
-  {
-    id: 'strappy-clump',
-    label: 'Strappy Clump (SVG)',
-    file: 'strappy-clump.svg',
-    defaultWidth: 160,
-    aspect: 200 / 250,
-  },
-  {
-    id: 'rounded-shrub',
-    label: 'Rounded Shrub (SVG)',
-    file: 'rounded-shrub.svg',
-    defaultWidth: 200,
-    aspect: 200 / 230,
-  },
-  {
-    id: 'hedge-section',
-    label: 'Hedge Section (SVG)',
-    file: 'hedge-section.svg',
-    defaultWidth: 300,
-    aspect: 320 / 200,
-  },
-]
+import {
+  DEFAULT_DEV_OVERLAY,
+  DEV_OVERLAY_GROUPS,
+  devOverlaySrc,
+  getDevOverlaysByGroup,
+  type DevOverlayDef,
+} from '../../lib/visualiser/devOverlayAssets'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -215,16 +30,18 @@ interface Pos { x: number; y: number }
 // ---------------------------------------------------------------------------
 
 export default function DevOverlayPage() {
-  const [selected, setSelected]   = useState<OverlayDef>(OVERLAYS[0])
+  const [selected, setSelected]   = useState<DevOverlayDef>(DEFAULT_DEV_OVERLAY)
   const [pos,      setPos]        = useState<Pos>({ x: 180, y: 140 })
-  const [width,    setWidth]      = useState(OVERLAYS[0].defaultWidth)
+  const [width,    setWidth]      = useState(DEFAULT_DEV_OVERLAY.defaultWidth)
   const [bgSrc,    setBgSrc]      = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
 
   const dragOrigin = useRef({ clientX: 0, clientY: 0, posX: 0, posY: 0 })
 
+  const allOverlays = DEV_OVERLAY_GROUPS.flatMap((g) => getDevOverlaysByGroup(g.key))
+
   // ── Overlay selection ────────────────────────────────────────────────────
-  function selectOverlay(ov: OverlayDef) {
+  function selectOverlay(ov: DevOverlayDef) {
     setSelected(ov)
     setWidth(ov.defaultWidth)
     setPos({ x: 180, y: 140 })
@@ -277,23 +94,38 @@ export default function DevOverlayPage() {
       {/* ── Controls ── */}
       <div style={styles.controls}>
 
-        {/* Overlay picker */}
-        <div style={styles.controlGroup}>
+        {/* Overlay picker — grouped */}
+        <div style={{ ...styles.controlGroup, flex: '1 1 100%' }}>
           <span style={styles.label}>Overlay</span>
-          <div style={styles.row}>
-            {OVERLAYS.map((ov) => (
-              <button
-                key={ov.id}
-                onClick={() => selectOverlay(ov)}
-                style={{
-                  ...styles.btn,
-                  ...(selected.id === ov.id ? styles.btnActive : {}),
-                }}
-              >
-                {ov.label}
-              </button>
-            ))}
-          </div>
+          {DEV_OVERLAY_GROUPS.map((group) => {
+            const items = getDevOverlaysByGroup(group.key)
+            if (items.length === 0) return null
+            return (
+              <div key={group.key} style={styles.overlaySection}>
+                <div style={styles.sectionHeader}>
+                  <span style={styles.sectionTitle}>{group.title}</span>
+                  <span style={styles.sectionDesc}>{group.description}</span>
+                </div>
+                <div style={styles.row}>
+                  {items.map((ov) => (
+                    <button
+                      key={ov.id}
+                      type="button"
+                      onClick={() => selectOverlay(ov)}
+                      style={{
+                        ...styles.btn,
+                        ...(ov.group === 'new_batch' ? styles.btnNewBatch : {}),
+                        ...(selected.id === ov.id ? styles.btnActive : {}),
+                      }}
+                      title={ov.file}
+                    >
+                      {ov.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )
+          })}
         </div>
 
         {/* Size slider */}
@@ -320,6 +152,7 @@ export default function DevOverlayPage() {
           </label>
           {bgSrc && (
             <button
+              type="button"
               onClick={() => setBgSrc(null)}
               style={{ ...styles.btn, marginLeft: 8, background: '#3a1010' }}
             >
@@ -349,7 +182,8 @@ export default function DevOverlayPage() {
         {/* Plant overlay */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={overlaySrc(selected.file)}
+          key={`${selected.id}-${selected.cacheBust ?? 'v1'}`}
+          src={devOverlaySrc(selected.file, selected.cacheBust)}
           alt={selected.label}
           draggable={false}
           style={{
@@ -372,16 +206,18 @@ export default function DevOverlayPage() {
 
         {/* Status bar */}
         <div style={styles.statusBar}>
-          {selected.label} &nbsp;·&nbsp; {width} px wide &nbsp;·&nbsp;
+          {selected.label} &nbsp;·&nbsp; <span style={styles.mono}>{selected.file}</span> &nbsp;·&nbsp;
+          {width} px wide &nbsp;·&nbsp;
           pos ({Math.round(pos.x)}, {Math.round(pos.y)}) &nbsp;·&nbsp; drag to place
         </div>
       </div>
 
       <p style={styles.footer}>
         Smoke test only — no saving, no database, no fal.ai calls.
-        {OVERLAYS.filter((ov) => ov.file.endsWith('.png')).length} transparent PNG overlays
-        plus {OVERLAYS.filter((ov) => ov.file.endsWith('.svg')).length} SVG placeholders.
-        Assets live in <code style={{ color: '#9090c0' }}>public/plant-overlays/</code>
+        {' '}{allOverlays.filter((ov) => ov.file.endsWith('.png')).length} PNG overlays
+        plus {allOverlays.filter((ov) => ov.file.endsWith('.svg')).length} SVG placeholders.
+        Assets live in <code style={{ color: '#9090c0' }}>public/plant-overlays/</code>.
+        New batch items are not in the production Visualise selector until manually approved and wired.
       </p>
     </div>
   )
@@ -444,6 +280,29 @@ const styles = {
     fontWeight: 600,
   } as React.CSSProperties,
 
+  overlaySection: {
+    marginBottom: 14,
+  } as React.CSSProperties,
+
+  sectionHeader: {
+    display: 'flex',
+    flexWrap: 'wrap' as const,
+    alignItems: 'baseline',
+    gap: '6px 12px',
+    marginBottom: 8,
+  } as React.CSSProperties,
+
+  sectionTitle: {
+    fontSize: 13,
+    fontWeight: 700,
+    color: '#d0d0e8',
+  } as React.CSSProperties,
+
+  sectionDesc: {
+    fontSize: 12,
+    color: '#707090',
+  } as React.CSSProperties,
+
   row: {
     display: 'flex',
     flexWrap: 'wrap' as const,
@@ -463,9 +322,15 @@ const styles = {
     transition: 'background 0.15s',
   } as React.CSSProperties,
 
+  btnNewBatch: {
+    border: '1px solid #3d5a80',
+    background: '#1a2438',
+  } as React.CSSProperties,
+
   btnActive: {
     background: '#4ade80',
     color: '#0a1a0a',
+    border: '1px solid #4ade80',
   } as React.CSSProperties,
 
   slider: {
@@ -537,6 +402,10 @@ const styles = {
     padding: '4px 12px',
     pointerEvents: 'none' as const,
     zIndex: 20,
+    maxWidth: 'calc(100% - 20px)',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap' as const,
   } as React.CSSProperties,
 
   footer: {

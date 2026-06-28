@@ -1,0 +1,1206 @@
+{
+  "exportedAt": "2026-06-27T22:47:17.426Z",
+  "count": 120,
+  "plants": [
+    {
+      "id": 44,
+      "common_name": "Ake-Ake",
+      "scientific_name": "Dodonaea viscosa",
+      "plant_type": "Tree",
+      "task_category": "Evergreen",
+      "flower_color": "None",
+      "is_native": true,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 21,
+      "common_name": "Apple Tree",
+      "scientific_name": "Malus domestica",
+      "plant_type": "Fruit",
+      "task_category": "Deciduous",
+      "flower_color": "White",
+      "is_native": false,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 25,
+      "common_name": "Avocado",
+      "scientific_name": "Persea americana",
+      "plant_type": "Fruit",
+      "task_category": "Evergreen",
+      "flower_color": "None",
+      "is_native": false,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 114,
+      "common_name": "Begonia",
+      "scientific_name": "Begonia x semperflorens",
+      "plant_type": "Flower",
+      "task_category": "Flowering Shrub",
+      "flower_color": "Pink",
+      "is_native": false,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 68,
+      "common_name": "Bird Of Paradise",
+      "scientific_name": "Strelitzia reginae",
+      "plant_type": "Flower",
+      "task_category": "Flowering Shrub",
+      "flower_color": "Orange",
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 28,
+      "common_name": "Blueberry",
+      "scientific_name": "Vaccinium",
+      "plant_type": "Fruit",
+      "task_category": "Deciduous",
+      "flower_color": "White",
+      "is_native": false,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 122,
+      "common_name": "Boston Ivy",
+      "scientific_name": "Parthenocissus tricuspidata",
+      "plant_type": "Climber",
+      "task_category": "Climber",
+      "flower_color": null,
+      "is_native": false,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 30,
+      "common_name": "Bottlebrush",
+      "scientific_name": "Callistemon",
+      "plant_type": "Shrub",
+      "task_category": "Flowering Shrub",
+      "flower_color": "Red",
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 89,
+      "common_name": "Box Elder",
+      "scientific_name": "Acer negundo",
+      "plant_type": "Tree",
+      "task_category": "Deciduous",
+      "flower_color": "White",
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 115,
+      "common_name": "Bromeliad",
+      "scientific_name": "Alcantarea imperialis",
+      "plant_type": "Shrub",
+      "task_category": "Flowering Shrub",
+      "flower_color": "Pink",
+      "is_native": false,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 29,
+      "common_name": "Buxus (Box Hedge)",
+      "scientific_name": "Buxus sempervirens",
+      "plant_type": "Hedge",
+      "task_category": "Hedge",
+      "flower_color": "None",
+      "is_native": false,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 32,
+      "common_name": "Cabbage Tree",
+      "scientific_name": "Cordyline australis",
+      "plant_type": "Tree",
+      "task_category": "Evergreen",
+      "flower_color": "White",
+      "is_native": true,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 71,
+      "common_name": "Camellia",
+      "scientific_name": "Camellia japonica",
+      "plant_type": "Shrub",
+      "task_category": "Flowering Shrub",
+      "flower_color": "Pink",
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 134,
+      "common_name": "Canna Lily",
+      "scientific_name": "Canna indica",
+      "plant_type": "Perennial",
+      "task_category": "Perennial",
+      "flower_color": "Red",
+      "is_native": false,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 3,
+      "common_name": "Cherry Tree",
+      "scientific_name": null,
+      "plant_type": "Tree",
+      "task_category": "Deciduous",
+      "flower_color": "Pink",
+      "is_native": false,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 6,
+      "common_name": "Clivia",
+      "scientific_name": "Clivia miniata",
+      "plant_type": "Flower",
+      "task_category": "Flowering Shrub",
+      "flower_color": null,
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 131,
+      "common_name": "Cordyline Stricta",
+      "scientific_name": "Cordyline stricta",
+      "plant_type": "Perennial",
+      "task_category": "Perennial",
+      "flower_color": "Purple",
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 37,
+      "common_name": "Corokia Geentys Green",
+      "scientific_name": "Corokia cotoneaster",
+      "plant_type": "Hedge",
+      "task_category": "Hedge",
+      "flower_color": "Yellow",
+      "is_native": true,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 92,
+      "common_name": "Corokia Virgata",
+      "scientific_name": "Corokia virgata",
+      "plant_type": "Hedge / Shrub",
+      "task_category": "Hedge",
+      "flower_color": "Pink",
+      "is_native": true,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 94,
+      "common_name": "Crepe Myrtle",
+      "scientific_name": "Lagerstroemia indica",
+      "plant_type": "Tree / Shrub",
+      "task_category": "Deciduous",
+      "flower_color": null,
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 36,
+      "common_name": "Dogwood",
+      "scientific_name": "Cornus florida",
+      "plant_type": "Tree",
+      "task_category": "Deciduous",
+      "flower_color": "White",
+      "is_native": false,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 96,
+      "common_name": "English Holly",
+      "scientific_name": "Ilex aquifolium",
+      "plant_type": "Tree / Hedge",
+      "task_category": "Hedge",
+      "flower_color": "Pink",
+      "is_native": false,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 105,
+      "common_name": "English Oak",
+      "scientific_name": "Quercus robur",
+      "plant_type": "Tree",
+      "task_category": "Deciduous",
+      "flower_color": "White",
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 87,
+      "common_name": "Erman's Birch",
+      "scientific_name": "Betula ermanii",
+      "plant_type": "Tree",
+      "task_category": "Deciduous",
+      "flower_color": "White",
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 17,
+      "common_name": "Escallonia",
+      "scientific_name": "Escallonia exoniensis",
+      "plant_type": "Hedge",
+      "task_category": "Hedge",
+      "flower_color": "White",
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 72,
+      "common_name": "Eugenia",
+      "scientific_name": "Eugenia",
+      "plant_type": "Hedge",
+      "task_category": "Hedge",
+      "flower_color": "White",
+      "is_native": false,
+      "maintenance_level": "High"
+    },
+    {
+      "id": 93,
+      "common_name": "European Beech",
+      "scientific_name": "Fagus sylvatica",
+      "plant_type": "Tree",
+      "task_category": "Deciduous",
+      "flower_color": "White",
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 83,
+      "common_name": "European Hornbeam",
+      "scientific_name": "Carpinus betulus",
+      "plant_type": "Tree / Hedge",
+      "task_category": "Deciduous",
+      "flower_color": "White",
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 47,
+      "common_name": "Evergreen Ash",
+      "scientific_name": "Fraxinus griffithii",
+      "plant_type": "Tree",
+      "task_category": "Evergreen",
+      "flower_color": "None",
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 46,
+      "common_name": "Feijoa",
+      "scientific_name": "Acca sellowiana",
+      "plant_type": "Fruit",
+      "task_category": "Evergreen",
+      "flower_color": "Red",
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 137,
+      "common_name": "Ficus Pumila",
+      "scientific_name": "Ficus pumila",
+      "plant_type": "Climber",
+      "task_category": "Climber",
+      "flower_color": null,
+      "is_native": false,
+      "maintenance_level": "High"
+    },
+    {
+      "id": 76,
+      "common_name": "Ficus Tuffi",
+      "scientific_name": "Ficus Tuffi",
+      "plant_type": "Hedge",
+      "task_category": "Hedge",
+      "flower_color": "None",
+      "is_native": false,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 88,
+      "common_name": "Flame Tree",
+      "scientific_name": "Brachychiton acerifolia",
+      "plant_type": "Tree",
+      "task_category": "Deciduous",
+      "flower_color": "White",
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 40,
+      "common_name": "Flax Lily",
+      "scientific_name": "Dianella",
+      "plant_type": "Shrub",
+      "task_category": "Flowering Shrub",
+      "flower_color": "Blue",
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 33,
+      "common_name": "Forest Pansy",
+      "scientific_name": "Cercis chinensis",
+      "plant_type": "Tree",
+      "task_category": "Deciduous",
+      "flower_color": "None",
+      "is_native": false,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 43,
+      "common_name": "Fortnight Lily (Dietes)",
+      "scientific_name": "Dietes grandiflora",
+      "plant_type": "Flower",
+      "task_category": "Flowering Shrub",
+      "flower_color": "White",
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 133,
+      "common_name": "Foxtail Agave",
+      "scientific_name": "Agave attenuata",
+      "plant_type": "Succulent",
+      "task_category": "Perennial",
+      "flower_color": "Yellow",
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 147,
+      "common_name": "Gardenia",
+      "scientific_name": "Gardeniat jasminoides",
+      "plant_type": "Flower",
+      "task_category": "Flowering Shrub",
+      "flower_color": "White",
+      "is_native": false,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 4,
+      "common_name": "Griselinia",
+      "scientific_name": "Griselinia littoralis",
+      "plant_type": "Hedge",
+      "task_category": "Hedge",
+      "flower_color": "None",
+      "is_native": true,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 120,
+      "common_name": "Hardenbergia",
+      "scientific_name": "Hardenbergia violacea",
+      "plant_type": "Climber",
+      "task_category": "Climber",
+      "flower_color": null,
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 50,
+      "common_name": "Hebe (Koromiko)",
+      "scientific_name": "Hebe koromiko",
+      "plant_type": "Shrub",
+      "task_category": "Flowering Shrub",
+      "flower_color": "Purple",
+      "is_native": true,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 151,
+      "common_name": "Hellebore (Winter Rose)",
+      "scientific_name": "Helleborus x hybridus",
+      "plant_type": "Perennial",
+      "task_category": "Perennial",
+      "flower_color": "White",
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 23,
+      "common_name": "Hen and Chicken Fern",
+      "scientific_name": "Asplenium bulbiferum",
+      "plant_type": "Fern",
+      "task_category": "Perennial",
+      "flower_color": "None",
+      "is_native": true,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 145,
+      "common_name": "Hibiscus",
+      "scientific_name": "Hibiscus rosa-sinensis",
+      "plant_type": "Shrub",
+      "task_category": "Flowering Shrub",
+      "flower_color": null,
+      "is_native": false,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 85,
+      "common_name": "Himalayan Birch",
+      "scientific_name": "Betula utilis",
+      "plant_type": "Tree",
+      "task_category": "Deciduous",
+      "flower_color": "White",
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 5,
+      "common_name": "Hydrangea",
+      "scientific_name": "Hydrangea macrophylla",
+      "plant_type": "Shrub",
+      "task_category": "Flowering Shrub",
+      "flower_color": null,
+      "is_native": false,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 132,
+      "common_name": "Iresine",
+      "scientific_name": "Iresine herbstii",
+      "plant_type": "Perennial",
+      "task_category": "Perennial",
+      "flower_color": null,
+      "is_native": false,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 77,
+      "common_name": "Japanese Box",
+      "scientific_name": "Buxus microphylla",
+      "plant_type": "Hedge / Shrub",
+      "task_category": "Hedge",
+      "flower_color": null,
+      "is_native": false,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 18,
+      "common_name": "Japanese Maple",
+      "scientific_name": "Acer palmatum",
+      "plant_type": "Tree",
+      "task_category": "Deciduous",
+      "flower_color": "None",
+      "is_native": false,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 39,
+      "common_name": "Kahikatea",
+      "scientific_name": "Dacrycarpus",
+      "plant_type": "Tree",
+      "task_category": "Evergreen",
+      "flower_color": "None",
+      "is_native": true,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 97,
+      "common_name": "Karaka",
+      "scientific_name": "Corynocarpus laevigatus",
+      "plant_type": "Tree",
+      "task_category": "Evergreen",
+      "flower_color": "Yellow",
+      "is_native": true,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 19,
+      "common_name": "Kauri",
+      "scientific_name": "Agathis australis",
+      "plant_type": "Tree",
+      "task_category": "Evergreen",
+      "flower_color": "None",
+      "is_native": true,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 52,
+      "common_name": "Kentia Palm",
+      "scientific_name": "Howea forsteriana",
+      "plant_type": "Palm",
+      "task_category": "Palm",
+      "flower_color": "None",
+      "is_native": false,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 22,
+      "common_name": "King Palm",
+      "scientific_name": "Archontophoenix",
+      "plant_type": "Palm",
+      "task_category": "Palm",
+      "flower_color": "None",
+      "is_native": false,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 101,
+      "common_name": "Kohekohe",
+      "scientific_name": "Dysoxylum spectabile",
+      "plant_type": "Tree",
+      "task_category": "Evergreen",
+      "flower_color": "Yellow",
+      "is_native": true,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 112,
+      "common_name": "Kōwhai",
+      "scientific_name": "Sophora chathamica",
+      "plant_type": "Tree",
+      "task_category": "Evergreen",
+      "flower_color": "Yellow",
+      "is_native": true,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 51,
+      "common_name": "Lacebark",
+      "scientific_name": "Hoheria populnea",
+      "plant_type": "Tree",
+      "task_category": "Evergreen",
+      "flower_color": "White",
+      "is_native": true,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 91,
+      "common_name": "Lancewood",
+      "scientific_name": "Pseudopanax crassifolius",
+      "plant_type": "Tree",
+      "task_category": "Evergreen",
+      "flower_color": "Yellow",
+      "is_native": true,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 54,
+      "common_name": "Lavender",
+      "scientific_name": "Lavandula",
+      "plant_type": "Shrub",
+      "task_category": "Flowering Shrub",
+      "flower_color": "Purple",
+      "is_native": false,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 55,
+      "common_name": "Lemon Tree",
+      "scientific_name": "Citrus limon",
+      "plant_type": "Fruit",
+      "task_category": "Citrus",
+      "flower_color": "White",
+      "is_native": false,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 58,
+      "common_name": "Ligustrum",
+      "scientific_name": "Ligustrum rotundifolium",
+      "plant_type": "Hedge",
+      "task_category": "Hedge",
+      "flower_color": "White",
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 56,
+      "common_name": "Lime Tree",
+      "scientific_name": "Citrus aurantiifolia",
+      "plant_type": "Fruit",
+      "task_category": "Citrus",
+      "flower_color": "White",
+      "is_native": false,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 108,
+      "common_name": "Liriope (Lilyturf)",
+      "scientific_name": "Liriope muscari",
+      "plant_type": "Groundcover / Grass",
+      "task_category": "Perennial",
+      "flower_color": "Pink",
+      "is_native": false,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 75,
+      "common_name": "Lomandra",
+      "scientific_name": "Lomandra Tanika",
+      "plant_type": "Shrub",
+      "task_category": "Flowering Shrub",
+      "flower_color": "White",
+      "is_native": false,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 106,
+      "common_name": "London Plane Tree",
+      "scientific_name": "Platanus orientalis",
+      "plant_type": "Tree",
+      "task_category": "Deciduous",
+      "flower_color": "White",
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 59,
+      "common_name": "Magnolia (Deciduous)",
+      "scientific_name": "Magnolia grandiflora",
+      "plant_type": "Tree",
+      "task_category": "Deciduous",
+      "flower_color": "White",
+      "is_native": false,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 135,
+      "common_name": "Magnolia (Evergreen)",
+      "scientific_name": "Magnolia grandiflora",
+      "plant_type": "Tree",
+      "task_category": "Evergreen",
+      "flower_color": "White",
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 60,
+      "common_name": "Mandarin Tree",
+      "scientific_name": "Citrus reticulata",
+      "plant_type": "Fruit",
+      "task_category": "Citrus",
+      "flower_color": "White",
+      "is_native": false,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 128,
+      "common_name": "Manuka",
+      "scientific_name": "Leptospermum scoparium",
+      "plant_type": "Shrub",
+      "task_category": "Flowering Shrub",
+      "flower_color": "White",
+      "is_native": true,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 84,
+      "common_name": "Mexican Alder",
+      "scientific_name": "Alnus jorullensis",
+      "plant_type": "Tree",
+      "task_category": "Deciduous",
+      "flower_color": "White",
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 8,
+      "common_name": "Meyer Lemon",
+      "scientific_name": "Citrus x meyeri",
+      "plant_type": "Fruit",
+      "task_category": "Citrus",
+      "flower_color": null,
+      "is_native": false,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 136,
+      "common_name": "Michelia Bubbles",
+      "scientific_name": "Michelia figo x",
+      "plant_type": "Shrub",
+      "task_category": "Flowering Shrub",
+      "flower_color": "White",
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 35,
+      "common_name": "Mirror Bush",
+      "scientific_name": "Coprosma repens",
+      "plant_type": "Shrub",
+      "task_category": "Flowering Shrub",
+      "flower_color": "None",
+      "is_native": true,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 110,
+      "common_name": "Mondo Grass",
+      "scientific_name": "Ophiopogon japonicus",
+      "plant_type": "Groundcover",
+      "task_category": "Perennial",
+      "flower_color": null,
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 109,
+      "common_name": "Monstera (Swiss Cheese Plant)",
+      "scientific_name": "Monstera deliciosa",
+      "plant_type": "Indoor / Tropical",
+      "task_category": "Evergreen",
+      "flower_color": "Pink",
+      "is_native": false,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 90,
+      "common_name": "Monterey Cypress",
+      "scientific_name": "Cupressus macrocarpa",
+      "plant_type": "Tree",
+      "task_category": "Evergreen",
+      "flower_color": "White",
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 62,
+      "common_name": "Muehlenbeckia",
+      "scientific_name": "Muehlenbeckia complexa",
+      "plant_type": "Groundcover",
+      "task_category": "Perennial",
+      "flower_color": "None",
+      "is_native": true,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 116,
+      "common_name": "Murraya",
+      "scientific_name": "Murraya paniculata",
+      "plant_type": "Hedge",
+      "task_category": "Hedge",
+      "flower_color": "Pink",
+      "is_native": false,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 15,
+      "common_name": "Nikau Palm",
+      "scientific_name": "Palm",
+      "plant_type": "Palm",
+      "task_category": "Palm",
+      "flower_color": "Pink",
+      "is_native": true,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 81,
+      "common_name": "Norfolk Island Pine",
+      "scientific_name": "Araucaria heterophylla",
+      "plant_type": "Tree",
+      "task_category": "Evergreen",
+      "flower_color": "White",
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 12,
+      "common_name": "NZ Flax",
+      "scientific_name": "Phormium tenax",
+      "plant_type": "Flax",
+      "task_category": "Perennial",
+      "flower_color": "Red",
+      "is_native": true,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 63,
+      "common_name": "Olive Tree",
+      "scientific_name": "Olea europaea",
+      "plant_type": "Shrub",
+      "task_category": "Evergreen",
+      "flower_color": "None",
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 121,
+      "common_name": "Orange Trumpet Vine",
+      "scientific_name": "Pyrostegia venusta",
+      "plant_type": "Climber",
+      "task_category": "Citrus",
+      "flower_color": null,
+      "is_native": false,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 70,
+      "common_name": "Peach Tree",
+      "scientific_name": "Prunus persica",
+      "plant_type": "Fruit",
+      "task_category": "Deciduous",
+      "flower_color": "Pink",
+      "is_native": false,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 13,
+      "common_name": "Pink Rhaphiolepis",
+      "scientific_name": "Rhaphiolepis indica",
+      "plant_type": "Shrub",
+      "task_category": "Flowering Shrub",
+      "flower_color": "Pink",
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 10,
+      "common_name": "Pittosporum",
+      "scientific_name": "Pittosporum tenuifolium",
+      "plant_type": "Hedge",
+      "task_category": "Hedge",
+      "flower_color": "Purple",
+      "is_native": true,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 61,
+      "common_name": "Pohutukawa",
+      "scientific_name": "Metrosideros excelsa",
+      "plant_type": "Tree",
+      "task_category": "Evergreen",
+      "flower_color": "Red",
+      "is_native": true,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 42,
+      "common_name": "Ponga Fern",
+      "scientific_name": "Dicksonia squarrosa",
+      "plant_type": "Fern",
+      "task_category": "Perennial",
+      "flower_color": "None",
+      "is_native": true,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 107,
+      "common_name": "Port Wine Magnolia",
+      "scientific_name": "Michelia figo",
+      "plant_type": "Shrub / Hedge",
+      "task_category": "Hedge",
+      "flower_color": "Purple",
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 16,
+      "common_name": "Pratia",
+      "scientific_name": "Pratia angulata",
+      "plant_type": "Groundcover",
+      "task_category": "Perennial",
+      "flower_color": "White",
+      "is_native": true,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 113,
+      "common_name": "Pūriri",
+      "scientific_name": "Vitex lucens",
+      "plant_type": "Tree",
+      "task_category": "Evergreen",
+      "flower_color": "Yellow",
+      "is_native": true,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 95,
+      "common_name": "Putaputawētā",
+      "scientific_name": "Carpodetus serratus",
+      "plant_type": "Tree",
+      "task_category": "Evergreen",
+      "flower_color": "Yellow",
+      "is_native": true,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 111,
+      "common_name": "Rain Lily",
+      "scientific_name": "Zephyranthes",
+      "plant_type": "Perennial",
+      "task_category": "Perennial",
+      "flower_color": null,
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 79,
+      "common_name": "Redbud",
+      "scientific_name": "Cercis canadensis",
+      "plant_type": "Tree",
+      "task_category": "Deciduous",
+      "flower_color": "White",
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 141,
+      "common_name": "Renga Renga Lily",
+      "scientific_name": "Arthropodium cirratum",
+      "plant_type": "Perennial",
+      "task_category": "Perennial",
+      "flower_color": "White",
+      "is_native": true,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 98,
+      "common_name": "Rewarewa",
+      "scientific_name": "Knightia excelsa",
+      "plant_type": "Tree",
+      "task_category": "Evergreen",
+      "flower_color": "Yellow",
+      "is_native": true,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 117,
+      "common_name": "Rhododendron",
+      "scientific_name": "Rhododendron",
+      "plant_type": "Shrub",
+      "task_category": "Flowering Shrub",
+      "flower_color": "Pink",
+      "is_native": false,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 118,
+      "common_name": "Rhododendron Vireya",
+      "scientific_name": "Rhododendron vireya",
+      "plant_type": "Shrub",
+      "task_category": "Flowering Shrub",
+      "flower_color": "Pink",
+      "is_native": false,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 150,
+      "common_name": "Rose",
+      "scientific_name": "Rosa spp.",
+      "plant_type": "Shrub",
+      "task_category": "Flowering Shrub",
+      "flower_color": "Pink",
+      "is_native": false,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 38,
+      "common_name": "Sago Palm",
+      "scientific_name": "Cycas revoluta",
+      "plant_type": "Palm",
+      "task_category": "Palm",
+      "flower_color": "None",
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 86,
+      "common_name": "Serviceberry",
+      "scientific_name": "Amelanchier canadensis",
+      "plant_type": "Tree / Shrub",
+      "task_category": "Deciduous",
+      "flower_color": "White",
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 80,
+      "common_name": "Silk Tree",
+      "scientific_name": "Albizia julibrissin",
+      "plant_type": "Tree",
+      "task_category": "Deciduous",
+      "flower_color": "White",
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 34,
+      "common_name": "Silver Bush",
+      "scientific_name": "Convolvulus cneorum",
+      "plant_type": "Flower",
+      "task_category": "Flowering Shrub",
+      "flower_color": "White",
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 41,
+      "common_name": "Silver Falls",
+      "scientific_name": "Dichondra argentea",
+      "plant_type": "Groundcover",
+      "task_category": "Perennial",
+      "flower_color": "None",
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 24,
+      "common_name": "Silver Flax (Astelia)",
+      "scientific_name": "Astelia Silver",
+      "plant_type": "Flax",
+      "task_category": "Perennial",
+      "flower_color": "None",
+      "is_native": true,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 27,
+      "common_name": "Silver Lady Fern",
+      "scientific_name": "Blechnum gibbum",
+      "plant_type": "Fern",
+      "task_category": "Perennial",
+      "flower_color": "None",
+      "is_native": true,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 102,
+      "common_name": "Small-leaved Lime",
+      "scientific_name": "Tilia cordata",
+      "plant_type": "Tree",
+      "task_category": "Citrus",
+      "flower_color": "White",
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 99,
+      "common_name": "Smoke Bush",
+      "scientific_name": "Cotinus coggygria",
+      "plant_type": "Shrub / Tree",
+      "task_category": "Deciduous",
+      "flower_color": "Pink",
+      "is_native": false,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 139,
+      "common_name": "Spanish Shawl",
+      "scientific_name": "Heterocentron elegans",
+      "plant_type": "Groundcover",
+      "task_category": "Perennial",
+      "flower_color": "Purple",
+      "is_native": false,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 7,
+      "common_name": "Star Jasmine",
+      "scientific_name": "Trachelospermum jasminoides",
+      "plant_type": "Climber",
+      "task_category": "Climber",
+      "flower_color": null,
+      "is_native": false,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 45,
+      "common_name": "Sugar Cane Palm",
+      "scientific_name": "Dypsis baronii",
+      "plant_type": "Palm",
+      "task_category": "Palm",
+      "flower_color": "None",
+      "is_native": false,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 26,
+      "common_name": "Taraire",
+      "scientific_name": "Beilschmiedia taraire",
+      "plant_type": "Tree",
+      "task_category": "Evergreen",
+      "flower_color": "None",
+      "is_native": true,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 119,
+      "common_name": "Tecomanthe",
+      "scientific_name": "Tecomanthe speciosa",
+      "plant_type": "Climber",
+      "task_category": "Climber",
+      "flower_color": null,
+      "is_native": true,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 20,
+      "common_name": "Titoki",
+      "scientific_name": "Alectryon excelsus",
+      "plant_type": "Tree",
+      "task_category": "Evergreen",
+      "flower_color": "None",
+      "is_native": true,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 66,
+      "common_name": "Totara",
+      "scientific_name": "Podocarpus totara",
+      "plant_type": "Tree",
+      "task_category": "Evergreen",
+      "flower_color": "None",
+      "is_native": true,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 57,
+      "common_name": "Tractor Seat Plant",
+      "scientific_name": "Ligularia reniformis",
+      "plant_type": "Flower",
+      "task_category": "Flowering Shrub",
+      "flower_color": "Yellow",
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 123,
+      "common_name": "Virginia Creeper",
+      "scientific_name": "Parthenocissus quinquefolia",
+      "plant_type": "Climber",
+      "task_category": "Climber",
+      "flower_color": null,
+      "is_native": false,
+      "maintenance_level": "Medium"
+    },
+    {
+      "id": 140,
+      "common_name": "Westringia",
+      "scientific_name": "Westringia fruticosa",
+      "plant_type": "Shrub",
+      "task_category": "Flowering Shrub",
+      "flower_color": "White",
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 103,
+      "common_name": "Wych Elm",
+      "scientific_name": "Ulmus glabra",
+      "plant_type": "Tree",
+      "task_category": "Deciduous",
+      "flower_color": "White",
+      "is_native": false,
+      "maintenance_level": "Low"
+    },
+    {
+      "id": 138,
+      "common_name": "Xanadu",
+      "scientific_name": "Philodendron Xanadu",
+      "plant_type": "Perennial",
+      "task_category": "Perennial",
+      "flower_color": null,
+      "is_native": false,
+      "maintenance_level": "Low"
+    }
+  ]
+}
