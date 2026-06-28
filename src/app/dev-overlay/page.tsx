@@ -3,8 +3,7 @@
 /**
  * DEV-ONLY — Plant Overlay Smoke Test
  *
- * Lets you drag a semi-transparent plant silhouette over a garden photo to
- * check whether overlay previews feel useful before building a full feature.
+ * Single-spot and hedge-row preview for processed PNG overlays before production wiring.
  *
  * This file and public/plant-overlays/ can be deleted once a decision is made.
  * Route: /dev-overlay
@@ -25,20 +24,39 @@ import {
 
 interface Pos { x: number; y: number }
 
+type PreviewMode = 'single' | 'row'
+
+/** Matches production row tiling defaults (visualise detail page). */
+const ROW_TILE_OVERLAP_DEFAULT = 0.12
+const ROW_TILE_EDGE_CROP_RATIO = 0.05
+
+function buildRowLayout(tileWidth: number, tileCount: number, overlapRatio: number) {
+  const step = tileWidth * (1 - overlapRatio)
+  const totalWidth = tileCount <= 1 ? tileWidth : tileWidth + step * (tileCount - 1)
+  return { step, totalWidth }
+}
+
 // ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
 
 export default function DevOverlayPage() {
-  const [selected, setSelected]   = useState<DevOverlayDef>(DEFAULT_DEV_OVERLAY)
-  const [pos,      setPos]        = useState<Pos>({ x: 180, y: 140 })
-  const [width,    setWidth]      = useState(DEFAULT_DEV_OVERLAY.defaultWidth)
-  const [bgSrc,    setBgSrc]      = useState<string | null>(null)
-  const [isDragging, setIsDragging] = useState(false)
+  const [selected, setSelected]       = useState<DevOverlayDef>(DEFAULT_DEV_OVERLAY)
+  const [previewMode, setPreviewMode] = useState<PreviewMode>('single')
+  const [pos, setPos]                 = useState<Pos>({ x: 180, y: 140 })
+  const [width, setWidth]             = useState(DEFAULT_DEV_OVERLAY.defaultWidth)
+  const [bgSrc, setBgSrc]             = useState<string | null>(null)
+  const [isDragging, setIsDragging]   = useState(false)
+  const [rowTileCount, setRowTileCount] = useState(4)
+  const [rowOverlap, setRowOverlap]   = useState(ROW_TILE_OVERLAP_DEFAULT)
+  const [rowEdgeCrop, setRowEdgeCrop] = useState(true)
+  const [showTileSeams, setShowTileSeams] = useState(true)
 
   const dragOrigin = useRef({ clientX: 0, clientY: 0, posX: 0, posY: 0 })
 
   const allOverlays = DEV_OVERLAY_GROUPS.flatMap((g) => getDevOverlaysByGroup(g.key))
+  const isPng = selected.file.toLowerCase().endsWith('.png')
+  const effectiveMode: PreviewMode = isPng ? previewMode : 'single'
 
   // ── Overlay selection ────────────────────────────────────────────────────
   function selectOverlay(ov: DevOverlayDef) {
@@ -49,7 +67,7 @@ export default function DevOverlayPage() {
 
   // ── Drag handlers ────────────────────────────────────────────────────────
   const onPointerDown = useCallback(
-    (e: React.PointerEvent<HTMLImageElement>) => {
+    (e: React.PointerEvent<HTMLElement>) => {
       e.preventDefault()
       e.currentTarget.setPointerCapture(e.pointerId)
       setIsDragging(true)
@@ -59,7 +77,7 @@ export default function DevOverlayPage() {
   )
 
   const onPointerMove = useCallback(
-    (e: React.PointerEvent<HTMLImageElement>) => {
+    (e: React.PointerEvent<HTMLElement>) => {
       if (!isDragging) return
       setPos({
         x: dragOrigin.current.posX + e.clientX - dragOrigin.current.clientX,
@@ -78,8 +96,19 @@ export default function DevOverlayPage() {
     setBgSrc(URL.createObjectURL(f))
   }
 
+  const pointerHandlers = {
+    onPointerDown,
+    onPointerMove,
+    onPointerUp,
+    onPointerCancel: onPointerUp,
+  }
+
   // ── Computed ─────────────────────────────────────────────────────────────
-  const overlayHeight = Math.round(width / selected.aspect)
+  const tileHeight = Math.round(width / selected.aspect)
+  const rowLayout = buildRowLayout(width, rowTileCount, rowOverlap)
+  const overlayHeight = tileHeight
+  const overlaySrc = devOverlaySrc(selected.file, selected.cacheBust)
+  const cropInset = rowEdgeCrop ? ROW_TILE_EDGE_CROP_RATIO * 100 : 0
 
   return (
     <div style={styles.page}>
@@ -106,7 +135,7 @@ export default function DevOverlayPage() {
                   <span style={styles.sectionTitle}>{group.title}</span>
                   <span style={styles.sectionDesc}>{group.description}</span>
                 </div>
-                <div style={styles.row}>
+                <div style={styles.btnRow}>
                   {items.map((ov) => (
                     <button
                       key={ov.id}
@@ -128,10 +157,69 @@ export default function DevOverlayPage() {
           })}
         </div>
 
+        {/* Preview mode */}
+        <div style={styles.controlGroup}>
+          <span style={styles.label}>Preview mode</span>
+          <div style={styles.btnRow}>
+            <button
+              type="button"
+              onClick={() => setPreviewMode('single')}
+              style={{
+                ...styles.btn,
+                ...(effectiveMode === 'single' ? styles.btnActive : {}),
+              }}
+            >
+              Single
+            </button>
+            <button
+              type="button"
+              onClick={() => setPreviewMode('row')}
+              disabled={!isPng}
+              style={{
+                ...styles.btn,
+                ...(effectiveMode === 'row' ? styles.btnActive : {}),
+                ...(!isPng ? styles.btnDisabled : {}),
+              }}
+              title={isPng ? 'Repeat PNG as a hedge row' : 'Row preview requires a PNG overlay'}
+            >
+              Hedge row
+            </button>
+          </div>
+        </div>
+
+        {/* Tile count (row mode) */}
+        {effectiveMode === 'row' && (
+          <div style={styles.controlGroup}>
+            <span style={styles.label}>Tiles in row</span>
+            <div style={styles.btnRow}>
+              {[3, 4, 5].map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setRowTileCount(n)}
+                  style={{
+                    ...styles.btn,
+                    ...(rowTileCount === n ? styles.btnActive : {}),
+                  }}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Size slider */}
         <div style={styles.controlGroup}>
           <span style={styles.label}>
-            Size &nbsp;<span style={styles.mono}>{width} × {overlayHeight} px</span>
+            {effectiveMode === 'row' ? 'Tile width' : 'Size'}
+            {' '}
+            <span style={styles.mono}>
+              {width} × {overlayHeight} px
+              {effectiveMode === 'row' && (
+                <> &nbsp;·&nbsp; row {Math.round(rowLayout.totalWidth)} px</>
+              )}
+            </span>
           </span>
           <input
             type="range"
@@ -142,6 +230,55 @@ export default function DevOverlayPage() {
             style={styles.slider}
           />
         </div>
+
+        {/* Row overlap */}
+        {effectiveMode === 'row' && (
+          <div style={styles.controlGroup}>
+            <span style={styles.label}>
+              Tile overlap &nbsp;
+              <span style={styles.mono}>{Math.round(rowOverlap * 100)}%</span>
+            </span>
+            <input
+              type="range"
+              min={0}
+              max={30}
+              value={Math.round(rowOverlap * 100)}
+              onChange={(e) => setRowOverlap(Number(e.target.value) / 100)}
+              style={styles.slider}
+            />
+          </div>
+        )}
+
+        {/* Row toggles */}
+        {effectiveMode === 'row' && (
+          <div style={styles.controlGroup}>
+            <span style={styles.label}>Row QA aids</span>
+            <div style={styles.btnRow}>
+              <button
+                type="button"
+                onClick={() => setRowEdgeCrop((v) => !v)}
+                style={{
+                  ...styles.btn,
+                  ...(rowEdgeCrop ? styles.btnActive : {}),
+                }}
+                title="Crop 5% from each tile edge (matches production row mode)"
+              >
+                Edge crop
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowTileSeams((v) => !v)}
+                style={{
+                  ...styles.btn,
+                  ...(showTileSeams ? styles.btnActive : {}),
+                }}
+                title="Show faint vertical lines at tile boundaries"
+              >
+                Tile seams
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Photo upload */}
         <div style={styles.controlGroup}>
@@ -175,40 +312,120 @@ export default function DevOverlayPage() {
           <>
             <div style={styles.sky} />
             <div style={styles.lawn} />
-            <div style={styles.hint}>← Load a real garden photo to test overlay placement</div>
+            {effectiveMode === 'row' && (
+              <>
+                <div style={styles.checkerBand} />
+                <div style={styles.rowZoneLabel}>Hedge row zone — checkerboard shows transparency gaps</div>
+              </>
+            )}
+            <div style={styles.hint}>
+              {effectiveMode === 'row'
+                ? '← Row mode: drag the hedge strip to inspect tiling on lawn + checkerboard'
+                : '← Load a real garden photo to test overlay placement'}
+            </div>
           </>
         )}
 
-        {/* Plant overlay */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          key={`${selected.id}-${selected.cacheBust ?? 'v1'}`}
-          src={devOverlaySrc(selected.file, selected.cacheBust)}
-          alt={selected.label}
-          draggable={false}
-          style={{
-            position: 'absolute',
-            left: pos.x,
-            top: pos.y,
-            width,
-            height: 'auto',
-            cursor: isDragging ? 'grabbing' : 'grab',
-            userSelect: 'none',
-            touchAction: 'none',
-            filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.45))',
-            zIndex: 10,
-          }}
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          onPointerCancel={onPointerUp}
-        />
+        {/* Photo + row mode: subtle checker behind row only */}
+        {bgSrc && effectiveMode === 'row' && (
+          <div
+            style={{
+              ...styles.checkerBand,
+              top: pos.y - 8,
+              left: pos.x - 8,
+              width: rowLayout.totalWidth + 16,
+              height: tileHeight + 16,
+              borderRadius: 8,
+              opacity: 0.85,
+            }}
+          />
+        )}
+
+        {effectiveMode === 'single' ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            key={`${selected.id}-${selected.cacheBust ?? 'v1'}-single`}
+            src={overlaySrc}
+            alt={selected.label}
+            draggable={false}
+            style={{
+              position: 'absolute',
+              left: pos.x,
+              top: pos.y,
+              width,
+              height: 'auto',
+              cursor: isDragging ? 'grabbing' : 'grab',
+              userSelect: 'none',
+              touchAction: 'none',
+              filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.45))',
+              zIndex: 10,
+            }}
+            {...pointerHandlers}
+          />
+        ) : (
+          <div
+            role="presentation"
+            aria-label={`${selected.label} hedge row preview`}
+            draggable={false}
+            style={{
+              position: 'absolute',
+              left: pos.x,
+              top: pos.y,
+              width: rowLayout.totalWidth,
+              height: tileHeight,
+              cursor: isDragging ? 'grabbing' : 'grab',
+              userSelect: 'none',
+              touchAction: 'none',
+              filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.45))',
+              zIndex: 10,
+              overflow: 'visible',
+            }}
+            {...pointerHandlers}
+          >
+            {Array.from({ length: rowTileCount }, (_, index) => (
+              <div
+                key={index}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: index * rowLayout.step,
+                  width,
+                  height: tileHeight,
+                  overflow: 'hidden',
+                }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={overlaySrc}
+                  alt=""
+                  draggable={false}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'fill',
+                    pointerEvents: 'none',
+                    clipPath: cropInset > 0
+                      ? `inset(0 ${cropInset}% 0 ${cropInset}%)`
+                      : undefined,
+                  }}
+                />
+                {showTileSeams && index > 0 && (
+                  <div style={styles.tileSeam} />
+                )}
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Status bar */}
         <div style={styles.statusBar}>
           {selected.label} &nbsp;·&nbsp; <span style={styles.mono}>{selected.file}</span> &nbsp;·&nbsp;
-          {width} px wide &nbsp;·&nbsp;
-          pos ({Math.round(pos.x)}, {Math.round(pos.y)}) &nbsp;·&nbsp; drag to place
+          {effectiveMode === 'row'
+            ? `${rowTileCount} tiles · ${Math.round(rowOverlap * 100)}% overlap · ${Math.round(rowLayout.totalWidth)} px row`
+            : `${width} px wide`}
+          &nbsp;·&nbsp; pos ({Math.round(pos.x)}, {Math.round(pos.y)})
+          &nbsp;·&nbsp; drag to place
         </div>
       </div>
 
@@ -217,6 +434,7 @@ export default function DevOverlayPage() {
         {' '}{allOverlays.filter((ov) => ov.file.endsWith('.png')).length} PNG overlays
         plus {allOverlays.filter((ov) => ov.file.endsWith('.svg')).length} SVG placeholders.
         Assets live in <code style={{ color: '#9090c0' }}>public/plant-overlays/</code>.
+        Use <strong style={{ color: '#9090c0', fontWeight: 600 }}>Hedge row</strong> mode to QA tile blending before approving row-mode assets.
         New batch items are not in the production Visualise selector until manually approved and wired.
       </p>
     </div>
@@ -226,6 +444,9 @@ export default function DevOverlayPage() {
 // ---------------------------------------------------------------------------
 // Inline styles (avoids any Tailwind dependency issues in dev pages)
 // ---------------------------------------------------------------------------
+
+const CHECKER =
+  'linear-gradient(45deg, #888 25%, transparent 25%), linear-gradient(-45deg, #888 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #888 75%), linear-gradient(-45deg, transparent 75%, #888 75%)'
 
 const styles = {
   page: {
@@ -303,7 +524,7 @@ const styles = {
     color: '#707090',
   } as React.CSSProperties,
 
-  row: {
+  btnRow: {
     display: 'flex',
     flexWrap: 'wrap' as const,
     gap: 8,
@@ -331,6 +552,11 @@ const styles = {
     background: '#4ade80',
     color: '#0a1a0a',
     border: '1px solid #4ade80',
+  } as React.CSSProperties,
+
+  btnDisabled: {
+    opacity: 0.45,
+    cursor: 'not-allowed',
   } as React.CSSProperties,
 
   slider: {
@@ -377,6 +603,36 @@ const styles = {
     background: 'linear-gradient(180deg, #6aaa40 0%, #559030 30%, #4a7828 70%, #3e6422 100%)',
   } as React.CSSProperties,
 
+  checkerBand: {
+    position: 'absolute' as const,
+    top: '38%',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#ccc',
+    backgroundImage: CHECKER,
+    backgroundSize: '24px 24px',
+    backgroundPosition: '0 0, 0 12px, 12px -12px, -12px 0',
+    opacity: 0.55,
+    pointerEvents: 'none' as const,
+    zIndex: 1,
+  } as React.CSSProperties,
+
+  rowZoneLabel: {
+    position: 'absolute' as const,
+    top: '42%',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.85)',
+    background: 'rgba(0,0,0,0.35)',
+    padding: '4px 12px',
+    borderRadius: 16,
+    pointerEvents: 'none' as const,
+    zIndex: 2,
+    whiteSpace: 'nowrap' as const,
+  } as React.CSSProperties,
+
   hint: {
     position: 'absolute' as const,
     top: '18%',
@@ -389,6 +645,18 @@ const styles = {
     borderRadius: 20,
     whiteSpace: 'nowrap' as const,
     pointerEvents: 'none' as const,
+    zIndex: 2,
+  } as React.CSSProperties,
+
+  tileSeam: {
+    position: 'absolute' as const,
+    top: 0,
+    left: 0,
+    bottom: 0,
+    width: 2,
+    background: 'rgba(255, 80, 80, 0.65)',
+    pointerEvents: 'none' as const,
+    zIndex: 5,
   } as React.CSSProperties,
 
   statusBar: {
@@ -412,6 +680,6 @@ const styles = {
     marginTop: 18,
     fontSize: 13,
     color: '#60607a',
-    maxWidth: 700,
+    maxWidth: 760,
   } as React.CSSProperties,
 }

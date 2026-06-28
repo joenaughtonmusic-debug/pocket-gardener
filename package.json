@@ -12,7 +12,8 @@
     "export:plant-catalog": "tsx scripts/exportPlantCatalog.ts",
     "generate:coverage-doc": "tsx scripts/generateCoverageMarkdown.ts",
     "generate:production-checklist": "tsx scripts/generateProductionChecklist.ts",
-    "process:plant-overlays": "tsx scripts/processPlantOverlayAssets.ts"
+    "process:plant-overlays": "tsx scripts/processPlantOverlayAssets.ts",
+    "refresh:dev-overlays": "tsx scripts/refreshDevOverlayManifest.ts"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.4",

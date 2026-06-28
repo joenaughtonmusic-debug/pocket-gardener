@@ -253,6 +253,7 @@ function printReport(results: ProcessingResult[]): void {
   console.log(`  Processed → assets/plant-overlays/processed/`);
   console.log(`  Copied    → public/plant-overlays/`);
   console.log(`  Preview   → http://localhost:3000/dev-overlay`);
+  console.log(`  Refresh   → npm run refresh:dev-overlays`);
   console.log(`${HEAVY}\n`);
 }
 

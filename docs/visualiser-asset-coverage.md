@@ -26,16 +26,16 @@ Runtime resolution is unchanged — `resolveOverlayAsset()` in `plantOverlayAsse
 | Metric | Count |
 |--------|------:|
 | **Total plants in database** | 120 |
-| **Visualiser-relevant** | 93 |
-| **Exact asset ready** | 32 |
+| **Visualiser-relevant** | 98 |
+| **Exact asset ready** | 40 |
 | **Close shared asset OK** | 12 |
 | **Temporary fallback only** | 1 |
-| **Needs new asset** | 48 |
-| **Not visualiser relevant** | 27 |
+| **Needs new asset** | 45 |
+| **Not visualiser relevant** | 22 |
 | **High manual cutout risk** | 1 |
 | **White/pale flower risk flagged** | 42 |
 | **Broken registry paths** | 0 |
-| **Registered overlay keys** | 38 |
+| **Registered overlay keys** | 49 |
 
 ### Visualise selector (spot mode)
 
@@ -43,7 +43,7 @@ Runtime resolution is unchanged — `resolveOverlayAsset()` in `plantOverlayAsse
 
 ### Row mode (hedge/screen only)
 
-Allowed: Griselinia Hedge, Ficus Tuffy Hedge, Buxus Hedge, Titoki
+Allowed: Griselinia Hedge, Ficus Tuffy Hedge, Buxus Hedge, Titoki, Camellia Hedge, Corokia Geentys Green Hedge, Corokia Virgata Hedge, Eugenia
 
 Excluded examples (must NOT be added): Lomandra, Agapanthus, NZ Flax, Phormium, Clivia, Fortnight Lily (Dietes)
 
@@ -75,6 +75,14 @@ Excluded examples (must NOT be added): Lomandra, Agapanthus, NZ Flax, Phormium, 
 - Crepe Myrtle
 - Dogwood
 - English Holly
+- English Oak
+- Erman's Birch
+- Escallonia
+- Eugenia
+- European Beech
+- European Hornbeam
+- Evergreen Ash
+- Feijoa
 - Ficus Tuffi
 - Griselinia
 - Hebe (Koromiko)
@@ -103,9 +111,6 @@ Excluded examples (must NOT be added): Lomandra, Agapanthus, NZ Flax, Phormium, 
 
 ### Later
 
-- Escallonia
-- Eugenia
-- European Hornbeam
 - Ficus Pumila
 - Flax Lily
 - Forest Pansy
@@ -219,25 +224,25 @@ Gardenia is **needs_new_asset** (not exact_asset_ready). `gardenia-v2.png` exist
 | Bromeliad | Alcantarea imperialis | Shrub | bromeliad | exact_asset_ready | launch | none | — | Dedicated bromeliad.png overlay. |
 | Buxus (Box Hedge) | Buxus sempervirens | Hedge | buxus-hedge | exact_asset_ready | launch | none | — | Maps to buxus-hedge.png. Row mode + spot hedge rule. |
 | Cabbage Tree | Cordyline australis | Tree | cabbage-tree | exact_asset_ready | launch | none | Yes | Dedicated cabbage-tree.png overlay. White/pale flowers may need manual cutout or a non-white source background. |
-| Camellia | Camellia japonica | Shrub | camellia | exact_asset_ready | launch | none | — | Dedicated camellia.png overlay. |
+| Camellia | Camellia japonica | Shrub | camellia | exact_asset_ready | launch | none | — | Spot: camellia.png. Row: camellia-hedge.png via Camellia Hedge row option. |
 | Canna Lily | Canna indica | Perennial | canna-lily | exact_asset_ready | launch | none | — | Dedicated canna-lily.png overlay. |
 | Cherry Tree | — | Tree | cherry-tree | exact_asset_ready | launch | none | — | Dedicated cherry-tree.png overlay. |
 | Clivia | Clivia miniata | Flower | clivia | exact_asset_ready | launch | none | — | Dedicated clivia.png. |
 | Cordyline Stricta | Cordyline stricta | Perennial | cordyline-stricta | exact_asset_ready | launch | none | — | Dedicated cordyline-stricta.png overlay. |
-| Corokia Geentys Green | Corokia cotoneaster | Hedge | corokia-geentys-green | exact_asset_ready | launch | likely | — | Dedicated corokia-geentys-green.png overlay. |
-| Corokia Virgata | Corokia virgata | Hedge / Shrub | corokia-virgata | exact_asset_ready | launch | likely | — | Dedicated corokia-virgata.png overlay. |
+| Corokia Geentys Green | Corokia cotoneaster | Hedge | corokia-geentys-green | exact_asset_ready | launch | likely | — | Spot: corokia-geentys-green.png. Row: corokia-geentys-green-hedge.png. |
+| Corokia Virgata | Corokia virgata | Hedge / Shrub | corokia-virgata | exact_asset_ready | launch | likely | — | Spot: corokia-virgata.png. Row: corokia-virgata-hedge.png. |
 | Crepe Myrtle | Lagerstroemia indica | Tree / Shrub | crepe-myrtle | exact_asset_ready | launch | none | — | Dedicated crepe-myrtle.png overlay. |
 | Dogwood | Cornus florida | Tree | dogwood | exact_asset_ready | launch | none | Yes | Dedicated dogwood.png overlay. White/pale flowers may need manual cutout or a non-white source background. |
 | English Holly | Ilex aquifolium | Tree / Hedge | english-holly | exact_asset_ready | launch | none | — | Dedicated english-holly.png overlay. |
-| English Oak | Quercus robur | Tree | nikau | not_visualiser_relevant | not_needed | none | Yes | Large deciduous tree — out of scope. White/pale flowers may need manual cutout or a non-white source background. |
-| Erman's Birch | Betula ermanii | Tree | nikau | not_visualiser_relevant | not_needed | none | Yes | Large deciduous tree — out of scope. White/pale flowers may need manual cutout or a non-white source background. |
-| Escallonia | Escallonia exoniensis | Hedge | hedge | needs_new_asset | later | likely | Yes | Escallonia hedge — white flowers; needs hedge PNG. White/pale flowers may need manual cutout or a non-white source background. |
-| Eugenia | Eugenia | Hedge | hedge | needs_new_asset | later | likely | Yes | Eugenia hedge — white flowers; needs hedge PNG. White/pale flowers may need manual cutout or a non-white source background. |
-| European Beech | Fagus sylvatica | Tree | nikau | not_visualiser_relevant | not_needed | none | Yes | Large deciduous tree — out of scope. White/pale flowers may need manual cutout or a non-white source background. |
-| European Hornbeam | Carpinus betulus | Tree / Hedge | hedge | needs_new_asset | later | none | Yes | European Hornbeam — formal hedge tree; large scale. White/pale flowers may need manual cutout or a non-white source background. |
-| Evergreen Ash | Fraxinus griffithii | Tree | nikau | not_visualiser_relevant | not_needed | none | — | Large shade tree — out of scope. |
-| Feijoa | Acca sellowiana | Fruit | lomandra | not_visualiser_relevant | not_needed | none | — | Edible fruit shrub — defer. |
-| Ficus Pumila | Ficus pumila | Climber | star-jasmine | needs_new_asset | later | none | — | Ficus Pumila — climber; no overlay. |
+| English Oak | Quercus robur | Tree | oak | exact_asset_ready | launch | none | Yes | Dedicated oak.png overlay — spot mode only. White/pale flowers may need manual cutout or a non-white source background. |
+| Erman's Birch | Betula ermanii | Tree | birch | exact_asset_ready | launch | none | Yes | Dedicated birch.png overlay — spot mode only. White/pale flowers may need manual cutout or a non-white source background. |
+| Escallonia | Escallonia exoniensis | Hedge | escallonia | exact_asset_ready | launch | likely | Yes | Dedicated escallonia.png overlay — spot mode only. White/pale flowers may need manual cutout or a non-white source background. |
+| Eugenia | Eugenia | Hedge | eugenia | exact_asset_ready | launch | likely | Yes | Dedicated eugenia.png hedge row overlay — row mode only. White/pale flowers may need manual cutout or a non-white source background. |
+| European Beech | Fagus sylvatica | Tree | european-beech | exact_asset_ready | launch | none | Yes | Dedicated european-beech.png overlay — spot mode only. White/pale flowers may need manual cutout or a non-white source background. |
+| European Hornbeam | Carpinus betulus | Tree / Hedge | european-hornbeam | exact_asset_ready | launch | none | Yes | Dedicated european-hornbeam.png overlay — spot mode only. White/pale flowers may need manual cutout or a non-white source background. |
+| Evergreen Ash | Fraxinus griffithii | Tree | evergreen-ash | exact_asset_ready | launch | none | — | Dedicated evergreen-ash.png overlay — spot mode only. |
+| Feijoa | Acca sellowiana | Fruit | feijoa | exact_asset_ready | launch | none | — | Dedicated feijoa.png overlay — spot mode only. |
+| Ficus Pumila | Ficus pumila | Climber | star-jasmine | needs_new_asset | later | none | — | Ficus Pumila — held; ficus pumilia.png cutout too transparent/weak for production. |
 | Ficus Tuffi | Ficus Tuffi | Hedge | ficus-tuffy-hedge | exact_asset_ready | launch | none | — | Maps to ficus-tuffy-hedge.png. Row mode + spot hedge rule. |
 | Flame Tree | Brachychiton acerifolia | Tree | nikau | not_visualiser_relevant | not_needed | none | Yes | Large deciduous tree — out of scope. White/pale flowers may need manual cutout or a non-white source background. |
 | Flax Lily | Dianella | Shrub | flax | close_shared_asset_ok | later | none | — | Flax Lily (Dianella) — strappy; no dedicated asset, lomandra share if wired. |

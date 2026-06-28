@@ -2,12 +2,12 @@
  * Dev-only overlay definitions for /dev-overlay smoke testing.
  * Not used by the production visualiser editor or plant selectors.
  *
- * TODO: Future — generate a dev overlay asset manifest from public/plant-overlays/
- * (e.g. fs read at build time or a small API route) so newly processed files appear
- * automatically without editing this list.
+ * New processed PNGs are discovered via `npm run refresh:dev-overlays`, which
+ * regenerates devOverlayManifest.generated.ts from assets/plant-overlays/processed/.
  */
 
 import { REGISTERED_OVERLAY_PATHS } from '../visualIdeas/plantOverlayAssets'
+import { GENERATED_NEW_BATCH_TEST_OVERLAYS } from './devOverlayManifest.generated'
 
 export type DevOverlayGroup = 'registered' | 'dev_qa_variants' | 'new_batch' | 'svg_placeholder'
 
@@ -51,6 +51,17 @@ const REGISTERED_FILE_LABELS: Record<string, string> = {
   'cordyline-stricta.png': 'Cordyline Stricta',
   'crepe-myrtle.png': 'Crepe Myrtle',
   'dogwood.png': 'Dogwood',
+  'birch.png': "Erman's Birch",
+  'escallonia.png': 'Escallonia',
+  'european-beech.png': 'European Beech',
+  'european-hornbeam.png': 'European Hornbeam',
+  'evergreen-ash.png': 'Evergreen Ash',
+  'feijoa.png': 'Feijoa',
+  'oak.png': 'English Oak',
+  'camellia-hedge.png': 'Camellia Hedge',
+  'corokia-geentys-green-hedge.png': 'Corokia Geentys Green Hedge',
+  'corokia-virgata-hedge.png': 'Corokia Virgata Hedge',
+  'eugenia.png': 'Eugenia',
   'buxus.png': 'Buxus',
   'buxus-hedge.png': 'Buxus Hedge',
   'griselinia-hedge.png': 'Griselinia Hedge',
@@ -346,10 +357,39 @@ const DEV_QA_VARIANT_OVERLAYS: DevOverlayDef[] = [
     aspect: 1,
     group: 'dev_qa_variants',
   },
+  {
+    id: 'qa-corokia-geentys-hedge-src',
+    label: 'Corokia Geentys Green Hedge (spaced src)',
+    file: 'corokia geentys green hedge.png',
+    defaultWidth: 340,
+    aspect: 1,
+    group: 'dev_qa_variants',
+  },
+  {
+    id: 'qa-corokia-virgata-hedge-src',
+    label: 'Corokia Virgata Hedge (spaced src)',
+    file: 'corokia virgata hedge.png',
+    defaultWidth: 340,
+    aspect: 1,
+    group: 'dev_qa_variants',
+  },
+  {
+    id: 'qa-ficus-pumila-held',
+    label: 'Ficus Pumila (held — weak cutout)',
+    file: 'ficus pumilia.png',
+    defaultWidth: 260,
+    aspect: 1,
+    group: 'dev_qa_variants',
+  },
 ]
 
-/** Latest processed batch — cleared when assets graduate to production registry. */
-export const NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = []
+/** Filenames in static dev QA variants — excluded from auto-generated new batch. */
+export const DEV_QA_OVERLAY_FILES: readonly string[] = DEV_QA_VARIANT_OVERLAYS.map(
+  (overlay) => overlay.file,
+)
+
+/** Latest processed batch — auto-generated; run npm run refresh:dev-overlays to update. */
+export const NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = GENERATED_NEW_BATCH_TEST_OVERLAYS
 
 export const DEV_OVERLAY_GROUPS: Array<{
   key: DevOverlayGroup

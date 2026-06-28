@@ -169,7 +169,7 @@ function overlayToPixels(
 }
 
 /** Horizontal tile overlap for row overlays (reduces visible gaps between segments). */
-const ROW_TILE_OVERLAP_RATIO = 0.12
+const ROW_TILE_OVERLAP_RATIO = 0.2
 /** Crop each row tile's left/right edges to hide lighter seam bands (4–6% per side). */
 const ROW_TILE_EDGE_CROP_RATIO = 0.05
 

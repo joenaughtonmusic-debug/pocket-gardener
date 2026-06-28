@@ -78,7 +78,11 @@ export const PLANT_COVERAGE_OVERRIDES: Record<number, PlantCoverageOverride> = {
   },
   62: { classification: 'close_shared_asset_ok', priority: 'later', notes: 'Muehlenbeckia shares groundcover.png.' },
   35: { classification: 'close_shared_asset_ok', priority: 'later', notes: 'Mirror Bush (Coprosma) shares groundcover.png — shrub habit not ideal.' },
-  71: { classification: 'exact_asset_ready', priority: 'launch', notes: 'Dedicated camellia.png overlay.' },
+  71: {
+    classification: 'exact_asset_ready',
+    priority: 'launch',
+    notes: 'Spot: camellia.png. Row: camellia-hedge.png via Camellia Hedge row option.',
+  },
   52: { classification: 'close_shared_asset_ok', priority: 'later', notes: 'Kentia Palm — intent/palm rules may map to ponga/nikau; not all palms suit Nikau silhouette.' },
   22: { classification: 'close_shared_asset_ok', priority: 'later', notes: 'King Palm — shares palm/feature resolution; dedicated palm asset later.' },
   45: { classification: 'close_shared_asset_ok', priority: 'later', notes: 'Sugar Cane Palm — palm silhouette share.' },
@@ -116,8 +120,16 @@ export const PLANT_COVERAGE_OVERRIDES: Record<number, PlantCoverageOverride> = {
   55: { classification: 'needs_new_asset', priority: 'later', paleFlowerRisk: true, notes: 'Citrus — tree overlay needed.' },
   56: { classification: 'needs_new_asset', priority: 'later', paleFlowerRisk: true, notes: 'Citrus — tree overlay needed.' },
   60: { classification: 'needs_new_asset', priority: 'later', paleFlowerRisk: true, notes: 'Citrus — tree overlay needed.' },
-  37: { classification: 'exact_asset_ready', priority: 'launch', notes: 'Dedicated corokia-geentys-green.png overlay.' },
-  92: { classification: 'exact_asset_ready', priority: 'launch', notes: 'Dedicated corokia-virgata.png overlay.' },
+  37: {
+    classification: 'exact_asset_ready',
+    priority: 'launch',
+    notes: 'Spot: corokia-geentys-green.png. Row: corokia-geentys-green-hedge.png.',
+  },
+  92: {
+    classification: 'exact_asset_ready',
+    priority: 'launch',
+    notes: 'Spot: corokia-virgata.png. Row: corokia-virgata-hedge.png.',
+  },
   10: { classification: 'needs_new_asset', priority: 'later', notes: 'Pittosporum hedge — common NZ screen; needs dedicated PNG.' },
   61: { classification: 'needs_new_asset', priority: 'later', notes: 'Large coastal tree — poor fit for spot overlay scale without dedicated asset.' },
   112: { classification: 'needs_new_asset', priority: 'later', notes: 'Kōwhai — native feature tree; needs dedicated asset.' },
@@ -143,10 +155,10 @@ export const PLANT_COVERAGE_OVERRIDES: Record<number, PlantCoverageOverride> = {
     notes: 'Manuka (Leptospermum) — fine-textured native shrub.',
   },
   17: {
-    classification: 'needs_new_asset',
-    priority: 'later',
+    classification: 'exact_asset_ready',
+    priority: 'launch',
     paleFlowerRisk: true,
-    notes: 'Escallonia hedge — white flowers; needs hedge PNG.',
+    notes: 'Dedicated escallonia.png overlay — spot mode only.',
   },
   58: {
     classification: 'needs_new_asset',
@@ -155,15 +167,20 @@ export const PLANT_COVERAGE_OVERRIDES: Record<number, PlantCoverageOverride> = {
     notes: 'Ligustrum hedge — white flower spikes; needs hedge PNG.',
   },
   72: {
-    classification: 'needs_new_asset',
-    priority: 'later',
+    classification: 'exact_asset_ready',
+    priority: 'launch',
     paleFlowerRisk: true,
-    notes: 'Eugenia hedge — white flowers; needs hedge PNG.',
+    notes: 'Dedicated eugenia.png hedge row overlay — row mode only.',
   },
   116: { classification: 'needs_new_asset', priority: 'later', notes: 'Murraya hedge — no dedicated PNG.' },
   96: { classification: 'exact_asset_ready', priority: 'launch', notes: 'Dedicated english-holly.png overlay.' },
   107: { classification: 'needs_new_asset', priority: 'later', notes: 'Port Wine Magnolia hedge — no overlay.' },
-  83: { classification: 'needs_new_asset', priority: 'later', paleFlowerRisk: true, notes: 'European Hornbeam — formal hedge tree; large scale.' },
+  83: {
+    classification: 'exact_asset_ready',
+    priority: 'launch',
+    paleFlowerRisk: true,
+    notes: 'Dedicated european-hornbeam.png overlay — spot mode only.',
+  },
   150: { classification: 'needs_new_asset', priority: 'later', notes: 'Rose — cottage shrub; no overlay.' },
   145: { classification: 'needs_new_asset', priority: 'later', notes: 'Hibiscus — subtropical shrub; no overlay.' },
   114: { classification: 'exact_asset_ready', priority: 'launch', notes: 'Dedicated begonia.png overlay.' },
@@ -205,7 +222,11 @@ export const PLANT_COVERAGE_OVERRIDES: Record<number, PlantCoverageOverride> = {
     notes: 'Silver Bush — white flowers; low shrub.',
   },
   122: { classification: 'exact_asset_ready', priority: 'launch', notes: 'Dedicated boston-ivy.png overlay.' },
-  137: { classification: 'needs_new_asset', priority: 'later', notes: 'Ficus Pumila — climber; no overlay.' },
+  137: {
+    classification: 'needs_new_asset',
+    priority: 'later',
+    notes: 'Ficus Pumila — held; ficus pumilia.png cutout too transparent/weak for production.',
+  },
   120: { classification: 'needs_new_asset', priority: 'later', notes: 'Hardenbergia — climber; no overlay.' },
   119: { classification: 'needs_new_asset', priority: 'later', notes: 'Tecomanthe — native climber; no overlay.' },
   121: { classification: 'needs_new_asset', priority: 'later', notes: 'Orange Trumpet Vine — climber; no overlay.' },
@@ -223,7 +244,7 @@ export const PLANT_COVERAGE_OVERRIDES: Record<number, PlantCoverageOverride> = {
   21: { classification: 'exact_asset_ready', priority: 'launch', paleFlowerRisk: true, notes: 'Dedicated apple-tree.png overlay.' },
   25: { classification: 'exact_asset_ready', priority: 'launch', notes: 'Dedicated avocado.png overlay.' },
   28: { classification: 'exact_asset_ready', priority: 'launch', paleFlowerRisk: true, notes: 'Dedicated blueberry.png overlay.' },
-  46: { classification: 'not_visualiser_relevant', priority: 'not_needed', notes: 'Edible fruit shrub — defer.' },
+  46: { classification: 'exact_asset_ready', priority: 'launch', notes: 'Dedicated feijoa.png overlay — spot mode only.' },
   3: { classification: 'exact_asset_ready', priority: 'launch', notes: 'Dedicated cherry-tree.png overlay.' },
   70: { classification: 'not_visualiser_relevant', priority: 'not_needed', notes: 'Stone fruit tree — out of scope.' },
   19: { classification: 'not_visualiser_relevant', priority: 'not_needed', notes: 'Forest giant — not suitable for garden photo spot overlay.' },
@@ -238,11 +259,26 @@ export const PLANT_COVERAGE_OVERRIDES: Record<number, PlantCoverageOverride> = {
   91: { classification: 'not_visualiser_relevant', priority: 'not_needed', notes: 'Large native tree — out of scope.' },
   51: { classification: 'not_visualiser_relevant', priority: 'not_needed', notes: 'Medium native tree — poor spot overlay scale.' },
   89: { classification: 'exact_asset_ready', priority: 'launch', paleFlowerRisk: true, notes: 'Dedicated box-elder.png overlay.' },
-  105: { classification: 'not_visualiser_relevant', priority: 'not_needed', notes: 'Large deciduous tree — out of scope.' },
-  87: { classification: 'not_visualiser_relevant', priority: 'not_needed', notes: 'Large deciduous tree — out of scope.' },
-  93: { classification: 'not_visualiser_relevant', priority: 'not_needed', notes: 'Large deciduous tree — out of scope.' },
+  105: {
+    classification: 'exact_asset_ready',
+    priority: 'launch',
+    paleFlowerRisk: true,
+    notes: 'Dedicated oak.png overlay — spot mode only.',
+  },
+  87: {
+    classification: 'exact_asset_ready',
+    priority: 'launch',
+    paleFlowerRisk: true,
+    notes: 'Dedicated birch.png overlay — spot mode only.',
+  },
+  93: {
+    classification: 'exact_asset_ready',
+    priority: 'launch',
+    paleFlowerRisk: true,
+    notes: 'Dedicated european-beech.png overlay — spot mode only.',
+  },
   85: { classification: 'not_visualiser_relevant', priority: 'not_needed', notes: 'Large deciduous tree — out of scope.' },
-  47: { classification: 'not_visualiser_relevant', priority: 'not_needed', notes: 'Large shade tree — out of scope.' },
+  47: { classification: 'exact_asset_ready', priority: 'launch', notes: 'Dedicated evergreen-ash.png overlay — spot mode only.' },
   88: { classification: 'not_visualiser_relevant', priority: 'not_needed', notes: 'Large deciduous tree — out of scope.' },
   106: { classification: 'not_visualiser_relevant', priority: 'not_needed', notes: 'Large street tree — out of scope.' },
   84: { classification: 'not_visualiser_relevant', priority: 'not_needed', notes: 'Large deciduous tree — out of scope.' },
@@ -290,6 +326,13 @@ export const PRIMARY_EXACT_ASSET_PATTERNS: Array<{ pattern: RegExp; assetKey: st
   { pattern: /^cordyline stricta$/i, assetKey: 'cordyline-stricta' },
   { pattern: /^crepe myrtle$/i, assetKey: 'crepe-myrtle' },
   { pattern: /^dogwood$/i, assetKey: 'dogwood' },
+  { pattern: /^erman.?s birch$/i, assetKey: 'birch' },
+  { pattern: /^escallonia$/i, assetKey: 'escallonia' },
+  { pattern: /^european beech$/i, assetKey: 'european-beech' },
+  { pattern: /^european hornbeam$/i, assetKey: 'european-hornbeam' },
+  { pattern: /^evergreen ash$/i, assetKey: 'evergreen-ash' },
+  { pattern: /^feijoa$/i, assetKey: 'feijoa' },
+  { pattern: /^english oak$/i, assetKey: 'oak' },
 ]
 
 export const APPROVED_PNG_KEYS = new Set([
@@ -323,9 +366,24 @@ export const APPROVED_PNG_KEYS = new Set([
   'cordyline-stricta',
   'crepe-myrtle',
   'dogwood',
+  'birch',
+  'escallonia',
+  'european-beech',
+  'european-hornbeam',
+  'evergreen-ash',
+  'feijoa',
+  'oak',
 ])
 
-export const HEDGE_PNG_KEYS = new Set(['buxus-hedge', 'griselinia-hedge', 'ficus-tuffy-hedge'])
+export const HEDGE_PNG_KEYS = new Set([
+  'buxus-hedge',
+  'griselinia-hedge',
+  'ficus-tuffy-hedge',
+  'camellia-hedge',
+  'corokia-geentys-green-hedge',
+  'corokia-virgata-hedge',
+  'eugenia',
+])
 
 export const SVG_FALLBACK_KEYS = new Set(['hedge', 'strappy-clump', 'rounded-shrub'])
 
@@ -356,7 +414,7 @@ export const DB_TO_SELECTOR_ALIAS: Record<string, string> = {
   Camellia: 'Camellia sasanqua',
 }
 
-export const ROW_MODE_DB_NAMES = new Set(['Griselinia', 'Ficus Tuffi', 'Buxus (Box Hedge)', 'Titoki'])
+export const ROW_MODE_DB_NAMES = new Set(['Griselinia', 'Ficus Tuffi', 'Buxus (Box Hedge)', 'Titoki', 'Eugenia'])
 
 const PALE_FLOWER_COLOR = /white|cream|ivory|pale|light/i
 
