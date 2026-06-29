@@ -8,6 +8,7 @@
 
 import { REGISTERED_OVERLAY_PATHS } from '../visualIdeas/plantOverlayAssets'
 import { GENERATED_NEW_BATCH_TEST_OVERLAYS } from './devOverlayManifest.generated'
+import { DEV_OVERLAY_FILE_CACHE_BUST } from './devOverlayCacheBust.generated'
 import {
   enrichHeldOverlay,
   enrichLatestBatchOverlay,
@@ -146,6 +147,7 @@ function registeredOverlays(): DevOverlayDef[] {
       defaultWidth: isSvg ? (file.includes('hedge') ? 300 : 200) : 220,
       aspect: file === 'lomandra.png' ? 4576 / 3056 : isSvg && file.includes('hedge') ? 320 / 200 : isSvg && file.includes('strappy') ? 200 / 250 : isSvg ? 200 / 230 : 1,
       group: isSvg ? 'fallbacks' : 'production',
+      cacheBust: DEV_OVERLAY_FILE_CACHE_BUST[file],
     }
     return enrichProductionOverlay(base)
   })
@@ -512,6 +514,94 @@ const DEV_QA_VARIANT_INPUTS: QaOverlayInput[] = [
     label: 'Himalayan Birch (spaced src)',
     file: 'himalayan birch.png',
     defaultWidth: 280,
+    aspect: 1,
+    archiveKind: 'old_qa',
+  },
+  {
+    id: 'qa-hoheria-src',
+    label: 'Lacebark / Hoheria (spaced src)',
+    file: 'Hoheria.png',
+    defaultWidth: 280,
+    aspect: 1,
+    archiveKind: 'old_qa',
+  },
+  {
+    id: 'qa-japanese-maple-src',
+    label: 'Japanese Maple (spaced src)',
+    file: 'Japanese maple.png',
+    defaultWidth: 260,
+    aspect: 1,
+    archiveKind: 'old_qa',
+  },
+  {
+    id: 'qa-kentia-palm-src',
+    label: 'Kentia Palm (spaced src)',
+    file: 'Kentia Palm.png',
+    defaultWidth: 260,
+    aspect: 1,
+    archiveKind: 'old_qa',
+  },
+  {
+    id: 'qa-king-palm-src',
+    label: 'King Palm (spaced src)',
+    file: 'King Palm.png',
+    defaultWidth: 260,
+    aspect: 1,
+    archiveKind: 'old_qa',
+  },
+  {
+    id: 'qa-lime-tree-src',
+    label: 'Lime Tree (spaced src)',
+    file: 'lime tree.png',
+    defaultWidth: 300,
+    aspect: 1,
+    archiveKind: 'old_qa',
+  },
+  {
+    id: 'qa-london-plane-tree-src',
+    label: 'London Plane Tree (spaced src)',
+    file: 'london plane tree.png',
+    defaultWidth: 320,
+    aspect: 1,
+    archiveKind: 'old_qa',
+  },
+  {
+    id: 'qa-magnolia-deciduous-src',
+    label: 'Magnolia Deciduous (spaced src)',
+    file: 'Magnolia deciduous.png',
+    defaultWidth: 300,
+    aspect: 1,
+    archiveKind: 'old_qa',
+  },
+  {
+    id: 'qa-magnolia-evergreen-src',
+    label: 'Magnolia Evergreen (spaced src)',
+    file: 'magnolia evergreen.png',
+    defaultWidth: 300,
+    aspect: 1,
+    archiveKind: 'old_qa',
+  },
+  {
+    id: 'qa-mandarin-tree-src',
+    label: 'Mandarin Tree (spaced src)',
+    file: 'mandarin tree.png',
+    defaultWidth: 300,
+    aspect: 1,
+    archiveKind: 'old_qa',
+  },
+  {
+    id: 'qa-manuka-tree-src',
+    label: 'Manuka (spaced src)',
+    file: 'manuka tree.png',
+    defaultWidth: 240,
+    aspect: 1,
+    archiveKind: 'old_qa',
+  },
+  {
+    id: 'qa-magnolia-evergreen-final-src',
+    label: 'Magnolia Evergreen (spaced src)',
+    file: 'magnolia tree evergreen final.png',
+    defaultWidth: 300,
     aspect: 1,
     archiveKind: 'old_qa',
   },

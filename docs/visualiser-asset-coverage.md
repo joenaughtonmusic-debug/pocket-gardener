@@ -4,7 +4,7 @@ Developer-facing audit for Pocket Gardener's photo overlay visualiser.
 
 **Source of truth:** `src/lib/visualiser/visualiserAssetCoverage.ts` (built from `plantDatabaseCatalog.json`)
 
-Last generated: 2026-06-28
+Last generated: 2026-06-29
 
 Refresh plant list: `npm run export:plant-catalog` (requires Supabase env)  
 Validate overlay paths: `npm run validate:overlay-paths`
@@ -26,20 +26,20 @@ Runtime resolution is unchanged — `resolveOverlayAsset()` in `plantOverlayAsse
 | Metric | Count |
 |--------|------:|
 | **Total plants in database** | 120 |
-| **Visualiser-relevant** | 100 |
-| **Exact asset ready** | 50 |
-| **Close shared asset OK** | 10 |
+| **Visualiser-relevant** | 111 |
+| **Exact asset ready** | 82 |
+| **Close shared asset OK** | 5 |
 | **Temporary fallback only** | 1 |
-| **Needs new asset** | 39 |
-| **Not visualiser relevant** | 20 |
+| **Needs new asset** | 23 |
+| **Not visualiser relevant** | 9 |
 | **High manual cutout risk** | 1 |
-| **White/pale flower risk flagged** | 42 |
+| **White/pale flower risk flagged** | 43 |
 | **Broken registry paths** | 0 |
-| **Registered overlay keys** | 59 |
+| **Registered overlay keys** | 90 |
 
 ### Visualise selector (spot mode)
 
-14 plants in `PREVIEW_PLANT_OPTIONS` — all resolve to approved PNG keys (no broken paths in chooser).
+81 plants in `PREVIEW_PLANT_OPTIONS` — all resolve to approved PNG keys (no broken paths in chooser).
 
 ### Row mode (hedge/screen only)
 
@@ -89,6 +89,7 @@ Excluded examples (must NOT be added): Lomandra, Agapanthus, NZ Flax, Phormium, 
 - Forest Pansy
 - Fortnight Lily (Dietes)
 - Foxtail Agave
+- Gardenia
 - Griselinia
 - Hardenbergia
 - Hebe (Koromiko)
@@ -97,9 +98,40 @@ Excluded examples (must NOT be added): Lomandra, Agapanthus, NZ Flax, Phormium, 
 - Hibiscus
 - Himalayan Birch
 - Hydrangea
+- Iresine
 - Japanese Box
+- Japanese Maple
+- Kahikatea
+- Karaka
+- Kauri
+- Kentia Palm
+- King Palm
+- Kohekohe
+- Kōwhai
+- Lacebark
+- Lancewood
+- Lavender
+- Lemon Tree
+- Ligustrum
+- Lime Tree
+- Liriope (Lilyturf)
 - Lomandra
+- London Plane Tree
+- Magnolia (Deciduous)
+- Magnolia (Evergreen)
+- Mandarin Tree
+- Manuka
+- Mexican Alder
+- Meyer Lemon
+- Michelia Bubbles
+- Mirror Bush
+- Mondo Grass
+- Monstera (Swiss Cheese Plant)
+- Monterey Cypress
+- Muehlenbeckia
+- Murraya
 - Nikau Palm
+- Norfolk Island Pine
 - NZ Flax
 - Ponga Fern
 - Renga Renga Lily
@@ -107,11 +139,6 @@ Excluded examples (must NOT be added): Lomandra, Agapanthus, NZ Flax, Phormium, 
 
 ### Soon after launch
 
-- Gardenia — gardenia-v2
-- Kentia Palm — Kentia Palm — intent/palm rules may map to ponga/nikau; not all palms suit Nikau silhouette
-- King Palm — King Palm — shares palm/feature resolution; dedicated palm asset later
-- Lavender — lavender white
-- Muehlenbeckia — Muehlenbeckia shares groundcover
 - Pratia — Shares groundcover
 - Sago Palm — Sago Palm — palm-like; may share nikau/ponga intent asset
 - Silver Flax (Astelia) — Silver Flax (Astelia) shares flax
@@ -121,22 +148,6 @@ Excluded examples (must NOT be added): Lomandra, Agapanthus, NZ Flax, Phormium, 
 ### Later
 
 - Ficus Pumila
-- Iresine
-- Japanese Maple
-- Kōwhai
-- Lemon Tree
-- Ligustrum
-- Lime Tree
-- Liriope (Lilyturf)
-- Magnolia (Deciduous)
-- Magnolia (Evergreen)
-- Mandarin Tree
-- Manuka
-- Meyer Lemon
-- Michelia Bubbles
-- Mirror Bush
-- Mondo Grass
-- Murraya
 - Olive Tree
 - Orange Trumpet Vine
 - Pink Rhaphiolepis
@@ -251,7 +262,7 @@ Gardenia is **needs_new_asset** (not exact_asset_ready). `gardenia-v2.png` exist
 | Forest Pansy | Cercis chinensis | Tree | forest-pansy | exact_asset_ready | launch | none | — | Dedicated forest-pansy.png overlay. |
 | Fortnight Lily (Dietes) | Dietes grandiflora | Flower | fortnight-lily | exact_asset_ready | launch | likely | Yes | Dedicated fortnight-lily.png overlay. White flowers passed QA. White/pale flowers may need manual cutout or a non-white source background. |
 | Foxtail Agave | Agave attenuata | Succulent | foxtail-agave | exact_asset_ready | launch | none | — | Dedicated foxtail-agave.png overlay. |
-| Gardenia | Gardeniat jasminoides | Flower | camellia | needs_new_asset | soon | high | Yes | gardenia-v2.png on disk but NOT registered — auto cutout likely removes white flowers. Manual cutout or non-white source background required before wiring. Do NOT mark exact until QA passes. White/pale flowers may need manual cutout or a non-white source background. |
+| Gardenia | Gardeniat jasminoides | Flower | gardenia | exact_asset_ready | launch | high | Yes | Dedicated gardenia.png overlay — spot mode only. Manual cutout QA passed. White/pale flowers may need manual cutout or a non-white source background. |
 | Griselinia | Griselinia littoralis | Hedge | griselinia-hedge | exact_asset_ready | launch | none | — | Maps to griselinia-hedge.png. Row mode + spot hedge rule. |
 | Hardenbergia | Hardenbergia violacea | Climber | hardenbergia | exact_asset_ready | launch | none | — | Dedicated hardenbergia.png overlay. |
 | Hebe (Koromiko) | Hebe koromiko | Shrub | hebe | exact_asset_ready | launch | none | — | Dedicated hebe.png. |
@@ -260,40 +271,40 @@ Gardenia is **needs_new_asset** (not exact_asset_ready). `gardenia-v2.png` exist
 | Hibiscus | Hibiscus rosa-sinensis | Shrub | hibiscus | exact_asset_ready | launch | none | — | Dedicated hibiscus.png overlay. |
 | Himalayan Birch | Betula utilis | Tree | himalayan-birch | exact_asset_ready | launch | none | Yes | Dedicated himalayan-birch.png overlay — distinct from Erman's Birch (birch.png). White/pale flowers may need manual cutout or a non-white source background. |
 | Hydrangea | Hydrangea macrophylla | Shrub | hydrangea | exact_asset_ready | launch | none | — | Dedicated hydrangea.png. |
-| Iresine | Iresine herbstii | Perennial | camellia | needs_new_asset | later | none | — | Iresine — colourful foliage perennial; low priority. |
+| Iresine | Iresine herbstii | Perennial | iresine | exact_asset_ready | launch | none | — | Dedicated iresine.png overlay — spot mode only. |
 | Japanese Box | Buxus microphylla | Hedge / Shrub | hedge | exact_asset_ready | launch | none | — | Japanese Box → buxus-hedge.png via species rule. |
-| Japanese Maple | Acer palmatum | Tree | nikau | needs_new_asset | later | none | — | Japanese Maple — deciduous feature; large tree overlay. |
-| Kahikatea | Dacrycarpus | Tree | nikau | not_visualiser_relevant | not_needed | none | — | Large native tree — out of scope. |
-| Karaka | Corynocarpus laevigatus | Tree | nikau | not_visualiser_relevant | not_needed | none | — | Large native tree — out of scope. |
-| Kauri | Agathis australis | Tree | nikau | not_visualiser_relevant | not_needed | none | — | Forest giant — not suitable for garden photo spot overlay. |
-| Kentia Palm | Howea forsteriana | Palm | nikau | close_shared_asset_ok | soon | none | — | Kentia Palm — intent/palm rules may map to ponga/nikau; not all palms suit Nikau silhouette. |
-| King Palm | Archontophoenix | Palm | nikau | close_shared_asset_ok | soon | none | — | King Palm — shares palm/feature resolution; dedicated palm asset later. |
-| Kohekohe | Dysoxylum spectabile | Tree | nikau | not_visualiser_relevant | not_needed | none | — | Large native tree — out of scope. |
-| Kōwhai | Sophora chathamica | Tree | nikau | needs_new_asset | later | none | — | Kōwhai — native feature tree; needs dedicated asset. |
-| Lacebark | Hoheria populnea | Tree | nikau | not_visualiser_relevant | not_needed | none | Yes | Medium native tree — poor spot overlay scale. White/pale flowers may need manual cutout or a non-white source background. |
-| Lancewood | Pseudopanax crassifolius | Tree | nikau | not_visualiser_relevant | not_needed | none | — | Large native tree — out of scope. |
-| Lavender | Lavandula | Shrub | camellia | needs_new_asset | soon | none | — | lavender white.png on disk, unregistered. Process and QA before registry. |
-| Lemon Tree | Citrus limon | Fruit | lomandra | needs_new_asset | later | none | Yes | Citrus — tree overlay needed. White/pale flowers may need manual cutout or a non-white source background. |
-| Ligustrum | Ligustrum rotundifolium | Hedge | hedge | needs_new_asset | later | likely | Yes | Ligustrum hedge — white flower spikes; needs hedge PNG. White/pale flowers may need manual cutout or a non-white source background. |
-| Lime Tree | Citrus aurantiifolia | Fruit | lomandra | needs_new_asset | later | none | Yes | Citrus — tree overlay needed. White/pale flowers may need manual cutout or a non-white source background. |
-| Liriope (Lilyturf) | Liriope muscari | Groundcover / Grass | groundcover | close_shared_asset_ok | later | none | — | Liriope shares lomandra/groundcover family — strappy border clump. |
+| Japanese Maple | Acer palmatum | Tree | japanese-maple | exact_asset_ready | launch | none | — | Dedicated japanese-maple.png overlay — spot mode only. |
+| Kahikatea | Dacrycarpus | Tree | kahikatea | exact_asset_ready | launch | none | — | Dedicated kahikatea.png overlay — spot mode only. |
+| Karaka | Corynocarpus laevigatus | Tree | karaka | exact_asset_ready | launch | none | — | Dedicated karaka.png overlay — spot mode only. |
+| Kauri | Agathis australis | Tree | kauri | exact_asset_ready | launch | none | — | Dedicated kauri.png overlay — spot mode only. |
+| Kentia Palm | Howea forsteriana | Palm | kentia-palm | exact_asset_ready | launch | none | — | Dedicated kentia-palm.png overlay — spot mode only. |
+| King Palm | Archontophoenix | Palm | king-palm | exact_asset_ready | launch | none | — | Dedicated king-palm.png overlay — spot mode only. |
+| Kohekohe | Dysoxylum spectabile | Tree | kohekohe | exact_asset_ready | launch | none | — | Dedicated kohekohe.png overlay — spot mode only. |
+| Kōwhai | Sophora chathamica | Tree | kowhai | exact_asset_ready | launch | none | — | Dedicated kowhai.png overlay — spot mode only. |
+| Lacebark | Hoheria populnea | Tree | lacebark | exact_asset_ready | launch | none | Yes | Dedicated lacebark.png overlay (Hoheria) — spot mode only. Pale flowers passed QA. White/pale flowers may need manual cutout or a non-white source background. |
+| Lancewood | Pseudopanax crassifolius | Tree | lancewood | exact_asset_ready | launch | none | — | Dedicated lancewood.png overlay — spot mode only. |
+| Lavender | Lavandula | Shrub | lavender | exact_asset_ready | launch | none | — | Dedicated lavender.png overlay — spot mode only. |
+| Lemon Tree | Citrus limon | Fruit | lemon | exact_asset_ready | launch | none | Yes | Dedicated lemon.png overlay — spot mode only. White/pale flowers may need manual cutout or a non-white source background. |
+| Ligustrum | Ligustrum rotundifolium | Hedge | ligustrum | exact_asset_ready | launch | likely | Yes | Dedicated ligustrum.png overlay — spot shrub specimen only, not row mode. White/pale flowers may need manual cutout or a non-white source background. |
+| Lime Tree | Citrus aurantiifolia | Fruit | lime-tree | exact_asset_ready | launch | none | Yes | Dedicated lime-tree.png overlay — spot mode only. White/pale flowers may need manual cutout or a non-white source background. |
+| Liriope (Lilyturf) | Liriope muscari | Groundcover / Grass | liriope | exact_asset_ready | launch | none | — | Dedicated liriope.png overlay — spot mode only. |
 | Lomandra | Lomandra Tanika | Shrub | lomandra | exact_asset_ready | launch | none | Yes | Dedicated lomandra.png (large file — consider resize). Small white flower spikes — monitor cutout quality. White/pale flowers may need manual cutout or a non-white source background. |
-| London Plane Tree | Platanus orientalis | Tree | nikau | not_visualiser_relevant | not_needed | none | Yes | Large street tree — out of scope. White/pale flowers may need manual cutout or a non-white source background. |
-| Magnolia (Deciduous) | Magnolia grandiflora | Tree | nikau | needs_new_asset | later | none | Yes | Deciduous magnolia — large tree overlay. White/pale flowers may need manual cutout or a non-white source background. |
-| Magnolia (Evergreen) | Magnolia grandiflora | Tree | nikau | needs_new_asset | later | none | Yes | Evergreen magnolia — large tree overlay. White/pale flowers may need manual cutout or a non-white source background. |
-| Mandarin Tree | Citrus reticulata | Fruit | lomandra | needs_new_asset | later | none | Yes | Citrus — tree overlay needed. White/pale flowers may need manual cutout or a non-white source background. |
-| Manuka | Leptospermum scoparium | Shrub | camellia | needs_new_asset | later | likely | Yes | Manuka (Leptospermum) — fine-textured native shrub. White/pale flowers may need manual cutout or a non-white source background. |
-| Mexican Alder | Alnus jorullensis | Tree | nikau | not_visualiser_relevant | not_needed | none | Yes | Large deciduous tree — out of scope. White/pale flowers may need manual cutout or a non-white source background. |
-| Meyer Lemon | Citrus x meyeri | Fruit | lomandra | needs_new_asset | later | none | Yes | lemon white.png on disk, unregistered. Citrus tree-scale overlay needed. White/pale flowers may need manual cutout or a non-white source background. |
-| Michelia Bubbles | Michelia figo x | Shrub | camellia | needs_new_asset | later | likely | Yes | Michelia Bubbles — white flowers; manual cutout likely. White/pale flowers may need manual cutout or a non-white source background. |
-| Mirror Bush | Coprosma repens | Shrub | camellia | close_shared_asset_ok | later | none | — | Mirror Bush (Coprosma) shares groundcover.png — shrub habit not ideal. |
-| Mondo Grass | Ophiopogon japonicus | Groundcover | groundcover | needs_new_asset | later | none | — | Mondo Grass — too low for spot overlay. |
-| Monstera (Swiss Cheese Plant) | Monstera deliciosa | Indoor / Tropical | lomandra | not_visualiser_relevant | not_needed | none | — | Indoor/tropical houseplant — not garden visualiser focus. |
-| Monterey Cypress | Cupressus macrocarpa | Tree | nikau | not_visualiser_relevant | not_needed | none | Yes | Large conifer — out of scope. White/pale flowers may need manual cutout or a non-white source background. |
-| Muehlenbeckia | Muehlenbeckia complexa | Groundcover | groundcover | close_shared_asset_ok | soon | none | — | Muehlenbeckia shares groundcover.png. |
-| Murraya | Murraya paniculata | Hedge | hedge | needs_new_asset | later | none | — | Murraya hedge — no dedicated PNG. |
+| London Plane Tree | Platanus orientalis | Tree | london-plane-tree | exact_asset_ready | launch | none | Yes | Dedicated london-plane-tree.png overlay — spot mode only. White/pale flowers may need manual cutout or a non-white source background. |
+| Magnolia (Deciduous) | Magnolia grandiflora | Tree | magnolia-deciduous | exact_asset_ready | launch | none | Yes | Dedicated magnolia-deciduous.png overlay — spot mode only. White/pale flowers may need manual cutout or a non-white source background. |
+| Magnolia (Evergreen) | Magnolia grandiflora | Tree | magnolia-evergreen | exact_asset_ready | launch | none | Yes | Dedicated magnolia-evergreen.png overlay — spot mode only. Cream flowers passed QA. White/pale flowers may need manual cutout or a non-white source background. |
+| Mandarin Tree | Citrus reticulata | Fruit | mandarin-tree | exact_asset_ready | launch | none | Yes | Dedicated mandarin-tree.png overlay — spot mode only. White/pale flowers may need manual cutout or a non-white source background. |
+| Manuka | Leptospermum scoparium | Shrub | manuka | exact_asset_ready | launch | likely | Yes | Dedicated manuka.png overlay — spot mode only. Latest replacement with denser foliage; pink flowers passed QA. White/pale flowers may need manual cutout or a non-white source background. |
+| Mexican Alder | Alnus jorullensis | Tree | mexican-alder | exact_asset_ready | launch | none | Yes | Dedicated mexican-alder.png overlay — spot mode only. White/pale flowers may need manual cutout or a non-white source background. |
+| Meyer Lemon | Citrus x meyeri | Fruit | lemon | exact_asset_ready | launch | none | Yes | Reuses lemon.png via Meyer Lemon species rule (same asset as Lemon Tree). Spot mode only. White/pale flowers may need manual cutout or a non-white source background. |
+| Michelia Bubbles | Michelia figo x | Shrub | michelia-bubbles | exact_asset_ready | launch | likely | Yes | Dedicated michelia-bubbles.png overlay — spot mode only. Cream flowers passed QA. White/pale flowers may need manual cutout or a non-white source background. |
+| Mirror Bush | Coprosma repens | Shrub | mirror-bush | exact_asset_ready | launch | none | — | Dedicated mirror-bush.png overlay — spot mode only. |
+| Mondo Grass | Ophiopogon japonicus | Groundcover | mondo-grass | exact_asset_ready | launch | none | — | Dedicated mondo-grass.png overlay — spot mode only. |
+| Monstera (Swiss Cheese Plant) | Monstera deliciosa | Indoor / Tropical | monstera | exact_asset_ready | launch | none | — | Dedicated monstera.png overlay — spot mode only. |
+| Monterey Cypress | Cupressus macrocarpa | Tree | monterey-cypress | exact_asset_ready | launch | none | Yes | Dedicated monterey-cypress.png overlay — spot mode only. White/pale flowers may need manual cutout or a non-white source background. |
+| Muehlenbeckia | Muehlenbeckia complexa | Groundcover | muehlenbeckia | exact_asset_ready | launch | none | — | Dedicated muehlenbeckia.png overlay — spot mode only. |
+| Murraya | Murraya paniculata | Hedge | murraya | exact_asset_ready | launch | none | Yes | Dedicated murraya.png overlay — spot shrub specimen only, not row mode. White/pale flowers may need manual cutout or a non-white source background. |
 | Nikau Palm | Palm | Palm | nikau | exact_asset_ready | launch | none | — | Dedicated nikau.png. |
-| Norfolk Island Pine | Araucaria heterophylla | Tree | nikau | not_visualiser_relevant | not_needed | none | Yes | Large conifer — out of scope. White/pale flowers may need manual cutout or a non-white source background. |
+| Norfolk Island Pine | Araucaria heterophylla | Tree | norfolk-island-pine | exact_asset_ready | launch | none | Yes | Dedicated norfolk-island-pine.png overlay — spot mode only. White/pale flowers may need manual cutout or a non-white source background. |
 | NZ Flax | Phormium tenax | Flax | flax | close_shared_asset_ok | launch | none | — | Shares flax.png — same strappy form family. |
 | Olive Tree | Olea europaea | Shrub | camellia | needs_new_asset | later | none | — | Olive — silvery tree/shrub; no overlay. |
 | Orange Trumpet Vine | Pyrostegia venusta | Climber | star-jasmine | needs_new_asset | later | none | — | Orange Trumpet Vine — climber; no overlay. |

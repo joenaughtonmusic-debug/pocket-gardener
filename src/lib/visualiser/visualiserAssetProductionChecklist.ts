@@ -71,7 +71,6 @@ const BATCH_2_NAME_PATTERNS =
 const UNWIRED_RAW_BY_PLANT: Record<string, string> = {
   Gardenia: '/plant-overlays/gardenia-v2.png',
   Lavender: '/plant-overlays/lavender white.png',
-  'Meyer Lemon': '/plant-overlays/lemon white.png',
 }
 
 function needsProduction(row: VisualiserAssetCoverageRow): boolean {

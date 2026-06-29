@@ -79,7 +79,7 @@ function buildRow(plant: CatalogPlant): VisualiserAssetCoverageRow {
     defaultManualCutoutRisk(plant, paleFlowerRisk, classification)
 
   let priority = override?.priority ?? defaultPriority(classification)
-  if (classification === 'close_shared_asset_ok' && /pratia|dietes|astelia|coprosma|muehlenbeckia|palm|kentia|king palm/i.test(plant.common_name)) {
+  if (classification === 'close_shared_asset_ok' && /pratia|dietes|astelia|palm|kentia|king palm/i.test(plant.common_name)) {
     priority = 'soon'
   }
 

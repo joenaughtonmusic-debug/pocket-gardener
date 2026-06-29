@@ -13,6 +13,7 @@ import {
   ROW_MODE_EXCLUDED_EXAMPLES,
   UNWIRED_DISK_ASSETS,
 } from '../src/lib/visualiser/visualiserAssetCoverage'
+import { PREVIEW_PLANT_OPTIONS } from '../src/lib/visualIdeas/plantOverlayAssets'
 
 const s = getCoverageSummary()
 const roadmap = getAssetProductionRoadmap()
@@ -76,7 +77,7 @@ Runtime resolution is unchanged — \`resolveOverlayAsset()\` in \`plantOverlayA
 
 ### Visualise selector (spot mode)
 
-14 plants in \`PREVIEW_PLANT_OPTIONS\` — all resolve to approved PNG keys (no broken paths in chooser).
+${PREVIEW_PLANT_OPTIONS.length} plants in \`PREVIEW_PLANT_OPTIONS\` — all resolve to approved PNG keys (no broken paths in chooser).
 
 ### Row mode (hedge/screen only)
 
