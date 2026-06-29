@@ -26,20 +26,20 @@ Runtime resolution is unchanged — `resolveOverlayAsset()` in `plantOverlayAsse
 | Metric | Count |
 |--------|------:|
 | **Total plants in database** | 120 |
-| **Visualiser-relevant** | 111 |
-| **Exact asset ready** | 82 |
+| **Visualiser-relevant** | 113 |
+| **Exact asset ready** | 92 |
 | **Close shared asset OK** | 5 |
 | **Temporary fallback only** | 1 |
-| **Needs new asset** | 23 |
-| **Not visualiser relevant** | 9 |
+| **Needs new asset** | 15 |
+| **Not visualiser relevant** | 7 |
 | **High manual cutout risk** | 1 |
-| **White/pale flower risk flagged** | 43 |
+| **White/pale flower risk flagged** | 45 |
 | **Broken registry paths** | 0 |
-| **Registered overlay keys** | 90 |
+| **Registered overlay keys** | 100 |
 
 ### Visualise selector (spot mode)
 
-81 plants in `PREVIEW_PLANT_OPTIONS` — all resolve to approved PNG keys (no broken paths in chooser).
+91 plants in `PREVIEW_PLANT_OPTIONS` — all resolve to approved PNG keys (no broken paths in chooser).
 
 ### Row mode (hedge/screen only)
 
@@ -133,7 +133,17 @@ Excluded examples (must NOT be added): Lomandra, Agapanthus, NZ Flax, Phormium, 
 - Nikau Palm
 - Norfolk Island Pine
 - NZ Flax
+- Olive Tree
+- Orange Trumpet Vine
+- Peach Tree
+- Pink Rhaphiolepis
+- Pittosporum
+- Pohutukawa
 - Ponga Fern
+- Port Wine Magnolia
+- Pūriri
+- Putaputawētā
+- Rain Lily
 - Renga Renga Lily
 - Star Jasmine
 
@@ -148,14 +158,6 @@ Excluded examples (must NOT be added): Lomandra, Agapanthus, NZ Flax, Phormium, 
 ### Later
 
 - Ficus Pumila
-- Olive Tree
-- Orange Trumpet Vine
-- Pink Rhaphiolepis
-- Pittosporum
-- Pohutukawa
-- Port Wine Magnolia
-- Pūriri
-- Rain Lily
 - Redbud
 - Rhododendron
 - Rhododendron Vireya
@@ -306,18 +308,18 @@ Gardenia is **needs_new_asset** (not exact_asset_ready). `gardenia-v2.png` exist
 | Nikau Palm | Palm | Palm | nikau | exact_asset_ready | launch | none | — | Dedicated nikau.png. |
 | Norfolk Island Pine | Araucaria heterophylla | Tree | norfolk-island-pine | exact_asset_ready | launch | none | Yes | Dedicated norfolk-island-pine.png overlay — spot mode only. White/pale flowers may need manual cutout or a non-white source background. |
 | NZ Flax | Phormium tenax | Flax | flax | close_shared_asset_ok | launch | none | — | Shares flax.png — same strappy form family. |
-| Olive Tree | Olea europaea | Shrub | camellia | needs_new_asset | later | none | — | Olive — silvery tree/shrub; no overlay. |
-| Orange Trumpet Vine | Pyrostegia venusta | Climber | star-jasmine | needs_new_asset | later | none | — | Orange Trumpet Vine — climber; no overlay. |
-| Peach Tree | Prunus persica | Fruit | lomandra | not_visualiser_relevant | not_needed | none | — | Stone fruit tree — out of scope. |
-| Pink Rhaphiolepis | Rhaphiolepis indica | Shrub | camellia | needs_new_asset | later | none | — | Pink Rhaphiolepis — shrub; no overlay. |
-| Pittosporum | Pittosporum tenuifolium | Hedge | hedge | needs_new_asset | later | none | — | Pittosporum hedge — common NZ screen; needs dedicated PNG. |
-| Pohutukawa | Metrosideros excelsa | Tree | nikau | needs_new_asset | later | none | — | Large coastal tree — poor fit for spot overlay scale without dedicated asset. |
+| Olive Tree | Olea europaea | Shrub | olive-tree | exact_asset_ready | launch | none | — | Dedicated olive-tree.png overlay — spot mode only. |
+| Orange Trumpet Vine | Pyrostegia venusta | Climber | orange-trumpet-vine | exact_asset_ready | launch | none | — | Dedicated orange-trumpet-vine.png overlay — spot climber specimen only. |
+| Peach Tree | Prunus persica | Fruit | peach-tree | exact_asset_ready | launch | none | Yes | Dedicated peach-tree.png overlay — spot mode only. White/pale flowers may need manual cutout or a non-white source background. |
+| Pink Rhaphiolepis | Rhaphiolepis indica | Shrub | pink-rhaphiolepis | exact_asset_ready | launch | none | — | Dedicated pink-rhaphiolepis.png overlay — spot mode only. |
+| Pittosporum | Pittosporum tenuifolium | Hedge | pittosporum | exact_asset_ready | launch | none | — | Dedicated pittosporum.png overlay — spot shrub specimen only, not row mode. |
+| Pohutukawa | Metrosideros excelsa | Tree | pohutukawa | exact_asset_ready | launch | none | — | Dedicated pohutukawa.png overlay — spot mode only. |
 | Ponga Fern | Dicksonia squarrosa | Fern | ponga | exact_asset_ready | launch | none | — | Dedicated ponga.png. |
-| Port Wine Magnolia | Michelia figo | Shrub / Hedge | hedge | needs_new_asset | later | none | Yes | Port Wine Magnolia hedge — no overlay. White/pale flowers may need manual cutout or a non-white source background. |
+| Port Wine Magnolia | Michelia figo | Shrub / Hedge | port-wine-magnolia | exact_asset_ready | launch | none | Yes | Dedicated port-wine-magnolia.png overlay — spot shrub specimen only, not row mode. White/pale flowers may need manual cutout or a non-white source background. |
 | Pratia | Pratia angulata | Groundcover | groundcover | close_shared_asset_ok | soon | likely | Yes | Shares groundcover.png. White flowers — manual cutout may be needed. White/pale flowers may need manual cutout or a non-white source background. |
-| Pūriri | Vitex lucens | Tree | nikau | needs_new_asset | later | none | — | Large native tree — defer dedicated asset. |
-| Putaputawētā | Carpodetus serratus | Tree | nikau | not_visualiser_relevant | not_needed | none | — | Large native tree — out of scope. |
-| Rain Lily | Zephyranthes | Perennial | camellia | needs_new_asset | later | none | — | Rain Lily — small bulb; poor overlay scale. |
+| Pūriri | Vitex lucens | Tree | puriri | exact_asset_ready | launch | none | — | Dedicated puriri.png overlay — spot mode only. |
+| Putaputawētā | Carpodetus serratus | Tree | putaputaweta | exact_asset_ready | launch | none | — | Dedicated putaputaweta.png overlay — spot mode only. |
+| Rain Lily | Zephyranthes | Perennial | rain-lily | exact_asset_ready | launch | none | Yes | Dedicated rain-lily.png overlay — cream/soft-white flowers via luminance-preserving recolour; spot mode only. White/pale flowers may need manual cutout or a non-white source background. |
 | Redbud | Cercis canadensis | Tree | nikau | needs_new_asset | later | none | Yes | Redbud — small flowering tree. White/pale flowers may need manual cutout or a non-white source background. |
 | Renga Renga Lily | Arthropodium cirratum | Perennial | renga-renga-lily | exact_asset_ready | launch | likely | Yes | Dedicated renga-renga-lily.png. White/pale flowers may need manual cutout or non-white source background. White/pale flowers may need manual cutout or a non-white source background. |
 | Rewarewa | Knightia excelsa | Tree | nikau | not_visualiser_relevant | not_needed | none | — | Large native tree — out of scope. |
