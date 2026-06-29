@@ -95,7 +95,11 @@ export const PLANT_COVERAGE_OVERRIDES: Record<number, PlantCoverageOverride> = {
   52: { classification: 'exact_asset_ready', priority: 'launch', notes: 'Dedicated kentia-palm.png overlay — spot mode only.' },
   22: { classification: 'exact_asset_ready', priority: 'launch', notes: 'Dedicated king-palm.png overlay — spot mode only.' },
   45: { classification: 'close_shared_asset_ok', priority: 'later', notes: 'Sugar Cane Palm — palm silhouette share.' },
-  38: { classification: 'close_shared_asset_ok', priority: 'later', notes: 'Sago Palm — palm-like; may share nikau/ponga intent asset.' },
+  38: {
+    classification: 'exact_asset_ready',
+    priority: 'launch',
+    notes: 'Dedicated sago-palm.png overlay — spot mode only. Not palm/tree fallback.',
+  },
   108: { classification: 'exact_asset_ready', priority: 'launch', notes: 'Dedicated liriope.png overlay — spot mode only.' },
   40: { classification: 'exact_asset_ready', priority: 'launch', notes: 'Dedicated flax-lily.png overlay (Dianella).' },
 
@@ -163,8 +167,16 @@ export const PLANT_COVERAGE_OVERRIDES: Record<number, PlantCoverageOverride> = {
     notes: 'Dedicated puriri.png overlay — spot mode only.',
   },
   138: { classification: 'needs_new_asset', priority: 'later', notes: 'Philodendron Xanadu — subtropical clump; no overlay.' },
-  117: { classification: 'needs_new_asset', priority: 'later', notes: 'Rhododendron shrub — no species rule.' },
-  118: { classification: 'needs_new_asset', priority: 'later', notes: 'Vireya rhododendron — no species rule.' },
+  117: {
+    classification: 'exact_asset_ready',
+    priority: 'launch',
+    notes: 'Dedicated rhododendron.png overlay — spot mode only.',
+  },
+  118: {
+    classification: 'exact_asset_ready',
+    priority: 'launch',
+    notes: 'Dedicated rhododendron-vireya.png overlay — distinct from standard rhododendron; spot mode only.',
+  },
   134: { classification: 'exact_asset_ready', priority: 'launch', notes: 'Dedicated canna-lily.png overlay.' },
   128: {
     classification: 'exact_asset_ready',
@@ -208,7 +220,11 @@ export const PLANT_COVERAGE_OVERRIDES: Record<number, PlantCoverageOverride> = {
     paleFlowerRisk: true,
     notes: 'Dedicated european-hornbeam.png overlay — spot mode only.',
   },
-  150: { classification: 'needs_new_asset', priority: 'later', notes: 'Rose — cottage shrub; no overlay.' },
+  150: {
+    classification: 'exact_asset_ready',
+    priority: 'launch',
+    notes: 'Dedicated rose.png overlay — spot shrub specimen only, not row mode.',
+  },
   145: { classification: 'exact_asset_ready', priority: 'launch', notes: 'Dedicated hibiscus.png overlay.' },
   114: { classification: 'exact_asset_ready', priority: 'launch', notes: 'Dedicated begonia.png overlay.' },
   115: { classification: 'exact_asset_ready', priority: 'launch', notes: 'Dedicated bromeliad.png overlay.' },
@@ -228,7 +244,12 @@ export const PLANT_COVERAGE_OVERRIDES: Record<number, PlantCoverageOverride> = {
   },
   18: { classification: 'exact_asset_ready', priority: 'launch', notes: 'Dedicated japanese-maple.png overlay — spot mode only.' },
   33: { classification: 'exact_asset_ready', priority: 'launch', notes: 'Dedicated forest-pansy.png overlay.' },
-  79: { classification: 'needs_new_asset', priority: 'later', paleFlowerRisk: true, notes: 'Redbud — small flowering tree.' },
+  79: {
+    classification: 'exact_asset_ready',
+    priority: 'launch',
+    paleFlowerRisk: true,
+    notes: 'Dedicated redbud.png overlay — distinct from Forest Pansy; spot mode only.',
+  },
   136: {
     classification: 'exact_asset_ready',
     priority: 'launch',
@@ -250,11 +271,11 @@ export const PLANT_COVERAGE_OVERRIDES: Record<number, PlantCoverageOverride> = {
     notes: 'Dedicated hellebore.png overlay. White/cream flowers passed QA.',
   },
   34: {
-    classification: 'needs_new_asset',
-    priority: 'later',
+    classification: 'exact_asset_ready',
+    priority: 'launch',
     paleFlowerRisk: true,
     manualCutoutRisk: 'likely',
-    notes: 'Silver Bush — white flowers; low shrub.',
+    notes: 'Dedicated silver-bush.png overlay — compact silver shrub; distinct from Silver Falls; spot mode only.',
   },
   122: { classification: 'exact_asset_ready', priority: 'launch', notes: 'Dedicated boston-ivy.png overlay.' },
   137: {
@@ -277,7 +298,11 @@ export const PLANT_COVERAGE_OVERRIDES: Record<number, PlantCoverageOverride> = {
     priority: 'launch',
     notes: 'Dedicated mondo-grass.png overlay — spot mode only.',
   },
-  41: { classification: 'needs_new_asset', priority: 'later', notes: 'Silver Falls — trailing groundcover; poor overlay scale.' },
+  41: {
+    classification: 'exact_asset_ready',
+    priority: 'launch',
+    notes: 'Dedicated silver-falls.png overlay — trailing groundcover; distinct from Silver Bush; spot mode only.',
+  },
   139: { classification: 'needs_new_asset', priority: 'later', notes: 'Spanish Shawl — groundcover; low priority.' },
   111: {
     classification: 'exact_asset_ready',
@@ -310,7 +335,11 @@ export const PLANT_COVERAGE_OVERRIDES: Record<number, PlantCoverageOverride> = {
     priority: 'launch',
     notes: 'Dedicated putaputaweta.png overlay — spot mode only.',
   },
-  98: { classification: 'not_visualiser_relevant', priority: 'not_needed', notes: 'Large native tree — out of scope.' },
+  98: {
+    classification: 'exact_asset_ready',
+    priority: 'launch',
+    notes: 'Dedicated rewarewa.png overlay — spot mode only.',
+  },
   26: { classification: 'not_visualiser_relevant', priority: 'not_needed', notes: 'Large native tree — out of scope.' },
   44: { classification: 'exact_asset_ready', priority: 'launch', notes: 'Dedicated ake-ake.png overlay.' },
   91: { classification: 'exact_asset_ready', priority: 'launch', notes: 'Dedicated lancewood.png overlay — spot mode only.' },
@@ -356,8 +385,18 @@ export const PLANT_COVERAGE_OVERRIDES: Record<number, PlantCoverageOverride> = {
   },
   102: { classification: 'not_visualiser_relevant', priority: 'not_needed', notes: 'Large deciduous tree — out of scope.' },
   103: { classification: 'not_visualiser_relevant', priority: 'not_needed', notes: 'Large deciduous tree — out of scope.' },
-  80: { classification: 'not_visualiser_relevant', priority: 'not_needed', notes: 'Large deciduous tree — out of scope.' },
-  86: { classification: 'not_visualiser_relevant', priority: 'not_needed', notes: 'Large deciduous tree/shrub — out of scope.' },
+  80: {
+    classification: 'exact_asset_ready',
+    priority: 'launch',
+    paleFlowerRisk: true,
+    notes: 'Dedicated silk-tree.png overlay — spot mode only.',
+  },
+  86: {
+    classification: 'exact_asset_ready',
+    priority: 'launch',
+    paleFlowerRisk: true,
+    notes: 'Dedicated serviceberry.png overlay — spot mode only.',
+  },
   36: { classification: 'exact_asset_ready', priority: 'launch', paleFlowerRisk: true, notes: 'Dedicated dogwood.png overlay.' },
   90: {
     classification: 'exact_asset_ready',
@@ -469,6 +508,16 @@ export const PRIMARY_EXACT_ASSET_PATTERNS: Array<{ pattern: RegExp; assetKey: st
   { pattern: /^pūriri$/i, assetKey: 'puriri' },
   { pattern: /^putaputawētā$/i, assetKey: 'putaputaweta' },
   { pattern: /^rain lily$/i, assetKey: 'rain-lily' },
+  { pattern: /^redbud$/i, assetKey: 'redbud' },
+  { pattern: /^rewarewa$/i, assetKey: 'rewarewa' },
+  { pattern: /^rhododendron vireya$/i, assetKey: 'rhododendron-vireya' },
+  { pattern: /^rhododendron$/i, assetKey: 'rhododendron' },
+  { pattern: /^rose$/i, assetKey: 'rose' },
+  { pattern: /^sago palm$/i, assetKey: 'sago-palm' },
+  { pattern: /^serviceberry$/i, assetKey: 'serviceberry' },
+  { pattern: /^silk tree$/i, assetKey: 'silk-tree' },
+  { pattern: /^silver bush$/i, assetKey: 'silver-bush' },
+  { pattern: /^silver falls$/i, assetKey: 'silver-falls' },
 ]
 
 export const APPROVED_PNG_KEYS = new Set([
@@ -560,6 +609,16 @@ export const APPROVED_PNG_KEYS = new Set([
   'puriri',
   'putaputaweta',
   'rain-lily',
+  'redbud',
+  'rewarewa',
+  'rhododendron',
+  'rhododendron-vireya',
+  'rose',
+  'sago-palm',
+  'serviceberry',
+  'silk-tree',
+  'silver-bush',
+  'silver-falls',
 ])
 
 export const HEDGE_PNG_KEYS = new Set([

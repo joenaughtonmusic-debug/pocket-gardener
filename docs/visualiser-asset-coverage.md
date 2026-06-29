@@ -26,20 +26,20 @@ Runtime resolution is unchanged — `resolveOverlayAsset()` in `plantOverlayAsse
 | Metric | Count |
 |--------|------:|
 | **Total plants in database** | 120 |
-| **Visualiser-relevant** | 113 |
-| **Exact asset ready** | 92 |
-| **Close shared asset OK** | 5 |
+| **Visualiser-relevant** | 116 |
+| **Exact asset ready** | 102 |
+| **Close shared asset OK** | 4 |
 | **Temporary fallback only** | 1 |
-| **Needs new asset** | 15 |
-| **Not visualiser relevant** | 7 |
+| **Needs new asset** | 9 |
+| **Not visualiser relevant** | 4 |
 | **High manual cutout risk** | 1 |
 | **White/pale flower risk flagged** | 45 |
 | **Broken registry paths** | 0 |
-| **Registered overlay keys** | 100 |
+| **Registered overlay keys** | 110 |
 
 ### Visualise selector (spot mode)
 
-91 plants in `PREVIEW_PLANT_OPTIONS` — all resolve to approved PNG keys (no broken paths in chooser).
+101 plants in `PREVIEW_PLANT_OPTIONS` — all resolve to approved PNG keys (no broken paths in chooser).
 
 ### Row mode (hedge/screen only)
 
@@ -144,13 +144,22 @@ Excluded examples (must NOT be added): Lomandra, Agapanthus, NZ Flax, Phormium, 
 - Pūriri
 - Putaputawētā
 - Rain Lily
+- Redbud
 - Renga Renga Lily
+- Rewarewa
+- Rhododendron
+- Rhododendron Vireya
+- Rose
+- Sago Palm
+- Serviceberry
+- Silk Tree
+- Silver Bush
+- Silver Falls
 - Star Jasmine
 
 ### Soon after launch
 
 - Pratia — Shares groundcover
-- Sago Palm — Sago Palm — palm-like; may share nikau/ponga intent asset
 - Silver Flax (Astelia) — Silver Flax (Astelia) shares flax
 - Sugar Cane Palm — Sugar Cane Palm — palm silhouette share
 - Titoki — Row mode only
@@ -158,12 +167,6 @@ Excluded examples (must NOT be added): Lomandra, Agapanthus, NZ Flax, Phormium, 
 ### Later
 
 - Ficus Pumila
-- Redbud
-- Rhododendron
-- Rhododendron Vireya
-- Rose
-- Silver Bush
-- Silver Falls
 - Silver Lady Fern
 - Smoke Bush
 - Spanish Shawl
@@ -320,17 +323,17 @@ Gardenia is **needs_new_asset** (not exact_asset_ready). `gardenia-v2.png` exist
 | Pūriri | Vitex lucens | Tree | puriri | exact_asset_ready | launch | none | — | Dedicated puriri.png overlay — spot mode only. |
 | Putaputawētā | Carpodetus serratus | Tree | putaputaweta | exact_asset_ready | launch | none | — | Dedicated putaputaweta.png overlay — spot mode only. |
 | Rain Lily | Zephyranthes | Perennial | rain-lily | exact_asset_ready | launch | none | Yes | Dedicated rain-lily.png overlay — cream/soft-white flowers via luminance-preserving recolour; spot mode only. White/pale flowers may need manual cutout or a non-white source background. |
-| Redbud | Cercis canadensis | Tree | nikau | needs_new_asset | later | none | Yes | Redbud — small flowering tree. White/pale flowers may need manual cutout or a non-white source background. |
+| Redbud | Cercis canadensis | Tree | redbud | exact_asset_ready | launch | none | Yes | Dedicated redbud.png overlay — distinct from Forest Pansy; spot mode only. White/pale flowers may need manual cutout or a non-white source background. |
 | Renga Renga Lily | Arthropodium cirratum | Perennial | renga-renga-lily | exact_asset_ready | launch | likely | Yes | Dedicated renga-renga-lily.png. White/pale flowers may need manual cutout or non-white source background. White/pale flowers may need manual cutout or a non-white source background. |
-| Rewarewa | Knightia excelsa | Tree | nikau | not_visualiser_relevant | not_needed | none | — | Large native tree — out of scope. |
-| Rhododendron | Rhododendron | Shrub | camellia | needs_new_asset | later | none | — | Rhododendron shrub — no species rule. |
-| Rhododendron Vireya | Rhododendron vireya | Shrub | camellia | needs_new_asset | later | none | — | Vireya rhododendron — no species rule. |
-| Rose | Rosa spp. | Shrub | camellia | needs_new_asset | later | none | — | Rose — cottage shrub; no overlay. |
-| Sago Palm | Cycas revoluta | Palm | nikau | close_shared_asset_ok | soon | none | — | Sago Palm — palm-like; may share nikau/ponga intent asset. |
-| Serviceberry | Amelanchier canadensis | Tree / Shrub | nikau | not_visualiser_relevant | not_needed | none | Yes | Large deciduous tree/shrub — out of scope. White/pale flowers may need manual cutout or a non-white source background. |
-| Silk Tree | Albizia julibrissin | Tree | nikau | not_visualiser_relevant | not_needed | none | Yes | Large deciduous tree — out of scope. White/pale flowers may need manual cutout or a non-white source background. |
-| Silver Bush | Convolvulus cneorum | Flower | camellia | needs_new_asset | later | likely | Yes | Silver Bush — white flowers; low shrub. White/pale flowers may need manual cutout or a non-white source background. |
-| Silver Falls | Dichondra argentea | Groundcover | groundcover | needs_new_asset | later | none | — | Silver Falls — trailing groundcover; poor overlay scale. |
+| Rewarewa | Knightia excelsa | Tree | rewarewa | exact_asset_ready | launch | none | — | Dedicated rewarewa.png overlay — spot mode only. |
+| Rhododendron | Rhododendron | Shrub | rhododendron | exact_asset_ready | launch | none | — | Dedicated rhododendron.png overlay — spot mode only. |
+| Rhododendron Vireya | Rhododendron vireya | Shrub | rhododendron-vireya | exact_asset_ready | launch | none | — | Dedicated rhododendron-vireya.png overlay — distinct from standard rhododendron; spot mode only. |
+| Rose | Rosa spp. | Shrub | rose | exact_asset_ready | launch | none | — | Dedicated rose.png overlay — spot shrub specimen only, not row mode. |
+| Sago Palm | Cycas revoluta | Palm | sago-palm | exact_asset_ready | launch | none | — | Dedicated sago-palm.png overlay — spot mode only. Not palm/tree fallback. |
+| Serviceberry | Amelanchier canadensis | Tree / Shrub | serviceberry | exact_asset_ready | launch | none | Yes | Dedicated serviceberry.png overlay — spot mode only. White/pale flowers may need manual cutout or a non-white source background. |
+| Silk Tree | Albizia julibrissin | Tree | silk-tree | exact_asset_ready | launch | none | Yes | Dedicated silk-tree.png overlay — spot mode only. White/pale flowers may need manual cutout or a non-white source background. |
+| Silver Bush | Convolvulus cneorum | Flower | silver-bush | exact_asset_ready | launch | likely | Yes | Dedicated silver-bush.png overlay — compact silver shrub; distinct from Silver Falls; spot mode only. White/pale flowers may need manual cutout or a non-white source background. |
+| Silver Falls | Dichondra argentea | Groundcover | silver-falls | exact_asset_ready | launch | none | — | Dedicated silver-falls.png overlay — trailing groundcover; distinct from Silver Bush; spot mode only. |
 | Silver Flax (Astelia) | Astelia Silver | Flax | flax | close_shared_asset_ok | soon | none | — | Silver Flax (Astelia) shares flax.png. |
 | Silver Lady Fern | Blechnum gibbum | Fern | nikau | needs_new_asset | later | none | — | Silver Lady Fern — shade fern; no overlay. |
 | Small-leaved Lime | Tilia cordata | Tree | nikau | not_visualiser_relevant | not_needed | none | Yes | Large deciduous tree — out of scope. White/pale flowers may need manual cutout or a non-white source background. |
