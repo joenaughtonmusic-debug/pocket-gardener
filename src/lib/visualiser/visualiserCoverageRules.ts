@@ -105,9 +105,9 @@ export const PLANT_COVERAGE_OVERRIDES: Record<number, PlantCoverageOverride> = {
 
   // ── Temporary fallback ───────────────────────────────────────────────────
   20: {
-    classification: 'temporary_fallback_only',
-    priority: 'soon',
-    notes: 'Row mode only. Uses generic hedge-section.svg — replace with Titoki native screen PNG.',
+    classification: 'exact_asset_ready',
+    priority: 'launch',
+    notes: 'Dedicated titoki-hedge.png overlay — row mode only.',
   },
 
   // ── Needs new asset — priority candidates ────────────────────────────────
@@ -144,7 +144,7 @@ export const PLANT_COVERAGE_OVERRIDES: Record<number, PlantCoverageOverride> = {
   10: {
     classification: 'exact_asset_ready',
     priority: 'launch',
-    notes: 'Dedicated pittosporum.png overlay — spot shrub specimen only, not row mode.',
+    notes: 'Spot: pittosporum.png. Row: pittosporum-hedge.png via Pittosporum Hedge row option.',
   },
   61: {
     classification: 'exact_asset_ready',
@@ -166,7 +166,11 @@ export const PLANT_COVERAGE_OVERRIDES: Record<number, PlantCoverageOverride> = {
     priority: 'launch',
     notes: 'Dedicated puriri.png overlay — spot mode only.',
   },
-  138: { classification: 'needs_new_asset', priority: 'later', notes: 'Philodendron Xanadu — subtropical clump; no overlay.' },
+  138: {
+    classification: 'exact_asset_ready',
+    priority: 'launch',
+    notes: 'Dedicated xanadu.png overlay — spot mode only.',
+  },
   117: {
     classification: 'exact_asset_ready',
     priority: 'launch',
@@ -188,13 +192,13 @@ export const PLANT_COVERAGE_OVERRIDES: Record<number, PlantCoverageOverride> = {
     classification: 'exact_asset_ready',
     priority: 'launch',
     paleFlowerRisk: true,
-    notes: 'Dedicated escallonia.png overlay — spot mode only.',
+    notes: 'Spot: escallonia.png. Row: escallonia-hedge.png via Escallonia Hedge row option.',
   },
   58: {
     classification: 'exact_asset_ready',
     priority: 'launch',
     paleFlowerRisk: true,
-    notes: 'Dedicated ligustrum.png overlay — spot shrub specimen only, not row mode.',
+    notes: 'Spot: ligustrum.png. Row: ligustrum-hedge.png via Ligustrum Hedge row option.',
   },
   72: {
     classification: 'exact_asset_ready',
@@ -206,13 +210,13 @@ export const PLANT_COVERAGE_OVERRIDES: Record<number, PlantCoverageOverride> = {
     classification: 'exact_asset_ready',
     priority: 'launch',
     paleFlowerRisk: true,
-    notes: 'Dedicated murraya.png overlay — spot shrub specimen only, not row mode.',
+    notes: 'Spot: murraya.png. Row: murraya-hedge.png via Murraya Hedge row option.',
   },
   96: { classification: 'exact_asset_ready', priority: 'launch', notes: 'Dedicated english-holly.png overlay.' },
   107: {
     classification: 'exact_asset_ready',
     priority: 'launch',
-    notes: 'Dedicated port-wine-magnolia.png overlay — spot shrub specimen only, not row mode.',
+    notes: 'Spot: port-wine-magnolia.png. Row: michelia-figo-hedge.png via Port Wine Magnolia Hedge row option.',
   },
   83: {
     classification: 'exact_asset_ready',
@@ -258,10 +262,10 @@ export const PLANT_COVERAGE_OVERRIDES: Record<number, PlantCoverageOverride> = {
     notes: 'Dedicated michelia-bubbles.png overlay — spot mode only. Cream flowers passed QA.',
   },
   140: {
-    classification: 'needs_new_asset',
-    priority: 'later',
+    classification: 'exact_asset_ready',
+    priority: 'launch',
     paleFlowerRisk: true,
-    notes: 'Westringia — white flowers; coastal shrub overlay.',
+    notes: 'Dedicated westringia.png overlay — spot mode only.',
   },
   151: {
     classification: 'exact_asset_ready',
@@ -290,7 +294,11 @@ export const PLANT_COVERAGE_OVERRIDES: Record<number, PlantCoverageOverride> = {
     priority: 'launch',
     notes: 'Dedicated orange-trumpet-vine.png overlay — spot climber specimen only.',
   },
-  123: { classification: 'needs_new_asset', priority: 'later', notes: 'Virginia Creeper — climber; no overlay.' },
+  123: {
+    classification: 'exact_asset_ready',
+    priority: 'launch',
+    notes: 'Dedicated virginia-creeper.png overlay — spot climber specimen only.',
+  },
   23: { classification: 'exact_asset_ready', priority: 'launch', notes: 'Dedicated hen-and-chicken-fern.png overlay.' },
   27: { classification: 'needs_new_asset', priority: 'later', notes: 'Silver Lady Fern — shade fern; no overlay.' },
   110: {
@@ -384,7 +392,12 @@ export const PLANT_COVERAGE_OVERRIDES: Record<number, PlantCoverageOverride> = {
     notes: 'Dedicated mexican-alder.png overlay — spot mode only.',
   },
   102: { classification: 'not_visualiser_relevant', priority: 'not_needed', notes: 'Large deciduous tree — out of scope.' },
-  103: { classification: 'not_visualiser_relevant', priority: 'not_needed', notes: 'Large deciduous tree — out of scope.' },
+  103: {
+    classification: 'exact_asset_ready',
+    priority: 'launch',
+    paleFlowerRisk: true,
+    notes: 'Dedicated wych-elm.png overlay — spot mode only.',
+  },
   80: {
     classification: 'exact_asset_ready',
     priority: 'launch',
@@ -518,6 +531,10 @@ export const PRIMARY_EXACT_ASSET_PATTERNS: Array<{ pattern: RegExp; assetKey: st
   { pattern: /^silk tree$/i, assetKey: 'silk-tree' },
   { pattern: /^silver bush$/i, assetKey: 'silver-bush' },
   { pattern: /^silver falls$/i, assetKey: 'silver-falls' },
+  { pattern: /^virginia creeper$/i, assetKey: 'virginia-creeper' },
+  { pattern: /^westringia$/i, assetKey: 'westringia' },
+  { pattern: /^wych elm$/i, assetKey: 'wych-elm' },
+  { pattern: /^xanadu$/i, assetKey: 'xanadu' },
 ]
 
 export const APPROVED_PNG_KEYS = new Set([
@@ -619,6 +636,10 @@ export const APPROVED_PNG_KEYS = new Set([
   'silk-tree',
   'silver-bush',
   'silver-falls',
+  'virginia-creeper',
+  'westringia',
+  'wych-elm',
+  'xanadu',
 ])
 
 export const HEDGE_PNG_KEYS = new Set([
@@ -629,6 +650,12 @@ export const HEDGE_PNG_KEYS = new Set([
   'corokia-geentys-green-hedge',
   'corokia-virgata-hedge',
   'eugenia',
+  'escallonia-hedge',
+  'ligustrum-hedge',
+  'michelia-figo-hedge',
+  'murraya-hedge',
+  'pittosporum-hedge',
+  'titoki-hedge',
 ])
 
 export const SVG_FALLBACK_KEYS = new Set(['hedge', 'strappy-clump', 'rounded-shrub'])
@@ -660,7 +687,18 @@ export const DB_TO_SELECTOR_ALIAS: Record<string, string> = {
   Camellia: 'Camellia sasanqua',
 }
 
-export const ROW_MODE_DB_NAMES = new Set(['Griselinia', 'Ficus Tuffi', 'Buxus (Box Hedge)', 'Titoki', 'Eugenia'])
+export const ROW_MODE_DB_NAMES = new Set([
+  'Griselinia',
+  'Ficus Tuffi',
+  'Buxus (Box Hedge)',
+  'Titoki',
+  'Eugenia',
+  'Escallonia',
+  'Ligustrum',
+  'Murraya',
+  'Pittosporum',
+  'Port Wine Magnolia',
+])
 
 const PALE_FLOWER_COLOR = /white|cream|ivory|pale|light/i
 

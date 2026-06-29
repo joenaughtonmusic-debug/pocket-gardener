@@ -269,6 +269,42 @@ const ASSETS: Record<string, OverlayAsset> = {
     defaultWidthFraction: widthFraction(340),
     aspect: 1,
   },
+  'escallonia-hedge': {
+    key: 'escallonia-hedge',
+    src: '/plant-overlays/escallonia-hedge.png',
+    defaultWidthFraction: widthFraction(340),
+    aspect: 1,
+  },
+  'ligustrum-hedge': {
+    key: 'ligustrum-hedge',
+    src: '/plant-overlays/ligustrum-hedge.png',
+    defaultWidthFraction: widthFraction(340),
+    aspect: 1,
+  },
+  'michelia-figo-hedge': {
+    key: 'michelia-figo-hedge',
+    src: '/plant-overlays/michelia-figo-hedge.png',
+    defaultWidthFraction: widthFraction(340),
+    aspect: 1,
+  },
+  'murraya-hedge': {
+    key: 'murraya-hedge',
+    src: '/plant-overlays/murraya-hedge.png',
+    defaultWidthFraction: widthFraction(340),
+    aspect: 1,
+  },
+  'pittosporum-hedge': {
+    key: 'pittosporum-hedge',
+    src: '/plant-overlays/pittosporum-hedge.png',
+    defaultWidthFraction: widthFraction(340),
+    aspect: 1,
+  },
+  'titoki-hedge': {
+    key: 'titoki-hedge',
+    src: '/plant-overlays/titoki-hedge.png',
+    defaultWidthFraction: widthFraction(340),
+    aspect: 1,
+  },
   eugenia: {
     key: 'eugenia',
     src: '/plant-overlays/eugenia.png',
@@ -641,6 +677,30 @@ const ASSETS: Record<string, OverlayAsset> = {
     defaultWidthFraction: widthFraction(160),
     aspect: 1,
   },
+  'virginia-creeper': {
+    key: 'virginia-creeper',
+    src: '/plant-overlays/virginia-creeper.png',
+    defaultWidthFraction: widthFraction(260),
+    aspect: 1,
+  },
+  westringia: {
+    key: 'westringia',
+    src: '/plant-overlays/westringia.png',
+    defaultWidthFraction: widthFraction(220),
+    aspect: 1,
+  },
+  'wych-elm': {
+    key: 'wych-elm',
+    src: '/plant-overlays/wych-elm.png',
+    defaultWidthFraction: widthFraction(300),
+    aspect: 1,
+  },
+  xanadu: {
+    key: 'xanadu',
+    src: '/plant-overlays/xanadu.png',
+    defaultWidthFraction: widthFraction(240),
+    aspect: 1,
+  },
   // Legacy / category fallbacks — kept for saved concepts and non-approved species
   buxus: {
     key: 'buxus',
@@ -786,6 +846,10 @@ export const APPROVED_OVERLAY_KEYS = new Set<string>([
   'silk-tree',
   'silver-bush',
   'silver-falls',
+  'virginia-creeper',
+  'westringia',
+  'wych-elm',
+  'xanadu',
 ])
 
 const FALLBACK_ASSET: OverlayAsset = ASSETS['rounded-shrub']
@@ -1366,7 +1430,7 @@ export const CREATE_VISUAL_PLANT_OPTIONS: CreateVisualPlantOption[] = [
   {
     name: 'Escallonia',
     description: 'Evergreen hedge shrub with glossy leaves and summer flowers.',
-    notes: 'Coastal-tolerant screen plant; clips well.',
+    notes: 'Spot: escallonia.png. Row: escallonia-hedge.png via Escallonia Hedge row option.',
     detectedIntent: 'shrub planting',
     style: 'Shrubs',
     gardenStyles: ['Coastal', 'Cottage', 'Formal'],
@@ -1816,7 +1880,7 @@ export const CREATE_VISUAL_PLANT_OPTIONS: CreateVisualPlantOption[] = [
   {
     name: 'Ligustrum',
     description: 'Compact evergreen privet shrub with dense glossy foliage.',
-    notes: 'Spot specimen only — not wired for row/hedge mode.',
+    notes: 'Spot: ligustrum.png. Row: ligustrum-hedge.png via Ligustrum Hedge row option.',
     detectedIntent: 'shrub planting',
     style: 'Shrubs',
     gardenStyles: ['Formal', 'Cottage'],
@@ -2041,7 +2105,7 @@ export const CREATE_VISUAL_PLANT_OPTIONS: CreateVisualPlantOption[] = [
   {
     name: 'Murraya',
     description: 'Evergreen shrub with glossy leaves and fragrant white flowers.',
-    notes: 'Spot shrub specimen only — not wired for row/hedge mode.',
+    notes: 'Spot: murraya.png. Row: murraya-hedge.png via Murraya Hedge row option.',
     detectedIntent: 'shrub planting',
     style: 'Shrubs',
     gardenStyles: ['Formal', 'Subtropical', 'Cottage'],
@@ -2131,7 +2195,7 @@ export const CREATE_VISUAL_PLANT_OPTIONS: CreateVisualPlantOption[] = [
   {
     name: 'Pittosporum',
     description: 'NZ native evergreen with wavy-edged leaves and purple flowers.',
-    notes: 'Spot shrub specimen only — not wired for row/hedge mode.',
+    notes: 'Spot: pittosporum.png. Row: pittosporum-hedge.png via Pittosporum Hedge row option.',
     detectedIntent: 'shrub planting',
     style: 'Shrubs',
     gardenStyles: ['Native', 'Formal', 'Coastal'],
@@ -2161,7 +2225,7 @@ export const CREATE_VISUAL_PLANT_OPTIONS: CreateVisualPlantOption[] = [
   {
     name: 'Port Wine Magnolia',
     description: 'Compact evergreen shrub with glossy leaves and wine-purple flowers.',
-    notes: 'Spot shrub specimen only — not wired for row/hedge mode.',
+    notes: 'Spot: port-wine-magnolia.png. Row: michelia-figo-hedge.png (Michelia figo) via Port Wine Magnolia Hedge row option.',
     detectedIntent: 'shrub planting',
     style: 'Shrubs',
     gardenStyles: ['Formal', 'Subtropical', 'Cottage'],
@@ -2368,6 +2432,66 @@ export const CREATE_VISUAL_PLANT_OPTIONS: CreateVisualPlantOption[] = [
       wind: ['moderate'],
     },
   },
+  {
+    name: 'Virginia Creeper',
+    description: 'Vigorous deciduous climber with five-lobed leaves and autumn colour.',
+    notes: 'Spot climber specimen; distinct from Boston Ivy.',
+    detectedIntent: 'climber planting',
+    style: 'Climbers',
+    gardenStyles: ['Cottage', 'Formal'],
+    plantTypes: ['Climber'],
+    conditions: {
+      sun: ['full sun', 'part shade'],
+      moisture: ['average', 'moist'],
+      drainage: ['well drained'],
+      wind: ['moderate'],
+    },
+  },
+  {
+    name: 'Westringia',
+    description: 'Coastal evergreen shrub with fine grey-green foliage and white flowers.',
+    notes: 'Coastal rosemary; spot mode only.',
+    detectedIntent: 'shrub planting',
+    style: 'Shrubs',
+    gardenStyles: ['Coastal', 'Formal', 'Low maintenance'],
+    plantTypes: ['Shrub'],
+    conditions: {
+      sun: ['full sun'],
+      moisture: ['average', 'dry'],
+      drainage: ['well drained'],
+      wind: ['moderate', 'exposed'],
+    },
+  },
+  {
+    name: 'Wych Elm',
+    description: 'Large deciduous tree with broad leaves and spreading crown.',
+    notes: 'Feature tree scale; spot mode only.',
+    detectedIntent: 'feature tree',
+    style: 'Feature tree',
+    gardenStyles: ['Formal', 'Cottage'],
+    plantTypes: ['Tree'],
+    conditions: {
+      sun: ['full sun', 'part shade'],
+      moisture: ['average', 'moist'],
+      drainage: ['well drained'],
+      wind: ['moderate'],
+    },
+  },
+  {
+    name: 'Xanadu',
+    description: 'Compact subtropical foliage plant with deeply lobed glossy leaves.',
+    notes: 'Philodendron Xanadu clump; spot mode only.',
+    detectedIntent: 'shrub planting',
+    style: 'Shrubs',
+    gardenStyles: ['Subtropical', 'Low maintenance'],
+    plantTypes: ['Shrub'],
+    conditions: {
+      sun: ['part shade', 'full shade'],
+      moisture: ['average', 'moist'],
+      drainage: ['well drained'],
+      wind: ['sheltered'],
+    },
+  },
 ]
 
 export interface SpotConditions {
@@ -2524,15 +2648,19 @@ const SPECIES_RULES: Array<{ pattern: RegExp; assetKey: string }> = [
   { pattern: /monstera|swiss cheese plant/i,                           assetKey: 'monstera' },
   { pattern: /monterey cypress|cupressus macrocarpa/i,                  assetKey: 'monterey-cypress' },
   { pattern: /muehlenbeckia|muehlenbeckia complexa/i,                    assetKey: 'muehlenbeckia' },
-  { pattern: /murraya|orange jessamine|murraya paniculata/i,             assetKey: 'murraya' },
+  { pattern: /murraya(?! hedge)|orange jessamine|murraya paniculata/i,    assetKey: 'murraya' },
   { pattern: /norfolk island pine|araucaria heterophylla/i,              assetKey: 'norfolk-island-pine' },
   { pattern: /olive tree|olea europaea|\bolive\b/i,                      assetKey: 'olive-tree' },
   { pattern: /orange trumpet|pyrostegia venusta/i,                       assetKey: 'orange-trumpet-vine' },
   { pattern: /peach tree|prunus persica/i,                               assetKey: 'peach-tree' },
   { pattern: /pink rhaphiolepis|rhaphiolepis indica|rhapiolepis/i,       assetKey: 'pink-rhaphiolepis' },
-  { pattern: /pittosporum/i,                                             assetKey: 'pittosporum' },
+  { pattern: /pittosporum(?! hedge)/i,                                     assetKey: 'pittosporum' },
   { pattern: /pohutukawa|pohutakawa|metrosideros excelsa/i,              assetKey: 'pohutukawa' },
-  { pattern: /port wine magnolia/i,                                      assetKey: 'port-wine-magnolia' },
+  { pattern: /port wine magnolia(?! hedge)/i,                              assetKey: 'port-wine-magnolia' },
+  { pattern: /virginia creeper|parthenocissus quinquefolia/i,            assetKey: 'virginia-creeper' },
+  { pattern: /westringia/i,                                              assetKey: 'westringia' },
+  { pattern: /wych elm|ulmus glabra/i,                                   assetKey: 'wych-elm' },
+  { pattern: /xanadu|philodendron xanadu/i,                              assetKey: 'xanadu' },
   { pattern: /pūriri|puriri|vitex lucens/i,                              assetKey: 'puriri' },
   { pattern: /putaputawētā|putaputaweta|carpodetus serratus/i,          assetKey: 'putaputaweta' },
   { pattern: /rain lily|zephyranthes/i,                                assetKey: 'rain-lily' },
@@ -2547,7 +2675,7 @@ const SPECIES_RULES: Array<{ pattern: RegExp; assetKey: string }> = [
   { pattern: /silver falls|dichondra argentea/i,                         assetKey: 'silver-falls' },
   { pattern: /silver bush|convolvulus cneorum/i,                         assetKey: 'silver-bush' },
   { pattern: /lime tree|citrus aurantiifolia/i,                          assetKey: 'lime-tree' },
-  { pattern: /ligustrum/i,                                             assetKey: 'ligustrum' },
+  { pattern: /ligustrum(?! hedge)/i,                                     assetKey: 'ligustrum' },
   { pattern: /liriope|lilyturf/i,                                       assetKey: 'liriope' },
   { pattern: /london plane|platanus orientalis/i,                      assetKey: 'london-plane-tree' },
   { pattern: /magnolia.*deciduous|deciduous magnolia/i,                assetKey: 'magnolia-deciduous' },
@@ -2564,6 +2692,12 @@ const SPECIES_RULES: Array<{ pattern: RegExp; assetKey: string }> = [
   { pattern: /phormium|flax|astelia|harakeke|nz flax/i,                assetKey: 'flax' },
   { pattern: /ponga|tree.?fern|dicksonia|cyathea/i,                    assetKey: 'ponga' },
   { pattern: /camellia hedge/i,                                         assetKey: 'camellia-hedge' },
+  { pattern: /escallonia hedge/i,                                        assetKey: 'escallonia-hedge' },
+  { pattern: /ligustrum hedge/i,                                         assetKey: 'ligustrum-hedge' },
+  { pattern: /port wine magnolia hedge|michelia figo hedge/i,              assetKey: 'michelia-figo-hedge' },
+  { pattern: /murraya hedge/i,                                            assetKey: 'murraya-hedge' },
+  { pattern: /pittosporum hedge/i,                                       assetKey: 'pittosporum-hedge' },
+  { pattern: /titoki/i,                                                  assetKey: 'titoki-hedge' },
   { pattern: /corokia geentys green hedge|geentys green hedge/i,       assetKey: 'corokia-geentys-green-hedge' },
   { pattern: /corokia virgata hedge/i,                                   assetKey: 'corokia-virgata-hedge' },
   { pattern: /corokia geentys|geentys green/i,                         assetKey: 'corokia-geentys-green' },
@@ -2572,7 +2706,7 @@ const SPECIES_RULES: Array<{ pattern: RegExp; assetKey: string }> = [
   { pattern: /eugenia/i,                                               assetKey: 'eugenia' },
   { pattern: /erman.?s birch|betula ermanii/i,                         assetKey: 'birch' },
   { pattern: /english oak|quercus robur/i,                               assetKey: 'oak' },
-  { pattern: /escallonia/i,                                            assetKey: 'escallonia' },
+  { pattern: /escallonia(?! hedge)/i,                                    assetKey: 'escallonia' },
   { pattern: /european beech|fagus sylvatica/i,                          assetKey: 'european-beech' },
   { pattern: /european hornbeam|carpinus betulus/i,                    assetKey: 'european-hornbeam' },
   { pattern: /evergreen ash|fraxinus griffithii/i,                       assetKey: 'evergreen-ash' },
@@ -2602,7 +2736,6 @@ const SPECIES_RULES: Array<{ pattern: RegExp; assetKey: string }> = [
   { pattern: /lomandra|carex|libertia|agapanthus/i,             assetKey: 'lomandra' },
   { pattern: /groundcover|ground.?cover|pratia/i,                        assetKey: 'groundcover' },
   // Legacy / category fallbacks for saved concepts and unmatched species
-  { pattern: /titoki/i,                                                 assetKey: 'hedge' },
 ]
 
 /** Detected-intent matching rules. */
@@ -2681,6 +2814,11 @@ export const ROW_PREVIEW_PLANT_OPTIONS: Array<{ name: string; detectedIntent: st
   { name: 'Corokia Geentys Green Hedge', detectedIntent: 'hedge/screening' },
   { name: 'Corokia Virgata Hedge', detectedIntent: 'hedge/screening' },
   { name: 'Eugenia', detectedIntent: 'hedge/screening' },
+  { name: 'Escallonia Hedge', detectedIntent: 'hedge/screening' },
+  { name: 'Ligustrum Hedge', detectedIntent: 'hedge/screening' },
+  { name: 'Port Wine Magnolia Hedge', detectedIntent: 'hedge/screening' },
+  { name: 'Murraya Hedge', detectedIntent: 'hedge/screening' },
+  { name: 'Pittosporum Hedge', detectedIntent: 'hedge/screening' },
 ]
 
 const ROW_PREVIEW_PLANT_NAMES = new Set(ROW_PREVIEW_PLANT_OPTIONS.map((p) => p.name))
@@ -2727,6 +2865,15 @@ export const SPOT_HEDGE_OVERLAY_PAIRS: ReadonlyArray<{
     spotFile: 'corokia-virgata.png',
     hedgeFile: 'corokia-virgata-hedge.png',
   },
+  { label: 'Escallonia', spotFile: 'escallonia.png', hedgeFile: 'escallonia-hedge.png' },
+  { label: 'Ligustrum', spotFile: 'ligustrum.png', hedgeFile: 'ligustrum-hedge.png' },
+  {
+    label: 'Port Wine Magnolia',
+    spotFile: 'port-wine-magnolia.png',
+    hedgeFile: 'michelia-figo-hedge.png',
+  },
+  { label: 'Murraya', spotFile: 'murraya.png', hedgeFile: 'murraya-hedge.png' },
+  { label: 'Pittosporum', spotFile: 'pittosporum.png', hedgeFile: 'pittosporum-hedge.png' },
 ]
 
 // TODO: Future hedge mode — support linear metres, desired height, trim frequency,

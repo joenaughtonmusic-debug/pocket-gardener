@@ -26,24 +26,24 @@ Runtime resolution is unchanged — `resolveOverlayAsset()` in `plantOverlayAsse
 | Metric | Count |
 |--------|------:|
 | **Total plants in database** | 120 |
-| **Visualiser-relevant** | 116 |
-| **Exact asset ready** | 102 |
+| **Visualiser-relevant** | 117 |
+| **Exact asset ready** | 107 |
 | **Close shared asset OK** | 4 |
-| **Temporary fallback only** | 1 |
-| **Needs new asset** | 9 |
-| **Not visualiser relevant** | 4 |
+| **Temporary fallback only** | 0 |
+| **Needs new asset** | 6 |
+| **Not visualiser relevant** | 3 |
 | **High manual cutout risk** | 1 |
 | **White/pale flower risk flagged** | 45 |
 | **Broken registry paths** | 0 |
-| **Registered overlay keys** | 110 |
+| **Registered overlay keys** | 120 |
 
 ### Visualise selector (spot mode)
 
-101 plants in `PREVIEW_PLANT_OPTIONS` — all resolve to approved PNG keys (no broken paths in chooser).
+105 plants in `PREVIEW_PLANT_OPTIONS` — all resolve to approved PNG keys (no broken paths in chooser).
 
 ### Row mode (hedge/screen only)
 
-Allowed: Griselinia Hedge, Ficus Tuffy Hedge, Buxus Hedge, Titoki, Camellia Hedge, Corokia Geentys Green Hedge, Corokia Virgata Hedge, Eugenia
+Allowed: Griselinia Hedge, Ficus Tuffy Hedge, Buxus Hedge, Titoki, Camellia Hedge, Corokia Geentys Green Hedge, Corokia Virgata Hedge, Eugenia, Escallonia Hedge, Ligustrum Hedge, Port Wine Magnolia Hedge, Murraya Hedge, Pittosporum Hedge
 
 Excluded examples (must NOT be added): Lomandra, Agapanthus, NZ Flax, Phormium, Clivia, Fortnight Lily (Dietes)
 
@@ -156,13 +156,17 @@ Excluded examples (must NOT be added): Lomandra, Agapanthus, NZ Flax, Phormium, 
 - Silver Bush
 - Silver Falls
 - Star Jasmine
+- Titoki
+- Virginia Creeper
+- Westringia
+- Wych Elm
+- Xanadu
 
 ### Soon after launch
 
 - Pratia — Shares groundcover
 - Silver Flax (Astelia) — Silver Flax (Astelia) shares flax
 - Sugar Cane Palm — Sugar Cane Palm — palm silhouette share
-- Titoki — Row mode only
 
 ### Later
 
@@ -172,9 +176,6 @@ Excluded examples (must NOT be added): Lomandra, Agapanthus, NZ Flax, Phormium, 
 - Spanish Shawl
 - Tecomanthe
 - Tractor Seat Plant
-- Virginia Creeper
-- Westringia
-- Xanadu
 
 ### Manual cutout likely / high
 
@@ -254,7 +255,7 @@ Gardenia is **needs_new_asset** (not exact_asset_ready). `gardenia-v2.png` exist
 | English Holly | Ilex aquifolium | Tree / Hedge | english-holly | exact_asset_ready | launch | none | — | Dedicated english-holly.png overlay. |
 | English Oak | Quercus robur | Tree | oak | exact_asset_ready | launch | none | Yes | Dedicated oak.png overlay — spot mode only. White/pale flowers may need manual cutout or a non-white source background. |
 | Erman's Birch | Betula ermanii | Tree | birch | exact_asset_ready | launch | none | Yes | Dedicated birch.png overlay — spot mode only. White/pale flowers may need manual cutout or a non-white source background. |
-| Escallonia | Escallonia exoniensis | Hedge | escallonia | exact_asset_ready | launch | likely | Yes | Dedicated escallonia.png overlay — spot mode only. White/pale flowers may need manual cutout or a non-white source background. |
+| Escallonia | Escallonia exoniensis | Hedge | escallonia | exact_asset_ready | launch | likely | Yes | Spot: escallonia.png. Row: escallonia-hedge.png via Escallonia Hedge row option. White/pale flowers may need manual cutout or a non-white source background. |
 | Eugenia | Eugenia | Hedge | eugenia | exact_asset_ready | launch | likely | Yes | Dedicated eugenia.png hedge row overlay — row mode only. White/pale flowers may need manual cutout or a non-white source background. |
 | European Beech | Fagus sylvatica | Tree | european-beech | exact_asset_ready | launch | none | Yes | Dedicated european-beech.png overlay — spot mode only. White/pale flowers may need manual cutout or a non-white source background. |
 | European Hornbeam | Carpinus betulus | Tree / Hedge | european-hornbeam | exact_asset_ready | launch | none | Yes | Dedicated european-hornbeam.png overlay — spot mode only. White/pale flowers may need manual cutout or a non-white source background. |
@@ -290,7 +291,7 @@ Gardenia is **needs_new_asset** (not exact_asset_ready). `gardenia-v2.png` exist
 | Lancewood | Pseudopanax crassifolius | Tree | lancewood | exact_asset_ready | launch | none | — | Dedicated lancewood.png overlay — spot mode only. |
 | Lavender | Lavandula | Shrub | lavender | exact_asset_ready | launch | none | — | Dedicated lavender.png overlay — spot mode only. |
 | Lemon Tree | Citrus limon | Fruit | lemon | exact_asset_ready | launch | none | Yes | Dedicated lemon.png overlay — spot mode only. White/pale flowers may need manual cutout or a non-white source background. |
-| Ligustrum | Ligustrum rotundifolium | Hedge | ligustrum | exact_asset_ready | launch | likely | Yes | Dedicated ligustrum.png overlay — spot shrub specimen only, not row mode. White/pale flowers may need manual cutout or a non-white source background. |
+| Ligustrum | Ligustrum rotundifolium | Hedge | ligustrum | exact_asset_ready | launch | likely | Yes | Spot: ligustrum.png. Row: ligustrum-hedge.png via Ligustrum Hedge row option. White/pale flowers may need manual cutout or a non-white source background. |
 | Lime Tree | Citrus aurantiifolia | Fruit | lime-tree | exact_asset_ready | launch | none | Yes | Dedicated lime-tree.png overlay — spot mode only. White/pale flowers may need manual cutout or a non-white source background. |
 | Liriope (Lilyturf) | Liriope muscari | Groundcover / Grass | liriope | exact_asset_ready | launch | none | — | Dedicated liriope.png overlay — spot mode only. |
 | Lomandra | Lomandra Tanika | Shrub | lomandra | exact_asset_ready | launch | none | Yes | Dedicated lomandra.png (large file — consider resize). Small white flower spikes — monitor cutout quality. White/pale flowers may need manual cutout or a non-white source background. |
@@ -307,7 +308,7 @@ Gardenia is **needs_new_asset** (not exact_asset_ready). `gardenia-v2.png` exist
 | Monstera (Swiss Cheese Plant) | Monstera deliciosa | Indoor / Tropical | monstera | exact_asset_ready | launch | none | — | Dedicated monstera.png overlay — spot mode only. |
 | Monterey Cypress | Cupressus macrocarpa | Tree | monterey-cypress | exact_asset_ready | launch | none | Yes | Dedicated monterey-cypress.png overlay — spot mode only. White/pale flowers may need manual cutout or a non-white source background. |
 | Muehlenbeckia | Muehlenbeckia complexa | Groundcover | muehlenbeckia | exact_asset_ready | launch | none | — | Dedicated muehlenbeckia.png overlay — spot mode only. |
-| Murraya | Murraya paniculata | Hedge | murraya | exact_asset_ready | launch | none | Yes | Dedicated murraya.png overlay — spot shrub specimen only, not row mode. White/pale flowers may need manual cutout or a non-white source background. |
+| Murraya | Murraya paniculata | Hedge | murraya | exact_asset_ready | launch | none | Yes | Spot: murraya.png. Row: murraya-hedge.png via Murraya Hedge row option. White/pale flowers may need manual cutout or a non-white source background. |
 | Nikau Palm | Palm | Palm | nikau | exact_asset_ready | launch | none | — | Dedicated nikau.png. |
 | Norfolk Island Pine | Araucaria heterophylla | Tree | norfolk-island-pine | exact_asset_ready | launch | none | Yes | Dedicated norfolk-island-pine.png overlay — spot mode only. White/pale flowers may need manual cutout or a non-white source background. |
 | NZ Flax | Phormium tenax | Flax | flax | close_shared_asset_ok | launch | none | — | Shares flax.png — same strappy form family. |
@@ -315,10 +316,10 @@ Gardenia is **needs_new_asset** (not exact_asset_ready). `gardenia-v2.png` exist
 | Orange Trumpet Vine | Pyrostegia venusta | Climber | orange-trumpet-vine | exact_asset_ready | launch | none | — | Dedicated orange-trumpet-vine.png overlay — spot climber specimen only. |
 | Peach Tree | Prunus persica | Fruit | peach-tree | exact_asset_ready | launch | none | Yes | Dedicated peach-tree.png overlay — spot mode only. White/pale flowers may need manual cutout or a non-white source background. |
 | Pink Rhaphiolepis | Rhaphiolepis indica | Shrub | pink-rhaphiolepis | exact_asset_ready | launch | none | — | Dedicated pink-rhaphiolepis.png overlay — spot mode only. |
-| Pittosporum | Pittosporum tenuifolium | Hedge | pittosporum | exact_asset_ready | launch | none | — | Dedicated pittosporum.png overlay — spot shrub specimen only, not row mode. |
+| Pittosporum | Pittosporum tenuifolium | Hedge | pittosporum | exact_asset_ready | launch | none | — | Spot: pittosporum.png. Row: pittosporum-hedge.png via Pittosporum Hedge row option. |
 | Pohutukawa | Metrosideros excelsa | Tree | pohutukawa | exact_asset_ready | launch | none | — | Dedicated pohutukawa.png overlay — spot mode only. |
 | Ponga Fern | Dicksonia squarrosa | Fern | ponga | exact_asset_ready | launch | none | — | Dedicated ponga.png. |
-| Port Wine Magnolia | Michelia figo | Shrub / Hedge | port-wine-magnolia | exact_asset_ready | launch | none | Yes | Dedicated port-wine-magnolia.png overlay — spot shrub specimen only, not row mode. White/pale flowers may need manual cutout or a non-white source background. |
+| Port Wine Magnolia | Michelia figo | Shrub / Hedge | port-wine-magnolia | exact_asset_ready | launch | none | Yes | Spot: port-wine-magnolia.png. Row: michelia-figo-hedge.png via Port Wine Magnolia Hedge row option. White/pale flowers may need manual cutout or a non-white source background. |
 | Pratia | Pratia angulata | Groundcover | groundcover | close_shared_asset_ok | soon | likely | Yes | Shares groundcover.png. White flowers — manual cutout may be needed. White/pale flowers may need manual cutout or a non-white source background. |
 | Pūriri | Vitex lucens | Tree | puriri | exact_asset_ready | launch | none | — | Dedicated puriri.png overlay — spot mode only. |
 | Putaputawētā | Carpodetus serratus | Tree | putaputaweta | exact_asset_ready | launch | none | — | Dedicated putaputaweta.png overlay — spot mode only. |
@@ -343,13 +344,13 @@ Gardenia is **needs_new_asset** (not exact_asset_ready). `gardenia-v2.png` exist
 | Sugar Cane Palm | Dypsis baronii | Palm | nikau | close_shared_asset_ok | soon | none | — | Sugar Cane Palm — palm silhouette share. |
 | Taraire | Beilschmiedia taraire | Tree | nikau | not_visualiser_relevant | not_needed | none | — | Large native tree — out of scope. |
 | Tecomanthe | Tecomanthe speciosa | Climber | star-jasmine | needs_new_asset | later | none | — | Tecomanthe — native climber; no overlay. |
-| Titoki | Alectryon excelsus | Tree | hedge | temporary_fallback_only | soon | none | — | Row mode only. Uses generic hedge-section.svg — replace with Titoki native screen PNG. |
+| Titoki | Alectryon excelsus | Tree | titoki-hedge | exact_asset_ready | launch | none | — | Dedicated titoki-hedge.png overlay — row mode only. |
 | Totara | Podocarpus totara | Tree | nikau | not_visualiser_relevant | not_needed | none | — | Large native timber tree — out of scope. |
 | Tractor Seat Plant | Ligularia reniformis | Flower | camellia | needs_new_asset | later | none | — | Tractor Seat — bold leaf perennial; low overlay priority. |
-| Virginia Creeper | Parthenocissus quinquefolia | Climber | star-jasmine | needs_new_asset | later | none | — | Virginia Creeper — climber; no overlay. |
-| Westringia | Westringia fruticosa | Shrub | camellia | needs_new_asset | later | likely | Yes | Westringia — white flowers; coastal shrub overlay. White/pale flowers may need manual cutout or a non-white source background. |
-| Wych Elm | Ulmus glabra | Tree | nikau | not_visualiser_relevant | not_needed | none | Yes | Large deciduous tree — out of scope. White/pale flowers may need manual cutout or a non-white source background. |
-| Xanadu | Philodendron Xanadu | Perennial | camellia | needs_new_asset | later | none | — | Philodendron Xanadu — subtropical clump; no overlay. |
+| Virginia Creeper | Parthenocissus quinquefolia | Climber | virginia-creeper | exact_asset_ready | launch | none | — | Dedicated virginia-creeper.png overlay — spot climber specimen only. |
+| Westringia | Westringia fruticosa | Shrub | westringia | exact_asset_ready | launch | likely | Yes | Dedicated westringia.png overlay — spot mode only. White/pale flowers may need manual cutout or a non-white source background. |
+| Wych Elm | Ulmus glabra | Tree | wych-elm | exact_asset_ready | launch | none | Yes | Dedicated wych-elm.png overlay — spot mode only. White/pale flowers may need manual cutout or a non-white source background. |
+| Xanadu | Philodendron Xanadu | Perennial | xanadu | exact_asset_ready | launch | none | — | Dedicated xanadu.png overlay — spot mode only. |
 
 ---
 
