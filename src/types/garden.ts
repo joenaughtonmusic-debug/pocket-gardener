@@ -108,6 +108,7 @@ export interface VisualConcept {
   overlay_scale: number | null;
   preview_mode: string | null;
   overlay_items?: PreviewOverlay[] | null;
+  preview_thumbnail_url?: string | null;
   created_at: string;
   updated_at: string;
 }

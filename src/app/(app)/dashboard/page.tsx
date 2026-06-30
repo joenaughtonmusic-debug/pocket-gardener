@@ -196,6 +196,16 @@ export default function MyGardenDashboard() {
     getGarden(); 
   }, []);
 
+  useEffect(() => {
+    if (typeof window === 'undefined' || window.location.hash !== '#diagnose') return
+    setSelectedUnhealthyPlant(null)
+    setIssueSearchQuery('')
+    supabase.from('plant_remedies').select('*').then(({ data }) => {
+      setAllRemedies((data ?? []) as PlantRemedy[])
+      setShowIssueModal(true)
+    })
+  }, [supabase])
+
   async function handleAssignPlantArea(userPlantId: string, areaId: string | null) {
     const { error } = await supabase
       .from('user_plants')
@@ -617,7 +627,7 @@ export default function MyGardenDashboard() {
       <div className="px-6 space-y-8">
 
         {/* ── 1. Garden Coach ──────────────────────────────────────────── */}
-        <section className="space-y-3">
+        <section id="diagnose" className="space-y-3 scroll-mt-24">
           <div className="px-1">
             <h2 className="text-xl font-black text-green-950 uppercase italic tracking-tighter leading-none">
               Garden Coach
@@ -1151,12 +1161,6 @@ export default function MyGardenDashboard() {
                 </span>
               </div>
               <div className="space-y-2">
-                <LockedProFeatureCard
-                  icon="🤖"
-                  title="AI Garden Coach"
-                  description="Planned Pro feature — personalised garden advice, on the way."
-                  upgradeHref="#pro-upgrade"
-                />
                 {/* TODO: Monthly Garden Report — Pro summary of completed tasks, resolved sick
                      plants, and upcoming planting windows for project/future plants. */}
                 <LockedProFeatureCard
@@ -1189,7 +1193,7 @@ export default function MyGardenDashboard() {
                     Pro Membership
                   </div>
                   <h2 className="text-xl font-black mb-2 uppercase tracking-tighter text-white italic leading-none">Unlimited Growth</h2>
-                  <p className="text-[10px] text-green-200/60 font-medium italic mb-6 px-4">Unlock identification, expert guides, and custom garden photos.</p>
+                  <p className="text-[10px] text-green-200/60 font-medium italic mb-6 px-4">Unlimited plants in My Garden and a custom garden hero photo.</p>
                   <UpgradeButton />
                 </div>
               </div>

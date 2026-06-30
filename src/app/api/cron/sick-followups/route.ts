@@ -127,7 +127,7 @@ export async function GET(req: Request) {
 
     const title = `How is your ${plantName} doing? 🌿`;
     const body  = `It's been ${daysSince} days since you logged ${issueName}.`;
-    const path  = plantId ? `/plants/${plantId}` : '/dashboard';
+    const path  = plantId ? `/plants/${plantId}?mode=my-garden` : '/dashboard';
 
     // ── Fetch device tokens for this user ─────────────────────────────────────
     const { data: tokens } = await supabaseAdmin

@@ -2,6 +2,10 @@
 
 import { useState } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
+import {
+  isAtFreePlantLimit,
+  PLANT_LIMIT_MESSAGE,
+} from '../lib/pro/plantLimit'
 
 export default function QuickAddButton({ plantId, plantName }: { plantId: number, plantName: string }) {
   const [adding, setAdding] = useState(false)
@@ -24,28 +28,25 @@ export default function QuickAddButton({ plantId, plantName }: { plantId: number
       return
     }
 
-    // --- NEW: LIMIT CHECK START ---
-    // 1. Check if the user is PRO
     const { data: profile } = await supabase
       .from('profiles')
       .select('is_pro')
       .eq('id', user.id)
-      .single();
+      .single()
 
-    // 2. If not Pro, count their current plants
     if (!profile?.is_pro) {
-      const { count, error: countError } = await supabase
+      const { count } = await supabase
         .from('user_plants')
         .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .eq('is_project', false)
 
-      if (count !== null && count >= 3) {
-        alert("🌿 Garden Full! Free accounts are limited to 3 plants. Upgrade to Pro for unlimited garden space!");
+      if (isAtFreePlantLimit(count, false)) {
+        alert(`${PLANT_LIMIT_MESSAGE} Visit Dashboard → Pro to upgrade.`)
         setAdding(false)
-        return; // Stop here!
+        return
       }
     }
-    // --- NEW: LIMIT CHECK END ---
 
     const { error } = await supabase
       .from('user_plants')

@@ -37,6 +37,7 @@ export default function AboutPage() {
   const [subscriptionStatus, setSubscriptionStatus] = useState<string>('free')
   const [loading, setLoading] = useState(true)
   const [portalLoading, setPortalLoading] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
 
   useEffect(() => {
     const supabase = getSupabase()
@@ -73,6 +74,28 @@ export default function AboutPage() {
     await supabase.auth.signOut()
     router.push('/')
     router.refresh()
+  }
+
+  const handleDeleteAccount = async () => {
+    if (!window.confirm(
+      'Delete your Pocket Gardener account permanently? This cannot be undone.',
+    )) return
+
+    setDeleteLoading(true)
+    try {
+      const res = await fetch('/api/account/delete', { method: 'POST' })
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}))
+        alert(json.error || 'Could not delete account. Please email support.')
+        return
+      }
+      const supabase = getSupabase()
+      await supabase.auth.signOut()
+      router.push('/')
+      router.refresh()
+    } finally {
+      setDeleteLoading(false)
+    }
   }
 
   const handleManageSubscription = async () => {
@@ -166,7 +189,7 @@ export default function AboutPage() {
                 )}
                 {!isPro && (
                   <Link
-                    href="/dashboard"
+                    href="/dashboard#pro-upgrade"
                     className="block w-full py-4 rounded-2xl bg-amber-400 text-green-950 font-black uppercase tracking-widest text-[9px] shadow-md active:scale-95 transition-all text-center"
                   >
                     Upgrade to Pro
@@ -202,6 +225,17 @@ export default function AboutPage() {
           >
             Sign Out
           </button>
+          <button
+            onClick={handleDeleteAccount}
+            disabled={deleteLoading}
+            className="w-full mt-3 py-4 rounded-2xl bg-white text-gray-500 border border-gray-100 font-black uppercase tracking-widest text-[10px] shadow-sm active:scale-95 transition-all disabled:opacity-50"
+          >
+            {deleteLoading ? 'Deleting…' : 'Delete Account'}
+          </button>
+          <p className="text-[10px] text-gray-400 font-medium text-center mt-3 leading-relaxed">
+            Account deletion removes your profile and garden data. See our{' '}
+            <Link href="/privacy" className="text-green-700 underline">privacy policy</Link>.
+          </p>
         </section>
 
         <footer className="pt-4 text-center">

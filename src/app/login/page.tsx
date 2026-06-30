@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, useMemo, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 
 // Custom URI scheme registered in AndroidManifest.xml.
@@ -9,6 +9,19 @@ import { createBrowserClient } from '@supabase/ssr'
 const NATIVE_REDIRECT = 'com.pocketgardener.app://auth/callback'
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen bg-[#f8fbf9] flex items-center justify-center">
+        <p className="text-sm font-bold text-gray-400">Loading…</p>
+      </main>
+    }>
+      <LoginPageContent />
+    </Suspense>
+  )
+}
+
+function LoginPageContent() {
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
@@ -148,6 +161,12 @@ export default function LoginPage() {
     }
   }, [supabase, router])
 
+  useEffect(() => {
+    if (searchParams.get('error') === 'auth_failed') {
+      setMessage('Sign-in failed. Please try again or use a magic link.')
+    }
+  }, [searchParams])
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -184,7 +203,10 @@ export default function LoginPage() {
         redirectTo: `${window.location.origin}/auth/callback`,
       },
     })
-    if (error) console.error('❌ Google Error:', error.message)
+    if (error) {
+      console.error('❌ Google Error:', error.message)
+      setMessage('Google sign-in failed. Please try again or use a magic link.')
+    }
   }
 
   return (

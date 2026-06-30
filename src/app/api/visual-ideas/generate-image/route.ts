@@ -89,7 +89,7 @@ export async function POST(req: Request) {
 
       return NextResponse.json({ error: error ?? 'Image editing failed' }, { status: 422 })
     }
-    const uploadPath = `visual-ideas/generated/${user.id}-${Date.now()}.png`
+    const uploadPath = `visual-ideas/generated/${user.id}/${Date.now()}.png`
 
     const { error: uploadError } = await adminSupabase.storage
       .from('weed-images')

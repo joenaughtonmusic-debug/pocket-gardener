@@ -47,6 +47,11 @@ repomix*.xml
 *-repomix*
 *qa-audit*
 *-audit.md
+pocket-gardener-qa-audit.md
+
+# Optional generated visualiser docs (regenerate via npm scripts)
+# docs/visualiser-asset-coverage.md
+# docs/visualiser-asset-production-checklist.md
 
 # Android build artifacts
 android/.gradle/

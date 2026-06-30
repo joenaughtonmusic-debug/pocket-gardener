@@ -8,8 +8,10 @@ import PlantThumbnail from "../../../../components/PlantThumbnail"
 import GardenAreaBadge from "../../../../components/GardenAreaBadge"
 import GardenAreaAssignSelect from "../../../../components/GardenAreaAssignSelect"
 import { resolveAreaName } from '../../../../lib/gardenAreas'
-import { Check, Search, Sparkles, Quote } from 'lucide-react'
+import { isAtFreePlantLimit, PLANT_LIMIT_MESSAGE } from '../../../../lib/pro/plantLimit'
+import { enrichShoppingForIssue } from '../../../../lib/taskSupplies'
 import { trackEvent } from '../../../../lib/analytics/trackEvent'
+import { Check, Search, Sparkles, Quote } from 'lucide-react'
 
 export default function PlantDetailPage() {
   const params = useParams()
@@ -225,9 +227,20 @@ export default function PlantDetailPage() {
     fetchPlantAndStatus()
   }, [id, supabase])
 
- async function handleLogIssue(issueType: string, remedyTitle?: string) {
+ async function handleLogIssue(
+  issueType: string,
+  remedyTitle?: string,
+  shoppingTags?: string[] | null,
+) {
   if (!userPlantRecordId) return
   setIsProcessing(true)
+
+  const enrichedShopping = enrichShoppingForIssue({
+    issue: issueType,
+    remedy: remedyTitle ?? null,
+    plantName: plant?.common_name,
+    existing: shoppingTags ?? [],
+  })
 
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -252,7 +265,7 @@ export default function PlantDetailPage() {
         is_sick: true,
         current_issue: issueType,
         current_remedy: remedyTitle || null,
-        current_shopping_tags: null,
+        current_shopping_tags: enrichedShopping,
       })
       .eq('id', userPlantRecordId)
 
@@ -374,9 +387,9 @@ const { error } = await supabase.from('user_plants').insert([{
         .eq('user_id', session.user.id)
         .eq('is_project', false)
 
-      if (count && count >= 3) {
+      if (isAtFreePlantLimit(count, false)) {
         setIsProcessing(false)
-        alert('Free account limited to 3 plants. Upgrade to add more!')
+        alert(`${PLANT_LIMIT_MESSAGE} Visit Dashboard → Pro to upgrade.`)
         return
       }
     }
@@ -701,7 +714,8 @@ const { error } = await supabase.from('user_plants').insert([{
   onClick={() =>
   handleLogIssue(
     r.issue_type,
-    `${(r as any).remedy_title}: ${(r as any).remedy_description}`
+    `${(r as any).remedy_title}: ${(r as any).remedy_description}`,
+    (r as any).shopping_tags,
   )
 }
   disabled={isProcessing}
@@ -737,7 +751,8 @@ const { error } = await supabase.from('user_plants').insert([{
   onClick={() =>
   handleLogIssue(
     r.issue_type,
-    `${(r as any).remedy_title}: ${(r as any).remedy_description}`
+    `${(r as any).remedy_title}: ${(r as any).remedy_description}`,
+    (r as any).shopping_tags,
   )
 }
   disabled={isProcessing}

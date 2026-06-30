@@ -151,18 +151,28 @@ export async function POST(req: Request) {
       const sub = await stripe.subscriptions.retrieve(subscriptionId);
       const periodEnd = periodEndFromSub(sub);
 
+      // Respect cancel_at_period_end: user cancelled but is still in paid period.
+      // Do not flip subscription_status back to 'active' or revoke early.
+      const isCancelAtPeriodEnd = sub.cancel_at_period_end === true
+      const subscriptionStatus =
+        sub.status === 'active' && isCancelAtPeriodEnd ? 'canceled' : 'active'
+      const isPro =
+        sub.status === 'active' ||
+        sub.status === 'past_due' ||
+        sub.status === 'unpaid'
+
       const { error } = await supabaseAdmin
         .from('profiles')
         .update({
-          is_pro: true,
+          is_pro: isPro,
           pro_source: 'stripe',
           pro_expires_at: periodEnd,
-          subscription_status: 'active',
+          subscription_status: subscriptionStatus,
         })
         .eq('stripe_customer_id', customerId);
 
       if (error) console.error('❌ Supabase update error (invoice.paid):', error);
-      else console.log(`🔄 Renewal confirmed for customer ${customerId}, expires ${periodEnd}`);
+      else console.log(`🔄 Renewal confirmed for customer ${customerId}, expires ${periodEnd}, status: ${subscriptionStatus}`);
     }
   }
 

@@ -65,7 +65,7 @@ export default function CreateVisualIdeaForm({ initialAreaId = null }: CreateVis
       setSubmitStep('uploading')
 
       const ext = photo.name.split('.').pop() ?? 'jpg'
-      const uploadPath = `visual-ideas/uploads/${user.id}-${Date.now()}.${ext}`
+      const uploadPath = `visual-ideas/uploads/${user.id}/${Date.now()}.${ext}`
       const { error: uploadError } = await supabase.storage
         .from('weed-images')
         .upload(uploadPath, photo, { upsert: false })

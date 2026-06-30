@@ -6,6 +6,11 @@
  *   npm run process:plant-overlays
  */
 
+import type {
+  VisualiserGardenStyleTag,
+  VisualiserPlantRoleTag,
+} from './previewPlantPickerFilters'
+
 export interface OverlayAsset {
   key: string
   src: string
@@ -159,6 +164,12 @@ const ASSETS: Record<string, OverlayAsset> = {
     key: 'ake-ake',
     src: '/plant-overlays/ake-ake.png',
     defaultWidthFraction: widthFraction(260),
+    aspect: 1,
+  },
+  agapanthus: {
+    key: 'agapanthus',
+    src: '/plant-overlays/agapanthus.png',
+    defaultWidthFraction: widthFraction(220),
     aspect: 1,
   },
   'apple-tree': {
@@ -761,6 +772,7 @@ export const APPROVED_OVERLAY_KEYS = new Set<string>([
   'lomandra',
   'camellia',
   'ake-ake',
+  'agapanthus',
   'apple-tree',
   'avocado',
   'begonia',
@@ -894,6 +906,10 @@ export interface CreateVisualPlantOption {
   gardenStyles: GardenStyleFilter[]
   plantTypes: PlantTypeFilter[]
   conditions: PlantConditionProfile
+  /** Optional visualiser picker tags — merged with derived style tags at runtime. */
+  styleTags?: VisualiserGardenStyleTag[]
+  /** Optional visualiser picker tags — when set, replaces derived role tags. */
+  roleTags?: VisualiserPlantRoleTag[]
 }
 
 export const GARDEN_STYLE_FILTERS: Array<GardenStyleFilter | 'Any'> = [
@@ -2723,6 +2739,7 @@ const SPECIES_RULES: Array<{ pattern: RegExp; assetKey: string }> = [
   { pattern: /crepe myrtle|crape myrtle|lagerstroemia/i,               assetKey: 'crepe-myrtle' },
   { pattern: /dogwood|cornus florida|cornus/i,                         assetKey: 'dogwood' },
   { pattern: /ake.?ake|dodonaea/i,                                     assetKey: 'ake-ake' },
+  { pattern: /agapanthus|lily of the nile/i,                           assetKey: 'agapanthus' },
   { pattern: /apple tree|malus/i,                                      assetKey: 'apple-tree' },
   { pattern: /avocado|persea/i,                                        assetKey: 'avocado' },
   { pattern: /begonia/i,                                               assetKey: 'begonia' },
@@ -2733,7 +2750,7 @@ const SPECIES_RULES: Array<{ pattern: RegExp; assetKey: string }> = [
   { pattern: /griselinia/i,                                              assetKey: 'griselinia-hedge' },
   { pattern: /ficus tuff|ficus tuffy|ficus tuffi/i,                      assetKey: 'ficus-tuffy-hedge' },
   { pattern: /buxus|box hedge|boxwood/i,                                 assetKey: 'buxus-hedge' },
-  { pattern: /lomandra|carex|libertia|agapanthus/i,             assetKey: 'lomandra' },
+  { pattern: /lomandra|carex|libertia/i,                               assetKey: 'lomandra' },
   { pattern: /groundcover|ground.?cover|pratia/i,                        assetKey: 'groundcover' },
   // Legacy / category fallbacks for saved concepts and unmatched species
 ]
@@ -2796,10 +2813,17 @@ export function resolveOverlayAsset(
   return FALLBACK_ASSET
 }
 
+function comparePlantOptionNames(
+  a: { name: string },
+  b: { name: string },
+): number {
+  return a.name.localeCompare(b.name, 'en', { sensitivity: 'base' })
+}
+
 /** Production Visualise chooser — approved dedicated PNG overlays only. */
 export const PREVIEW_PLANT_OPTIONS: CreateVisualPlantOption[] = CREATE_VISUAL_PLANT_OPTIONS.filter(
   (plant) => APPROVED_OVERLAY_KEYS.has(resolveOverlayAsset([plant.name], plant.detectedIntent).key),
-)
+).sort(comparePlantOptionNames)
 
 /** Default normalised row span for hedge/row previews. */
 export const DEFAULT_ROW_WIDTH = 0.55
@@ -2819,7 +2843,7 @@ export const ROW_PREVIEW_PLANT_OPTIONS: Array<{ name: string; detectedIntent: st
   { name: 'Port Wine Magnolia Hedge', detectedIntent: 'hedge/screening' },
   { name: 'Murraya Hedge', detectedIntent: 'hedge/screening' },
   { name: 'Pittosporum Hedge', detectedIntent: 'hedge/screening' },
-]
+].sort(comparePlantOptionNames)
 
 const ROW_PREVIEW_PLANT_NAMES = new Set(ROW_PREVIEW_PLANT_OPTIONS.map((p) => p.name))
 

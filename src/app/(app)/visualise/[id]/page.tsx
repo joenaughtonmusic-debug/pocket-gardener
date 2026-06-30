@@ -16,7 +16,22 @@ import {
   DEFAULT_ROW_WIDTH,
   type OverlayAsset,
 } from '../../../../lib/visualIdeas/plantOverlayAssets'
+import {
+  categoriesUsedByPreviewPlants,
+  previewPlantMatchesCategory,
+} from '../../../../lib/visualIdeas/previewPlantCategories'
+import type { PlantCategoryFilter } from '../../../../lib/plants/plantCategories'
+import {
+  PREVIEW_PICKER_HELPER_TEXT,
+  PREVIEW_PICKER_NO_MATCHES_TEXT,
+  sortPreviewPlantsByOptionalFilters,
+  VISUALISER_GARDEN_STYLE_OPTIONS,
+  VISUALISER_PLANT_ROLE_OPTIONS,
+  type VisualiserGardenStyleTag,
+  type VisualiserPlantRoleTag,
+} from '../../../../lib/visualIdeas/previewPlantPickerFilters'
 import { trackEvent } from '../../../../lib/analytics/trackEvent'
+import { capturePreviewThumbnail } from '../../../../lib/visualIdeas/capturePreviewThumbnail'
 
 interface Pos { x: number; y: number }
 
@@ -297,6 +312,10 @@ export default function VisualConceptDetailPage() {
   const [overlays, setOverlays]           = useState<PreviewOverlay[]>([])
   const [selectedOverlayId, setSelectedOverlayId] = useState<string | null>(null)
   const [plantToAdd, setPlantToAdd]       = useState(PREVIEW_PLANT_OPTIONS[0]?.name ?? '')
+  const [plantCategoryFilter, setPlantCategoryFilter] = useState<PlantCategoryFilter | ''>('')
+  const [plantSearchQuery, setPlantSearchQuery] = useState('')
+  const [gardenStyleFilter, setGardenStyleFilter] = useState<VisualiserGardenStyleTag | 'Any'>('Any')
+  const [plantRoleFilter, setPlantRoleFilter] = useState<VisualiserPlantRoleTag | 'Any'>('Any')
   const [placementMode, setPlacementMode] = useState<PlacementMode>('single')
   const [isDraggingOverlay, setIsDraggingOverlay] = useState(false)
   const overlayDragOrigin                 = useRef<{
@@ -330,17 +349,58 @@ export default function VisualConceptDetailPage() {
     return Math.round((selectedOverlay.width ?? DEFAULT_ROW_WIDTH) * previewDims.w)
   }, [selectedOverlay, previewDims.w])
 
+  const previewPlantCategories = useMemo(
+    () => categoriesUsedByPreviewPlants(PREVIEW_PLANT_OPTIONS),
+    [],
+  )
+
+  const filteredSinglePlantOptions = useMemo(() => {
+    return PREVIEW_PLANT_OPTIONS.filter((plant) => {
+      const matchesCategory = previewPlantMatchesCategory(plant, plantCategoryFilter)
+      const query = plantSearchQuery.trim().toLowerCase()
+      const matchesSearch = !query || plant.name.toLowerCase().includes(query)
+      return matchesCategory && matchesSearch
+    })
+  }, [plantCategoryFilter, plantSearchQuery])
+
+  const sortedSinglePlantPicker = useMemo(
+    () => sortPreviewPlantsByOptionalFilters(
+      filteredSinglePlantOptions,
+      gardenStyleFilter,
+      plantRoleFilter,
+    ),
+    [filteredSinglePlantOptions, gardenStyleFilter, plantRoleFilter],
+  )
+
   const addPlantOptions = placementMode === 'row'
     ? ROW_PREVIEW_PLANT_OPTIONS
-    : PREVIEW_PLANT_OPTIONS
+    : [...sortedSinglePlantPicker.recommended, ...sortedSinglePlantPicker.other]
+
+  const showNoStyleRoleMatches = placementMode === 'single'
+    && sortedSinglePlantPicker.hasActiveFilters
+    && !sortedSinglePlantPicker.hasExactMatches
+    && filteredSinglePlantOptions.length > 0
+
+  const showRecommendedGroup = placementMode === 'single'
+    && sortedSinglePlantPicker.hasActiveFilters
+    && sortedSinglePlantPicker.hasExactMatches
+    && sortedSinglePlantPicker.recommended.length > 0
+    && sortedSinglePlantPicker.other.length > 0
+
+  useEffect(() => {
+    if (addPlantOptions.some((plant) => plant.name === plantToAdd)) return
+    setPlantToAdd(addPlantOptions[0]?.name ?? '')
+  }, [addPlantOptions, plantToAdd])
 
   function handlePlacementModeChange(mode: PlacementMode) {
     setPlacementMode(mode)
-    setPlantToAdd(
-      mode === 'row'
-        ? (ROW_PREVIEW_PLANT_OPTIONS[0]?.name ?? '')
-        : (PREVIEW_PLANT_OPTIONS[0]?.name ?? ''),
-    )
+    if (mode === 'row') {
+      setPlantCategoryFilter('')
+      setPlantSearchQuery('')
+      setGardenStyleFilter('Any')
+      setPlantRoleFilter('Any')
+      setPlantToAdd(ROW_PREVIEW_PLANT_OPTIONS[0]?.name ?? '')
+    }
   }
 
   function updateOverlay(id: string, patch: Partial<PreviewOverlay>) {
@@ -586,6 +646,32 @@ export default function VisualConceptDetailPage() {
     const normalizedScale = primaryOverlay.scale
     const speciesToSave = uniqueOverlayPlantNames
 
+    let previewThumbnailUrl: string | null = concept.preview_thumbnail_url ?? null
+
+    if (concept.original_photo_url) {
+      const thumbBlob = await capturePreviewThumbnail(
+        concept.original_photo_url,
+        overlays,
+        previewDims.w,
+        previewDims.h,
+      )
+      if (thumbBlob) {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          const thumbPath = `visual-ideas/thumbnails/${user.id}/${concept.id}.jpg`
+          const { error: uploadError } = await supabase.storage
+            .from('weed-images')
+            .upload(thumbPath, thumbBlob, { contentType: 'image/jpeg', upsert: true })
+          if (!uploadError) {
+            const { data: { publicUrl } } = supabase.storage
+              .from('weed-images')
+              .getPublicUrl(thumbPath)
+            previewThumbnailUrl = publicUrl
+          }
+        }
+      }
+    }
+
     const { error } = await supabase
       .from('garden_visual_concepts')
       .update({
@@ -595,6 +681,7 @@ export default function VisualConceptDetailPage() {
         overlay_scale:       normalizedScale,
         preview_mode:        'overlay',
         selected_species:    speciesToSave,
+        preview_thumbnail_url: previewThumbnailUrl,
         updated_at:          new Date().toISOString(),
       })
       .eq('id', concept.id)
@@ -608,6 +695,7 @@ export default function VisualConceptDetailPage() {
         overlay_scale:       normalizedScale,
         preview_mode:        'overlay',
         selected_species:    speciesToSave,
+        preview_thumbnail_url: previewThumbnailUrl,
       } : prev)
       setSelectedSpecies(speciesToSave)
       setFuturePlantsSaved(false)
@@ -774,22 +862,123 @@ export default function VisualConceptDetailPage() {
                   </div>
                 )}
               </div>
+              {placementMode === 'single' && (
+                <>
+                  <p className="px-1 text-[11px] text-gray-500 font-medium leading-relaxed">
+                    {PREVIEW_PICKER_HELPER_TEXT}
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div className="bg-white border border-gray-100 rounded-[1rem] px-4 py-3">
+                      <label className="text-[8px] font-black text-gray-300 uppercase tracking-widest block mb-1">
+                        Garden style
+                      </label>
+                      <select
+                        value={gardenStyleFilter}
+                        onChange={(e) => setGardenStyleFilter(e.target.value as VisualiserGardenStyleTag | 'Any')}
+                        className="w-full bg-transparent text-[12px] font-bold text-green-950 outline-none appearance-none cursor-pointer"
+                      >
+                        {VISUALISER_GARDEN_STYLE_OPTIONS.map((option) => (
+                          <option key={option} value={option}>
+                            {option === 'Any' ? 'Any style' : option}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="bg-white border border-gray-100 rounded-[1rem] px-4 py-3">
+                      <label className="text-[8px] font-black text-gray-300 uppercase tracking-widest block mb-1">
+                        Plant role
+                      </label>
+                      <select
+                        value={plantRoleFilter}
+                        onChange={(e) => setPlantRoleFilter(e.target.value as VisualiserPlantRoleTag | 'Any')}
+                        className="w-full bg-transparent text-[12px] font-bold text-green-950 outline-none appearance-none cursor-pointer"
+                      >
+                        {VISUALISER_PLANT_ROLE_OPTIONS.map((option) => (
+                          <option key={option} value={option}>
+                            {option === 'Any' ? 'Any role' : option}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </>
+              )}
+              {placementMode === 'single' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="bg-white border border-gray-100 rounded-[1rem] px-4 py-3">
+                    <label className="text-[8px] font-black text-gray-300 uppercase tracking-widest block mb-1">
+                      Category
+                    </label>
+                    <select
+                      value={plantCategoryFilter}
+                      onChange={(e) => setPlantCategoryFilter(e.target.value as PlantCategoryFilter | '')}
+                      className="w-full bg-transparent text-[12px] font-bold text-green-950 outline-none appearance-none cursor-pointer"
+                    >
+                      <option value="">All categories</option>
+                      {previewPlantCategories.map((category) => (
+                        <option key={category} value={category}>
+                          {category}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="bg-white border border-gray-100 rounded-[1rem] px-4 py-3">
+                    <label className="text-[8px] font-black text-gray-300 uppercase tracking-widest block mb-1">
+                      Search
+                    </label>
+                    <input
+                      type="text"
+                      value={plantSearchQuery}
+                      onChange={(e) => setPlantSearchQuery(e.target.value)}
+                      placeholder="Filter by name..."
+                      className="w-full bg-transparent text-[12px] font-bold text-green-950 outline-none placeholder:text-gray-300"
+                    />
+                  </div>
+                </div>
+              )}
+              {showNoStyleRoleMatches && (
+                <p className="px-1 text-[11px] text-amber-700 font-medium leading-relaxed">
+                  {PREVIEW_PICKER_NO_MATCHES_TEXT}
+                </p>
+              )}
               <div className="flex flex-col sm:flex-row gap-2">
                 <select
                   value={plantToAdd}
                   onChange={(e) => setPlantToAdd(e.target.value)}
-                  className="flex-1 bg-white border border-gray-100 rounded-[1rem] px-4 py-3 text-[12px] font-bold text-green-950 outline-none"
+                  disabled={addPlantOptions.length === 0}
+                  className="flex-1 bg-white border border-gray-100 rounded-[1rem] px-4 py-3 text-[12px] font-bold text-green-950 outline-none disabled:opacity-50"
                 >
-                  {addPlantOptions.map((plant) => (
-                    <option key={plant.name} value={plant.name}>
-                      {plant.name}
-                    </option>
-                  ))}
+                  {addPlantOptions.length === 0 ? (
+                    <option value="">No plants match</option>
+                  ) : showRecommendedGroup ? (
+                    <>
+                      <optgroup label="Recommended">
+                        {sortedSinglePlantPicker.recommended.map((plant) => (
+                          <option key={plant.name} value={plant.name}>
+                            {plant.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="All plants">
+                        {sortedSinglePlantPicker.other.map((plant) => (
+                          <option key={plant.name} value={plant.name}>
+                            {plant.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    </>
+                  ) : (
+                    addPlantOptions.map((plant) => (
+                      <option key={plant.name} value={plant.name}>
+                        {plant.name}
+                      </option>
+                    ))
+                  )}
                 </select>
                 <button
                   type="button"
                   onClick={handleAddPlant}
-                  disabled={!previewReady || !plantToAdd}
+                  disabled={!previewReady || !plantToAdd || addPlantOptions.length === 0}
                   className="bg-green-900 text-white px-5 py-3 rounded-[1rem] text-[10px] font-black uppercase tracking-widest active:scale-[0.98] transition-all disabled:opacity-50 whitespace-nowrap"
                 >
                   {placementMode === 'row' ? 'Add row' : 'Add plant'}

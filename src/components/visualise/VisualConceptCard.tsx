@@ -24,10 +24,10 @@ export default function VisualConceptCard({ concept }: { concept: VisualConcept 
     >
       <div className="flex items-stretch gap-0">
         <div className="w-28 shrink-0 bg-gray-100 relative overflow-hidden rounded-l-[2rem]">
-          {concept.original_photo_url ? (
+          {concept.preview_thumbnail_url || concept.original_photo_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={concept.original_photo_url}
+              src={concept.preview_thumbnail_url || concept.original_photo_url || ''}
               alt={concept.name}
               className="absolute inset-0 w-full h-full object-cover"
             />

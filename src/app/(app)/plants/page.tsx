@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useMemo } from "react";
 import { createSupabaseBrowserClient } from "../../lib/supabaseClient";
+import { isAtFreePlantLimit, PLANT_LIMIT_MESSAGE } from "../../../lib/pro/plantLimit";
 import Link from "next/link";
 import {
   ChevronDown,
@@ -262,8 +263,8 @@ export default function LibraryPage() {
           .eq('user_id', session.user.id)
           .eq('is_project', false);
 
-        if (count && count >= 3) {
-          alert('Free account limited to 3 plants. Upgrade to add more!');
+        if (isAtFreePlantLimit(count, false)) {
+          alert(`${PLANT_LIMIT_MESSAGE} Visit Dashboard → Pro to upgrade.`)
           return;
         }
       }
