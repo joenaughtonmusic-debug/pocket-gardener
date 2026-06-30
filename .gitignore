@@ -67,3 +67,5 @@ android/capacitor-cordova-android-plugins/build/
 
 # Firebase — contains API keys, never commit
 android/app/google-services.json
+# Local/reference plant source images
+assets/plant-overlays/references/
