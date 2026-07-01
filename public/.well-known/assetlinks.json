@@ -1,11 +1,14 @@
 [
   {
-    "relation": ["delegate_permission/common.handle_all_urls"],
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
     "target": {
       "namespace": "android_app",
       "package_name": "com.pocketgardener.app",
       "sha256_cert_fingerprints": [
-        "DE:E3:E2:01:BA:05:A3:76:A0:8A:24:15:3A:DD:4A:E8:63:DD:29:D5:3C:D4:D4:DD:F4:64:86:25:4B:AD:43:6D"
+        "DE:E3:E2:01:BA:05:A3:76:A0:8A:24:15:3A:DD:4A:E8:63:DD:29:D5:3C:D4:D4:DD:F4:64:86:25:4B:AD:43:6D",
+        "AF:DF:3B:F2:DB:C3:CE:E4:3F:A8:65:96:AE:8B:EF:0A:31:1E:5A:CF:67:75:5D:FF:38:C8:DE:BC:2F:83:FF:E0"
       ]
     }
   }
