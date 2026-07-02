@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test:visual-prompts": "npx tsx scripts/testVisualIdeaPrompts.ts",
+    "test:foreground-masks": "tsx scripts/testForegroundMasks.ts",
     "validate:overlay-paths": "tsx scripts/validateOverlayPaths.ts",
     "export:plant-catalog": "tsx scripts/exportPlantCatalog.ts",
     "generate:coverage-doc": "tsx scripts/generateCoverageMarkdown.ts",

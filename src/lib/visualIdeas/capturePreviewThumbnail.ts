@@ -1,6 +1,6 @@
 import { DEFAULT_ROW_WIDTH, type OverlayAsset } from './plantOverlayAssets'
 import { resolvePreviewAsset } from '../visualiser/devAlphaBatchOverlays'
-import type { PreviewOverlay } from '../../types/garden'
+import type { ForegroundMask, PreviewOverlay } from '../../types/garden'
 
 const THUMB_MAX_WIDTH = 480
 const ROW_TILE_OVERLAP_RATIO = 0.2
@@ -56,6 +56,7 @@ export async function capturePreviewThumbnail(
   overlays: PreviewOverlay[],
   containerW: number,
   containerH: number,
+  foregroundMasks: ForegroundMask[] = [],
 ): Promise<Blob | null> {
   if (!containerW || !containerH || overlays.length === 0) return null
 
@@ -98,6 +99,22 @@ export async function capturePreviewThumbnail(
           rect.height * scale,
         )
       }
+    }
+
+    for (const mask of foregroundMasks) {
+      if (mask.points.length < 3) continue
+      ctx.save()
+      ctx.beginPath()
+      mask.points.forEach((point, index) => {
+        const px = point.x * canvas.width
+        const py = point.y * canvas.height
+        if (index === 0) ctx.moveTo(px, py)
+        else ctx.lineTo(px, py)
+      })
+      ctx.closePath()
+      ctx.clip()
+      ctx.drawImage(bg, 0, 0, canvas.width, canvas.height)
+      ctx.restore()
     }
 
     return await new Promise((resolve) => {

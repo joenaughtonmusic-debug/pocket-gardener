@@ -32,6 +32,19 @@ import {
 import { trackEvent } from '../../../../lib/analytics/trackEvent'
 import { capturePreviewThumbnail } from '../../../../lib/visualIdeas/capturePreviewThumbnail'
 import {
+  clampMaskPoint,
+  createForegroundMask,
+  FOREGROUND_MASK_TRACE_PLANT_OPACITY,
+  isForegroundMasksEnabled,
+  parseForegroundMasks,
+} from '../../../../lib/visualIdeas/foregroundMasks'
+import type { ForegroundMask, ForegroundMaskPoint } from '../../../../types/garden'
+import {
+  ForegroundMaskDrawingLayer,
+  ForegroundMaskLayers,
+} from '../../../../components/visualise/ForegroundMaskLayers'
+import { ForegroundMaskControls } from '../../../../components/visualise/ForegroundMaskControls'
+import {
   getDevAlphaPreviewPlantOptions,
   getDevAlphaAssetForPlant,
   isDevAlphaPreviewPlant,
@@ -337,6 +350,13 @@ export default function VisualConceptDetailPage() {
   const [showFuturePlantsModal, setShowFuturePlantsModal] = useState(false)
   const [futurePlantsSaved, setFuturePlantsSaved] = useState(false)
 
+  const foregroundMasksEnabled = isForegroundMasksEnabled()
+  const [foregroundMasks, setForegroundMasks] = useState<ForegroundMask[]>([])
+  const [maskDrawingMode, setMaskDrawingMode] = useState(false)
+  const [draftMaskPoints, setDraftMaskPoints] = useState<ForegroundMaskPoint[]>([])
+  const [hidePlantWhileTracing, setHidePlantWhileTracing] = useState(false)
+  const [showForegroundMasks, setShowForegroundMasks] = useState(true)
+
   const suggestedNames = useMemo(
     () => ((concept?.suggested_species ?? []) as SuggestedSpecies[]).map((s) => s.name),
     [concept?.suggested_species],
@@ -450,6 +470,9 @@ export default function VisualConceptDetailPage() {
       const c = data as VisualConcept
       setConcept(c)
       setSelectedSpecies(c.selected_species ?? [])
+      if (isForegroundMasksEnabled()) {
+        setForegroundMasks(parseForegroundMasks(c.foreground_masks))
+      }
       setLoading(false)
     }
     load()
@@ -549,9 +572,47 @@ export default function VisualConceptDetailPage() {
     })
   }
 
+  function handleStartMaskDrawing() {
+    if (!foregroundMasksEnabled || !selectedOverlay || !previewReady) return
+    setMaskDrawingMode(true)
+    setDraftMaskPoints([])
+    // Scroll the photo into view so the user doesn't need to scroll manually before tracing.
+    previewContainerRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  }
+
+  function handleAddMaskPoint(point: ForegroundMaskPoint) {
+    if (!maskDrawingMode) return
+    setDraftMaskPoints((prev) => [...prev, clampMaskPoint(point)])
+  }
+
+  function handleUndoMaskPoint() {
+    setDraftMaskPoints((prev) => prev.slice(0, -1))
+  }
+
+  function handleCancelMaskDrawing() {
+    setMaskDrawingMode(false)
+    setDraftMaskPoints([])
+  }
+
+  function handleFinishMaskDrawing() {
+    const mask = createForegroundMask(
+      draftMaskPoints,
+      `Mask ${foregroundMasks.length + 1}`,
+    )
+    if (!mask) return
+    setForegroundMasks((prev) => [...prev, mask])
+    setMaskDrawingMode(false)
+    setDraftMaskPoints([])
+  }
+
+  function handleDeleteForegroundMask(maskId: string) {
+    setForegroundMasks((prev) => prev.filter((mask) => mask.id !== maskId))
+  }
+
   // ── Drag handlers (selected overlay only) ────────────────────────────────
   const handleOverlayPointerDown = useCallback(
     (overlayId: string) => (e: React.PointerEvent<HTMLElement>) => {
+      if (maskDrawingMode) return
       if (!previewDims.w || !previewDims.h) return
 
       const overlay = overlays.find((item) => item.id === overlayId)
@@ -573,11 +634,12 @@ export default function VisualConceptDetailPage() {
         posY: top,
       }
     },
-    [overlays, previewDims.h, previewDims.w],
+    [overlays, previewDims.h, previewDims.w, maskDrawingMode],
   )
 
   const handleOverlayPointerMove = useCallback(
     (e: React.PointerEvent<HTMLElement>) => {
+      if (maskDrawingMode) return
       if (!isDraggingOverlay || !previewDims.w || !previewDims.h) return
 
       const { overlayId, clientX, clientY, posX, posY } = overlayDragOrigin.current
@@ -607,7 +669,7 @@ export default function VisualConceptDetailPage() {
         )
       })
     },
-    [isDraggingOverlay, previewDims.h, previewDims.w],
+    [isDraggingOverlay, previewDims.h, previewDims.w, maskDrawingMode],
   )
 
   const handleOverlayPointerUp = useCallback(() => setIsDraggingOverlay(false), [])
@@ -688,6 +750,7 @@ export default function VisualConceptDetailPage() {
         overlays,
         previewDims.w,
         previewDims.h,
+        foregroundMasksEnabled ? foregroundMasks : [],
       )
       if (thumbBlob) {
         const { data: { user } } = await supabase.auth.getUser()
@@ -716,6 +779,7 @@ export default function VisualConceptDetailPage() {
         preview_mode:        'overlay',
         selected_species:    speciesToSave,
         preview_thumbnail_url: previewThumbnailUrl,
+        ...(foregroundMasksEnabled ? { foreground_masks: foregroundMasks } : {}),
         updated_at:          new Date().toISOString(),
       })
       .eq('id', concept.id)
@@ -730,6 +794,7 @@ export default function VisualConceptDetailPage() {
         preview_mode:        'overlay',
         selected_species:    speciesToSave,
         preview_thumbnail_url: previewThumbnailUrl,
+        ...(foregroundMasksEnabled ? { foreground_masks: foregroundMasks } : {}),
       } : prev)
       setSelectedSpecies(speciesToSave)
       setFuturePlantsSaved(false)
@@ -1055,7 +1120,10 @@ export default function VisualConceptDetailPage() {
             <div
               ref={previewContainerRef}
               className="relative rounded-[2rem] overflow-hidden border border-gray-100 shadow-sm bg-gray-100"
-              onClick={() => setSelectedOverlayId(null)}
+              onClick={() => {
+                if (maskDrawingMode) return
+                setSelectedOverlayId(null)
+              }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -1076,21 +1144,31 @@ export default function VisualConceptDetailPage() {
                 )
                 const isSelected = overlay.id === selectedOverlayId
                 const isRow = getOverlayMode(overlay) === 'row'
+                const isTracingTarget = foregroundMasksEnabled
+                  && maskDrawingMode
+                  && overlay.id === selectedOverlayId
                 const sharedStyle = {
                   position: 'absolute' as const,
                   left,
                   top,
-                  cursor: isSelected
-                    ? (isDraggingOverlay ? 'grabbing' : 'grab')
-                    : 'pointer',
+                  cursor: maskDrawingMode
+                    ? 'default'
+                    : isSelected
+                      ? (isDraggingOverlay ? 'grabbing' : 'grab')
+                      : 'pointer',
                   userSelect: 'none' as const,
                   touchAction: 'none' as const,
                   filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.45))',
                   background: 'transparent',
                   zIndex: isSelected ? 20 : 10,
-                  outline: isSelected ? '3px solid rgba(74, 222, 128, 0.95)' : undefined,
-                  outlineOffset: isSelected ? '2px' : undefined,
-                  borderRadius: isSelected ? '6px' : undefined,
+                  outline: isSelected && !maskDrawingMode ? '3px solid rgba(74, 222, 128, 0.95)' : undefined,
+                  outlineOffset: isSelected && !maskDrawingMode ? '2px' : undefined,
+                  borderRadius: isSelected && !maskDrawingMode ? '6px' : undefined,
+                  opacity: isTracingTarget
+                    ? (hidePlantWhileTracing ? 0 : FOREGROUND_MASK_TRACE_PLANT_OPACITY)
+                    : 1,
+                  visibility: isTracingTarget && hidePlantWhileTracing ? ('hidden' as const) : ('visible' as const),
+                  pointerEvents: maskDrawingMode ? ('none' as const) : ('auto' as const),
                 }
                 const pointerHandlers = {
                   onPointerDown: handleOverlayPointerDown(overlay.id),
@@ -1161,6 +1239,25 @@ export default function VisualConceptDetailPage() {
                   />
                 )
               })}
+
+              {foregroundMasksEnabled && previewReady && concept.original_photo_url && !maskDrawingMode && (
+                <ForegroundMaskLayers
+                  photoUrl={concept.original_photo_url}
+                  masks={foregroundMasks}
+                  visible={showForegroundMasks}
+                  containerW={previewDims.w}
+                  containerH={previewDims.h}
+                />
+              )}
+
+              {foregroundMasksEnabled && previewReady && maskDrawingMode && (
+                <ForegroundMaskDrawingLayer
+                  draftPoints={draftMaskPoints}
+                  containerW={previewDims.w}
+                  containerH={previewDims.h}
+                  onAddPoint={handleAddMaskPoint}
+                />
+              )}
 
               {previewReady && overlays.length === 0 && (
                 <div
@@ -1292,10 +1389,29 @@ export default function VisualConceptDetailPage() {
                 </div>
               )}
 
+              {foregroundMasksEnabled && previewReady && overlays.length > 0 && (
+                <ForegroundMaskControls
+                  maskDrawingMode={maskDrawingMode}
+                  draftPointCount={draftMaskPoints.length}
+                  hidePlantWhileTracing={hidePlantWhileTracing}
+                  showForegroundMasks={showForegroundMasks}
+                  masks={foregroundMasks}
+                  hasSelectedOverlay={Boolean(selectedOverlay)}
+                  previewReady={previewReady}
+                  onStartDrawing={handleStartMaskDrawing}
+                  onUndoPoint={handleUndoMaskPoint}
+                  onFinishMask={handleFinishMaskDrawing}
+                  onCancelDrawing={handleCancelMaskDrawing}
+                  onDeleteMask={handleDeleteForegroundMask}
+                  onToggleHidePlant={() => setHidePlantWhileTracing((prev) => !prev)}
+                  onToggleShowMasks={() => setShowForegroundMasks((prev) => !prev)}
+                />
+              )}
+
               <div className="space-y-3">
                 <button
                   onClick={handleSavePreview}
-                  disabled={savingPreview || overlays.length === 0}
+                  disabled={savingPreview || overlays.length === 0 || maskDrawingMode}
                   className="w-full bg-green-900 text-white py-4 rounded-[1.5rem] text-[11px] font-black uppercase tracking-widest shadow-lg active:scale-[0.98] transition-all disabled:opacity-60 flex items-center justify-center gap-2"
                 >
                   {savingPreview ? (

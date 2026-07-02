@@ -81,6 +81,20 @@ export interface PreviewOverlay {
   width?: number;
 }
 
+/** Normalised point on the garden photo (0–1 relative to the preview image area). */
+export interface ForegroundMaskPoint {
+  x: number;
+  y: number;
+}
+
+/** User-drawn polygon mask — clipped duplicate of the photo renders above plant overlays. */
+export interface ForegroundMask {
+  id: string;
+  points: ForegroundMaskPoint[];
+  name?: string;
+  createdAt: string;
+}
+
 /**
  * A saved visual concept — a row from `garden_visual_concepts`.
  * Tracks the uploaded photo, goal, detected intent, species suggestions,
@@ -109,6 +123,8 @@ export interface VisualConcept {
   preview_mode: string | null;
   overlay_items?: PreviewOverlay[] | null;
   preview_thumbnail_url?: string | null;
+  /** Manual foreground masks for Quick Preview (photo-relative polygons). */
+  foreground_masks?: ForegroundMask[] | null;
   created_at: string;
   updated_at: string;
 }
