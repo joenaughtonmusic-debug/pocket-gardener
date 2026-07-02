@@ -17,6 +17,57 @@ export type VisualiserPlantRoleTag =
   | 'Flowering Colour'
   | 'Climber'
 
+/** Which Visualise Quick Preview placement modes may offer this plant. */
+export type VisualiserPreviewPlacement = 'single' | 'hedge-row'
+
+/**
+ * Explicit picker placement for plants without per-entry previewPlacements.
+ * Hedge-row-only names (e.g. "Photinia Hedge") live in ROW_PREVIEW_HEDGE_ENTRIES instead.
+ */
+const EXPLICIT_PREVIEW_PLACEMENTS: Readonly<Record<string, VisualiserPreviewPlacement[]>> = {
+  Acorus: ['single'],
+  Ajuga: ['single'],
+  Alstroemeria: ['single'],
+  Apodasmia: ['single'],
+  Astilbe: ['single'],
+  Azalea: ['single'],
+  Carex: ['single'],
+  Choisya: ['single'],
+  'Clumping Bamboo': ['single', 'hedge-row'],
+  Cyclamen: ['single'],
+  Daphne: ['single'],
+  Grevillea: ['single'],
+  Heuchera: ['single'],
+  Hosta: ['single'],
+  Jasmine: ['single'],
+  Leptinella: ['single'],
+  Leucadendron: ['single'],
+  Leucospermum: ['single'],
+  Libertia: ['single'],
+  'Potato Vine': ['single'],
+  Puka: ['single'],
+  Scleranthus: ['single'],
+  Teucrium: ['single'],
+  'Buxus ball': ['single'],
+}
+
+export function resolvePreviewPlacements(
+  plant: CreateVisualPlantOption,
+): VisualiserPreviewPlacement[] {
+  if (plant.previewPlacements?.length) return [...plant.previewPlacements]
+  const explicit = EXPLICIT_PREVIEW_PLACEMENTS[plant.name]
+  if (explicit) return [...explicit]
+  return ['single']
+}
+
+export function isSinglePreviewPlant(plant: CreateVisualPlantOption): boolean {
+  return resolvePreviewPlacements(plant).includes('single')
+}
+
+export function isHedgeRowPreviewPlant(plant: CreateVisualPlantOption): boolean {
+  return resolvePreviewPlacements(plant).includes('hedge-row')
+}
+
 export const VISUALISER_GARDEN_STYLE_OPTIONS: Array<VisualiserGardenStyleTag | 'Any'> = [
   'Any',
   'Tropical / Subtropical',

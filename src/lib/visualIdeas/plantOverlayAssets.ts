@@ -9,6 +9,11 @@
 import type {
   VisualiserGardenStyleTag,
   VisualiserPlantRoleTag,
+  VisualiserPreviewPlacement,
+} from './previewPlantPickerFilters'
+import {
+  isHedgeRowPreviewPlant,
+  isSinglePreviewPlant,
 } from './previewPlantPickerFilters'
 
 export interface OverlayAsset {
@@ -868,6 +873,12 @@ const ASSETS: Record<string, OverlayAsset> = {
     defaultWidthFraction: widthFraction(240),
     aspect: 1,
   },
+  'buxus-ball': {
+    key: 'buxus-ball',
+    src: '/plant-overlays/buxus-ball.png',
+    defaultWidthFraction: widthFraction(180),
+    aspect: 1,
+  },
   // Legacy / category fallbacks — kept for saved concepts and non-approved species
   buxus: {
     key: 'buxus',
@@ -942,6 +953,7 @@ export const APPROVED_OVERLAY_KEYS = new Set<string>([
   'bottlebrush',
   'box-elder',
   'bromeliad',
+  'buxus-ball',
   'cabbage-tree',
   'carex',
   'choisya',
@@ -1092,6 +1104,8 @@ export interface CreateVisualPlantOption {
   styleTags?: VisualiserGardenStyleTag[]
   /** Optional visualiser picker tags — when set, replaces derived role tags. */
   roleTags?: VisualiserPlantRoleTag[]
+  /** Explicit Quick Preview placement modes — overrides EXPLICIT_PREVIEW_PLACEMENTS lookup. */
+  previewPlacements?: VisualiserPreviewPlacement[]
 }
 
 export const GARDEN_STYLE_FILTERS: Array<GardenStyleFilter | 'Any'> = [
@@ -1545,6 +1559,24 @@ export const CREATE_VISUAL_PLANT_OPTIONS: CreateVisualPlantOption[] = [
       moisture: ['average', 'moist'],
       drainage: ['well drained'],
       wind: ['sheltered'],
+    },
+  },
+  {
+    name: 'Buxus ball',
+    description: 'Formal clipped boxwood sphere for structure and topiary.',
+    notes: 'Single feature topiary (buxus-ball.png). Use Buxus Hedge for row/screen planting.',
+    detectedIntent: 'feature planting',
+    style: 'Feature planting',
+    gardenStyles: ['Formal'],
+    plantTypes: ['Shrub'],
+    styleTags: ['Formal'],
+    roleTags: ['Feature Plant'],
+    previewPlacements: ['single'],
+    conditions: {
+      sun: ['full sun', 'part shade'],
+      moisture: ['average'],
+      drainage: ['well drained'],
+      wind: ['sheltered', 'moderate'],
     },
   },
   {
@@ -3349,7 +3381,9 @@ const SPECIES_RULES: Array<{ pattern: RegExp; assetKey: string }> = [
   { pattern: /bromeliad|alcantarea/i,                                  assetKey: 'bromeliad' },
   { pattern: /griselinia/i,                                              assetKey: 'griselinia-hedge' },
   { pattern: /ficus tuff|ficus tuffy|ficus tuffi/i,                      assetKey: 'ficus-tuffy-hedge' },
-  { pattern: /buxus|box hedge|boxwood/i,                                 assetKey: 'buxus-hedge' },
+  { pattern: /buxus ball|box ball|topiary ball/i,                        assetKey: 'buxus-ball' },
+  { pattern: /buxus hedge|box hedge|boxwood hedge|\bbox hedge\b/i,       assetKey: 'buxus-hedge' },
+  { pattern: /buxus|boxwood|\bbox\b/i,                                   assetKey: 'buxus-hedge' },
   { pattern: /lomandra/i,                                              assetKey: 'lomandra' },
   { pattern: /groundcover|ground.?cover|pratia/i,                        assetKey: 'groundcover' },
   // Legacy / category fallbacks for saved concepts and unmatched species
@@ -3420,16 +3454,18 @@ function comparePlantOptionNames(
   return a.name.localeCompare(b.name, 'en', { sensitivity: 'base' })
 }
 
-/** Production Visualise chooser — approved dedicated PNG overlays only. */
+/** Production Visualise chooser — approved dedicated PNG overlays for single placement. */
 export const PREVIEW_PLANT_OPTIONS: CreateVisualPlantOption[] = CREATE_VISUAL_PLANT_OPTIONS.filter(
-  (plant) => APPROVED_OVERLAY_KEYS.has(resolveOverlayAsset([plant.name], plant.detectedIntent).key),
+  (plant) =>
+    APPROVED_OVERLAY_KEYS.has(resolveOverlayAsset([plant.name], plant.detectedIntent).key) &&
+    isSinglePreviewPlant(plant),
 ).sort(comparePlantOptionNames)
 
 /** Default normalised row span for hedge/row previews. */
 export const DEFAULT_ROW_WIDTH = 0.55
 
-/** Plants available as a hedge/row preview (screening hedges with dedicated PNG assets). */
-export const ROW_PREVIEW_PLANT_OPTIONS: Array<{ name: string; detectedIntent: string }> = [
+/** Hedge/row-only picker entries (dedicated row assets; not shown in single mode). */
+const ROW_PREVIEW_HEDGE_ENTRIES: Array<{ name: string; detectedIntent: string }> = [
   { name: 'Griselinia Hedge', detectedIntent: 'hedge/screening' },
   { name: 'Ficus Tuffy Hedge', detectedIntent: 'hedge/screening' },
   { name: 'Buxus Hedge', detectedIntent: 'shrub planting' },
@@ -3446,7 +3482,26 @@ export const ROW_PREVIEW_PLANT_OPTIONS: Array<{ name: string; detectedIntent: st
   { name: 'Loropetalum Hedge', detectedIntent: 'hedge/screening' },
   { name: 'Teucrium Hedge', detectedIntent: 'hedge/screening' },
   { name: 'Pittosporum Hedge', detectedIntent: 'hedge/screening' },
-].sort(comparePlantOptionNames)
+]
+
+function buildRowPreviewPlantOptions(): Array<{ name: string; detectedIntent: string }> {
+  const byName = new Map<string, { name: string; detectedIntent: string }>()
+  for (const entry of ROW_PREVIEW_HEDGE_ENTRIES) {
+    byName.set(entry.name, entry)
+  }
+  for (const plant of CREATE_VISUAL_PLANT_OPTIONS) {
+    if (!isHedgeRowPreviewPlant(plant)) continue
+    if (!APPROVED_OVERLAY_KEYS.has(resolveOverlayAsset([plant.name], plant.detectedIntent).key)) {
+      continue
+    }
+    byName.set(plant.name, { name: plant.name, detectedIntent: plant.detectedIntent })
+  }
+  return [...byName.values()].sort(comparePlantOptionNames)
+}
+
+/** Plants available as a hedge/row preview (screening hedges with dedicated PNG assets). */
+export const ROW_PREVIEW_PLANT_OPTIONS: Array<{ name: string; detectedIntent: string }> =
+  buildRowPreviewPlantOptions()
 
 const ROW_PREVIEW_PLANT_NAMES = new Set(ROW_PREVIEW_PLANT_OPTIONS.map((p) => p.name))
 

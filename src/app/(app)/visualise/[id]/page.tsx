@@ -989,6 +989,12 @@ export default function VisualConceptDetailPage() {
                 >
                   {addPlantOptions.length === 0 ? (
                     <option value="">No plants match</option>
+                  ) : placementMode === 'row' ? (
+                    addPlantOptions.map((plant) => (
+                      <option key={plant.name} value={plant.name}>
+                        {plant.name}
+                      </option>
+                    ))
                   ) : showRecommendedGroup ? (
                     <>
                       <optgroup label="Recommended">

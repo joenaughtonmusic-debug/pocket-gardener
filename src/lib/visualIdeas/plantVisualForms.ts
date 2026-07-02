@@ -215,6 +215,7 @@ const SPECIES_RULES: SpeciesRule[] = [
   { keys: ['viburnum'], form: 'rounded_flowering_shrub' },
 
   // ── Formal / clipped shrubs ───────────────────────────────────────────────
+  { keys: ['buxus ball', 'box ball', 'topiary ball'], form: 'clipped_formal_shrub' },
   { keys: ['buxus', 'box hedge', 'boxwood', 'english box'], form: 'clipped_formal_shrub' },
   { keys: ['ilex', 'holly'], form: 'clipped_formal_shrub' },
 
