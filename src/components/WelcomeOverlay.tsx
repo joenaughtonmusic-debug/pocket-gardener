@@ -4,27 +4,28 @@ import React, { useLayoutEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { hasPendingNotificationPath, storePendingNotificationPath } from '../lib/notificationPath'
 
-function GardenBedIcon() {
+const GARDEN_AREAS_IMAGE =
+  'https://sonxnuxhrivzgcevtdtc.supabase.co/storage/v1/object/public/plants/IMG20260129134358.jpg'
+
+const VISUALISE_PREVIEW_IMAGE =
+  'https://sonxnuxhrivzgcevtdtc.supabase.co/storage/v1/object/public/weed-images/garden-photos/ChatGPT%20Image%20Apr%203,%202026,%2012_56_23%20PM%20small.png'
+
+function SlideImage({ src, alt }: { src: string; alt: string }) {
   return (
-    <svg viewBox="0 0 120 100" width="96" height="80" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      {/* Soil bed */}
-      <rect x="8" y="68" width="104" height="22" rx="6" fill="#6b3f1a" />
-      <rect x="8" y="68" width="104" height="8" rx="4" fill="#7d4e24" />
-      {/* Centre plant — tall stem + two leaves */}
-      <line x1="60" y1="68" x2="60" y2="32" stroke="#4ade80" strokeWidth="4" strokeLinecap="round" />
-      <ellipse cx="47" cy="46" rx="11" ry="7" fill="#22c55e" transform="rotate(-30 47 46)" />
-      <ellipse cx="73" cy="40" rx="11" ry="7" fill="#16a34a" transform="rotate(30 73 40)" />
-      <ellipse cx="60" cy="30" rx="9" ry="6" fill="#4ade80" />
-      {/* Left sprout */}
-      <line x1="32" y1="68" x2="30" y2="48" stroke="#4ade80" strokeWidth="3" strokeLinecap="round" />
-      <ellipse cx="24" cy="46" rx="8" ry="5" fill="#22c55e" transform="rotate(-20 24 46)" />
-      <ellipse cx="35" cy="42" rx="8" ry="5" fill="#16a34a" transform="rotate(20 35 42)" />
-      {/* Right sprout */}
-      <line x1="88" y1="68" x2="90" y2="48" stroke="#4ade80" strokeWidth="3" strokeLinecap="round" />
-      <ellipse cx="85" cy="42" rx="8" ry="5" fill="#22c55e" transform="rotate(-20 85 42)" />
-      <ellipse cx="96" cy="46" rx="8" ry="5" fill="#16a34a" transform="rotate(20 96 46)" />
-    </svg>
+    <img
+      src={src}
+      alt={alt}
+      className="mx-auto h-40 w-full max-w-[220px] rounded-2xl object-cover shadow-lg ring-2 ring-white/20"
+    />
   )
+}
+
+type Slide = {
+  title: string
+  desc: string
+  icon?: React.ReactNode
+  imageSrc?: string
+  imageAlt?: string
 }
 
 export default function WelcomeOverlay() {
@@ -67,25 +68,27 @@ export default function WelcomeOverlay() {
     setIsVisible(true);
   }, []);
 
-  const slides: { title: string; desc: string; icon: React.ReactNode }[] = [
+  const slides: Slide[] = [
     {
       title: "Your Garden, Sorted",
-      desc: "Whether you're starting from scratch or keeping an established garden going, Pocket Gardener gives you a clear monthly plan — built around your plants and Auckland's seasons.",
+      desc: "Whether you're starting from scratch or keeping an established garden going, Pocket Gardener gives you a clear monthly plan — built around your plants and the seasons.",
       icon: "🏡",
     },
     {
-      title: "Map Out Your Garden",
+      title: "Plan Your Garden Areas",
       desc: "Create areas like Front Garden, Back Fence, Patio Pots or Veggie Patch. Add plants now, or come back later when you're ready.",
-      icon: <GardenBedIcon />,
+      imageSrc: GARDEN_AREAS_IMAGE,
+      imageAlt: "A home garden with planted borders and lawn",
     },
     {
-      title: "Find the Right Plants",
-      desc: "Find plants that suit your garden, then preview them in your own photo.",
-      icon: "🖼️",
+      title: "Visualise",
+      desc: "Take photos of your space and add plants to see how your garden could look, compare ideas, and get inspiration for different areas.",
+      imageSrc: VISUALISE_PREVIEW_IMAGE,
+      imageAlt: "Garden photo with plants added in the visualiser preview",
     },
     {
       title: "Local Guides",
-      desc: "Practical help with weeds, pests, feeding, and what to plant this month — written for Auckland conditions, not a gardening textbook.",
+      desc: "Practical help with weeds, pests, feeding, and what to plant this month — written for real home gardens, not a gardening textbook.",
       icon: "📖",
     },
   ];
@@ -100,6 +103,8 @@ export default function WelcomeOverlay() {
   };
 
   if (!isVisible) return null;
+
+  const slide = slides[currentSlide];
 
   return (
     <div className="fixed inset-0 z-[250] bg-[#2d5a3f] flex flex-col items-center justify-center p-8 text-center text-white">
@@ -116,16 +121,25 @@ export default function WelcomeOverlay() {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 1.1, y: -20 }}
           transition={{ duration: 0.3 }}
-          className="max-w-xs relative z-10"
+          className="max-w-xs relative z-10 px-1"
         >
-          <div className="mb-10 drop-shadow-2xl flex items-center justify-center" style={{ fontSize: typeof slides[currentSlide].icon === 'string' ? '6rem' : undefined }}>
-            {slides[currentSlide].icon}
+          <div className="mb-8 flex items-center justify-center">
+            {slide.imageSrc ? (
+              <SlideImage src={slide.imageSrc} alt={slide.imageAlt ?? slide.title} />
+            ) : (
+              <div
+                className="drop-shadow-2xl"
+                style={{ fontSize: typeof slide.icon === 'string' ? '6rem' : undefined }}
+              >
+                {slide.icon}
+              </div>
+            )}
           </div>
           <h2 className="text-3xl font-black uppercase italic tracking-tighter leading-none mb-4">
-            {slides[currentSlide].title}
+            {slide.title}
           </h2>
-          <p className="text-green-100/80 font-medium leading-relaxed text-sm">
-            {slides[currentSlide].desc}
+          <p className="text-green-100/80 font-medium leading-relaxed text-sm px-1">
+            {slide.desc}
           </p>
         </motion.div>
       </AnimatePresence>

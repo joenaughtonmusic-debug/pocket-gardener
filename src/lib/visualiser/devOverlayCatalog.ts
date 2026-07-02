@@ -71,6 +71,18 @@ export function enrichProductionOverlay(base: DevOverlayDef): DevOverlayDef {
   }
 }
 
+export function enrichAlphaBatchOverlay(base: DevOverlayDef): DevOverlayDef {
+  const tags: DevOverlayTag[] = ['latest', 'unwired']
+  if (isHedgeCandidateFile(base.file)) tags.push('hedge')
+
+  return {
+    ...base,
+    group: 'alpha_batch',
+    tags,
+    statusNote: 'Alpha batch dev QA — not in production registry',
+  }
+}
+
 export function enrichLatestBatchOverlay(base: DevOverlayDef): DevOverlayDef {
   const tags: DevOverlayTag[] = ['latest', 'unwired']
   if (isHedgeCandidateFile(base.file)) tags.push('hedge')
@@ -130,6 +142,8 @@ export function filterDevOverlays(
   switch (filter) {
     case 'production':
       return catalog.filter((overlay) => overlay.group === 'production')
+    case 'alpha':
+      return catalog.filter((overlay) => overlay.group === 'alpha_batch')
     case 'latest':
       return catalog.filter((overlay) => overlay.group === 'latest_batch')
     case 'unwired':
@@ -159,6 +173,7 @@ export function getDevOverlaySections(
   const filtered = filterDevOverlays(catalog, filter)
   const groupOrder: DevOverlayGroup[] = [
     'production',
+    'alpha_batch',
     'latest_batch',
     'held',
     'raw_archive',
@@ -186,6 +201,10 @@ const DEV_OVERLAY_GROUP_META: Record<
   production: {
     title: 'Production / registered',
     description: 'Wired in plantOverlayAssets.ts — live in Visualise spot and/or row mode.',
+  },
+  alpha_batch: {
+    title: 'Alpha batch (dev QA)',
+    description: 'First alphabetical processed PNGs (Acorus–Clumping Bamboo). Enable Visualise picker with NEXT_PUBLIC_SHOW_DEV_OVERLAYS=true.',
   },
   latest_batch: {
     title: 'Latest processed batch',
@@ -216,6 +235,7 @@ export const DEV_OVERLAY_FILTERS: Array<{
 }> = [
   { id: 'all', label: 'All', hint: 'Show every dev overlay group' },
   { id: 'production', label: 'Production', hint: 'Registered / approved assets only' },
+  { id: 'alpha', label: 'Alpha batch', hint: 'Acorus–Clumping Bamboo dev QA PNGs' },
   { id: 'latest', label: 'Latest batch', hint: 'Newest processed unwired PNGs' },
   { id: 'unwired', label: 'Unwired', hint: 'Any processed PNG not in production registry' },
   { id: 'hedge', label: 'Hedge / row', hint: 'Hedge tiles and row-mode candidates' },

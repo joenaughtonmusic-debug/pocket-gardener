@@ -8,6 +8,7 @@
 
 import { REGISTERED_OVERLAY_PATHS } from '../visualIdeas/plantOverlayAssets'
 import { GENERATED_NEW_BATCH_TEST_OVERLAYS } from './devOverlayManifest.generated'
+import { GENERATED_DEV_ALPHA_BATCH_OVERLAYS } from './devAlphaBatchManifest.generated'
 import { DEV_OVERLAY_FILE_CACHE_BUST } from './devOverlayCacheBust.generated'
 import {
   enrichHeldOverlay,
@@ -15,10 +16,12 @@ import {
   enrichOldQaOverlay,
   enrichProductionOverlay,
   enrichRawArchiveOverlay,
+  enrichAlphaBatchOverlay,
 } from './devOverlayCatalog'
 
 export type DevOverlayGroup =
   | 'production'
+  | 'alpha_batch'
   | 'latest_batch'
   | 'held'
   | 'raw_archive'
@@ -41,6 +44,7 @@ export type DevOverlayTag =
 export type DevOverlayFilterId =
   | 'all'
   | 'production'
+  | 'alpha'
   | 'latest'
   | 'unwired'
   | 'hedge'
@@ -614,6 +618,11 @@ export const DEV_QA_OVERLAY_FILES: readonly string[] = DEV_QA_VARIANT_OVERLAYS.m
   (overlay) => overlay.file,
 )
 
+/** Alpha batch (A–C) — dev QA only; run npm run refresh:dev-overlays after adding PNGs. */
+export const DEV_ALPHA_BATCH_OVERLAYS: DevOverlayDef[] = GENERATED_DEV_ALPHA_BATCH_OVERLAYS.map(
+  enrichAlphaBatchOverlay,
+)
+
 /** Latest processed batch — auto-generated; run npm run refresh:dev-overlays to update. */
 export const NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = GENERATED_NEW_BATCH_TEST_OVERLAYS.map(
   enrichLatestBatchOverlay,
@@ -624,7 +633,7 @@ export function getDevOverlayCatalog(): DevOverlayDef[] {
   const registered = registeredOverlays()
   const registeredFiles = new Set(registered.map((overlay) => overlay.file))
   const qaVariants = DEV_QA_VARIANT_OVERLAYS.filter((overlay) => !registeredFiles.has(overlay.file))
-  return [...registered, ...qaVariants, ...NEW_BATCH_TEST_OVERLAYS]
+  return [...registered, ...qaVariants, ...DEV_ALPHA_BATCH_OVERLAYS, ...NEW_BATCH_TEST_OVERLAYS]
 }
 
 export function getDevOverlaysByGroup(group: DevOverlayGroup): DevOverlayDef[] {
@@ -632,6 +641,7 @@ export function getDevOverlaysByGroup(group: DevOverlayGroup): DevOverlayDef[] {
 }
 
 export const DEFAULT_DEV_OVERLAY: DevOverlayDef =
+  getDevOverlayCatalog().find((overlay) => overlay.group === 'alpha_batch') ??
   getDevOverlayCatalog().find((overlay) => overlay.group === 'latest_batch') ??
   getDevOverlayCatalog().find((overlay) => overlay.tags?.includes('production')) ??
   getDevOverlayCatalog()[0]

@@ -12,6 +12,8 @@ import fs from 'fs'
 import path from 'path'
 import { REGISTERED_OVERLAY_PATHS } from '../src/lib/visualIdeas/plantOverlayAssets'
 import { DEV_QA_OVERLAY_FILES } from '../src/lib/visualiser/devOverlayAssets'
+import { DEV_ALPHA_BATCH_SPECS } from '../src/lib/visualiser/devAlphaBatchOverlays'
+import { syncDevAlphaOverlays } from './syncDevAlphaOverlays'
 
 const PROCESSED_DIR = path.resolve('assets/plant-overlays/processed')
 const PUBLIC_DIR = path.resolve('public/plant-overlays')
@@ -81,6 +83,8 @@ function escapeString(value: string): string {
 }
 
 function main(): void {
+  syncDevAlphaOverlays()
+
   if (!fs.existsSync(PROCESSED_DIR)) {
     console.error(`Missing directory: ${PROCESSED_DIR}`)
     process.exit(1)
@@ -114,7 +118,11 @@ function main(): void {
   const newBatchFiles: string[] = []
   let copied = 0
 
+  const alphaBatchSlugs = new Set(DEV_ALPHA_BATCH_SPECS.map((spec) => spec.slug))
+  const alphaBatchFiles = new Set(DEV_ALPHA_BATCH_SPECS.map((spec) => spec.file))
+
   for (const [slug, sources] of slugGroups) {
+    if (slug === 'agapanthus' || alphaBatchSlugs.has(slug)) continue
     if (sources.every((file) => knownFiles.has(file))) continue
     const canonicalKnown =
       CANONICAL_BATCH_FILENAMES[slug] && knownFiles.has(CANONICAL_BATCH_FILENAMES[slug])
@@ -122,7 +130,7 @@ function main(): void {
 
     const sourceFile = pickPreferredSource(sources, PROCESSED_DIR)
     const canonicalFile = canonicalBatchFilename(slug, sourceFile)
-    if (knownFiles.has(canonicalFile)) continue
+    if (knownFiles.has(canonicalFile) || alphaBatchFiles.has(canonicalFile)) continue
 
     const src = path.join(PROCESSED_DIR, sourceFile)
     for (const dir of [PROCESSED_DIR, PUBLIC_DIR]) {

@@ -221,6 +221,10 @@ const SPECIES_RULES: SpeciesRule[] = [
   // ── Hedge / screen ────────────────────────────────────────────────────────
   { keys: ['griselinia'], form: 'hedge_screen' },
   { keys: ['photinia'], form: 'hedge_screen' },
+  { keys: ['loropetalum'], form: 'hedge_screen' },
+  { keys: ['potato vine', 'solanum jasminoides'], form: 'climber' },
+  { keys: ['teucrium'], form: 'hedge_screen' },
+  { keys: ['loropetalum'], form: 'hedge_screen' },
   { keys: ['leylandii', 'leyland', 'cupressus'], form: 'hedge_screen' },
   { keys: ['thuja', 'arborvitae'], form: 'hedge_screen' },
   { keys: ['escallonia'], form: 'hedge_screen' },
@@ -265,6 +269,7 @@ const SPECIES_RULES: SpeciesRule[] = [
   // ── Feature trees ─────────────────────────────────────────────────────────
   { keys: ['cordyline', 'cabbage tree', 'tī kōuka', 'ti kouka'], form: 'feature_tree' },
   { keys: ['tree fern', 'silver fern', 'ponga', 'cyathea', 'dicksonia'], form: 'feature_tree' },
+  { keys: ['puka', 'meryta sinclairii'], form: 'feature_tree' },
   { keys: ['pohutukawa'], form: 'feature_tree' },
   { keys: ['puriri'], form: 'feature_tree' },
   { keys: ['kauri', 'agathis'], form: 'feature_tree' },
@@ -280,6 +285,7 @@ const SPECIES_RULES: SpeciesRule[] = [
   { keys: ['gunnera'], form: 'palm_tropical' },
 
   // ── Groundcovers ──────────────────────────────────────────────────────────
+  { keys: ['scleranthus'], form: 'groundcover' },
   { keys: ['pratia', 'isotoma'], form: 'groundcover' },
   { keys: ['ajuga', 'bugle'], form: 'groundcover' },
   { keys: ['dichondra'], form: 'groundcover' },

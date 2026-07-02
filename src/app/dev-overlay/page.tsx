@@ -57,7 +57,7 @@ export default function DevOverlayPage() {
   const [rowEdgeCrop, setRowEdgeCrop] = useState(true)
   const [showTileSeams, setShowTileSeams] = useState(true)
 
-  const [activeFilter, setActiveFilter] = useState<DevOverlayFilterId>('latest')
+  const [activeFilter, setActiveFilter] = useState<DevOverlayFilterId>('alpha')
 
   const dragOrigin = useRef({ clientX: 0, clientY: 0, posX: 0, posY: 0 })
 
@@ -183,7 +183,7 @@ export default function DevOverlayPage() {
                         onClick={() => selectOverlay(ov)}
                         style={{
                           ...styles.btn,
-                          ...(ov.group === 'latest_batch' ? styles.btnLatest : {}),
+                          ...(ov.group === 'alpha_batch' || ov.group === 'latest_batch' ? styles.btnLatest : {}),
                           ...(ov.group === 'held' ? styles.btnHeld : {}),
                           ...(badge.hedge ? styles.btnHedge : {}),
                           ...(selected.id === ov.id ? styles.btnActive : {}),

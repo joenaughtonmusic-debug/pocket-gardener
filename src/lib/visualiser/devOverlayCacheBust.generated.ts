@@ -5,6 +5,7 @@
  */
 
 export const DEV_OVERLAY_FILE_CACHE_BUST: Record<string, string> = {
+  'agapanthus.png': '1782735356939',
   'ake-ake.png': '1782632218017',
   'apple-tree.png': '1782632218008',
   'avocado.png': '1782632218010',
@@ -66,7 +67,7 @@ export const DEV_OVERLAY_FILE_CACHE_BUST: Record<string, string> = {
   'king-palm.png': '1782722088887',
   'kohekohe.png': '1782721957721',
   'kowhai.png': '1782721960775',
-  'lacebark.png': '1782734589081',
+  'lacebark.png': '1782946162932',
   'lancewood.png': '1782725706872',
   'lavender.png': '1782680117472',
   'lemon.png': '1782725706875',
@@ -77,7 +78,7 @@ export const DEV_OVERLAY_FILE_CACHE_BUST: Record<string, string> = {
   'lomandra.png': '1782035193392',
   'london-plane-tree.png': '1782724564556',
   'magnolia-deciduous.png': '1782724564557',
-  'magnolia-evergreen.png': '1782734589084',
+  'magnolia-evergreen.png': '1782946162936',
   'mandarin-tree.png': '1782724564558',
   'manuka.png': '1782728224035',
   'mexican-alder.png': '1782728224014',

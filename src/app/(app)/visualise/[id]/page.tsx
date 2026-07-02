@@ -10,7 +10,6 @@ import {
 import type { VisualConcept, SuggestedSpecies, PreviewOverlay } from '../../../../types/garden'
 import {
   resolveOverlayAsset,
-  getAssetByKey,
   PREVIEW_PLANT_OPTIONS,
   ROW_PREVIEW_PLANT_OPTIONS,
   DEFAULT_ROW_WIDTH,
@@ -32,6 +31,15 @@ import {
 } from '../../../../lib/visualIdeas/previewPlantPickerFilters'
 import { trackEvent } from '../../../../lib/analytics/trackEvent'
 import { capturePreviewThumbnail } from '../../../../lib/visualIdeas/capturePreviewThumbnail'
+import {
+  getDevAlphaPreviewPlantOptions,
+  getDevAlphaAssetForPlant,
+  isDevAlphaPreviewPlant,
+  isDevOverlaysEnabled,
+  isDevAlphaAssetKey,
+  resolvePreviewAsset,
+  warnMissingDevAlphaOverlay,
+} from '../../../../lib/visualiser/devAlphaBatchOverlays'
 
 interface Pos { x: number; y: number }
 
@@ -349,10 +357,24 @@ export default function VisualConceptDetailPage() {
     return Math.round((selectedOverlay.width ?? DEFAULT_ROW_WIDTH) * previewDims.w)
   }, [selectedOverlay, previewDims.w])
 
-  const previewPlantCategories = useMemo(
-    () => categoriesUsedByPreviewPlants(PREVIEW_PLANT_OPTIONS),
-    [],
-  )
+  const showDevOverlays = isDevOverlaysEnabled()
+
+  const devAlphaPlantOptions = useMemo(() => {
+    if (!showDevOverlays) return []
+    return getDevAlphaPreviewPlantOptions().filter((plant) => {
+      const matchesCategory = previewPlantMatchesCategory(plant, plantCategoryFilter)
+      const query = plantSearchQuery.trim().toLowerCase()
+      const matchesSearch = !query || plant.name.toLowerCase().includes(query)
+      return matchesCategory && matchesSearch
+    })
+  }, [showDevOverlays, plantCategoryFilter, plantSearchQuery])
+
+  const previewPlantCategories = useMemo(() => {
+    const plants = showDevOverlays
+      ? [...PREVIEW_PLANT_OPTIONS, ...getDevAlphaPreviewPlantOptions()]
+      : PREVIEW_PLANT_OPTIONS
+    return categoriesUsedByPreviewPlants(plants)
+  }, [showDevOverlays])
 
   const filteredSinglePlantOptions = useMemo(() => {
     return PREVIEW_PLANT_OPTIONS.filter((plant) => {
@@ -372,9 +394,14 @@ export default function VisualConceptDetailPage() {
     [filteredSinglePlantOptions, gardenStyleFilter, plantRoleFilter],
   )
 
+  const productionSingleAddOptions = useMemo(
+    () => [...sortedSinglePlantPicker.recommended, ...sortedSinglePlantPicker.other],
+    [sortedSinglePlantPicker.recommended, sortedSinglePlantPicker.other],
+  )
+
   const addPlantOptions = placementMode === 'row'
     ? ROW_PREVIEW_PLANT_OPTIONS
-    : [...sortedSinglePlantPicker.recommended, ...sortedSinglePlantPicker.other]
+    : [...productionSingleAddOptions, ...devAlphaPlantOptions]
 
   const showNoStyleRoleMatches = placementMode === 'single'
     && sortedSinglePlantPicker.hasActiveFilters
@@ -386,6 +413,8 @@ export default function VisualConceptDetailPage() {
     && sortedSinglePlantPicker.hasExactMatches
     && sortedSinglePlantPicker.recommended.length > 0
     && sortedSinglePlantPicker.other.length > 0
+
+  const showDevAlphaGroup = placementMode === 'single' && devAlphaPlantOptions.length > 0
 
   useEffect(() => {
     if (addPlantOptions.some((plant) => plant.name === plantToAdd)) return
@@ -408,7 +437,6 @@ export default function VisualConceptDetailPage() {
       prev.map((overlay) => (overlay.id === id ? { ...overlay, ...patch } : overlay)),
     )
   }
-
   useEffect(() => {
     async function load() {
       const { data, error } = await supabase
@@ -484,11 +512,14 @@ export default function VisualConceptDetailPage() {
     }
 
     const plant = PREVIEW_PLANT_OPTIONS.find((p) => p.name === plantToAdd)
-    if (!plant) return
+    const devAsset = isDevAlphaPreviewPlant(plantToAdd)
+      ? getDevAlphaAssetForPlant(plantToAdd)
+      : undefined
+    if (!plant && !devAsset) return
 
-    const asset = resolveOverlayAsset([plant.name], plant.detectedIntent)
+    const asset = devAsset ?? resolveOverlayAsset([plant!.name], plant!.detectedIntent)
     const newOverlay = createOverlayFromAsset(
-      plant.name,
+      plantToAdd,
       asset,
       previewDims.w,
       previewDims.h,
@@ -501,7 +532,7 @@ export default function VisualConceptDetailPage() {
     setOverlays((prev) => [...prev, newOverlay])
     setSelectedOverlayId(newOverlay.id)
     trackEvent('plant_added_to_preview', {
-      plant_name:    plant.name,
+      plant_name:    plantToAdd,
       preview_mode:  'single',
       overlay_count: overlays.length + 1,
       route:         `/visualise/${id}`,
@@ -532,7 +563,7 @@ export default function VisualConceptDetailPage() {
       setSelectedOverlayId(overlayId)
       setIsDraggingOverlay(true)
 
-      const asset = getAssetByKey(overlay.assetKey)
+      const asset = resolvePreviewAsset(overlay.assetKey)
       const { left, top } = overlayToPixels(overlay, previewDims.w, previewDims.h, asset)
       overlayDragOrigin.current = {
         overlayId,
@@ -555,7 +586,7 @@ export default function VisualConceptDetailPage() {
         const overlay = prev.find((item) => item.id === overlayId)
         if (!overlay) return prev
 
-        const asset = getAssetByKey(overlay.assetKey)
+        const asset = resolvePreviewAsset(overlay.assetKey)
         const { width: widthPx, height: heightPx } = overlayToPixels(
           overlay,
           previewDims.w,
@@ -597,7 +628,7 @@ export default function VisualConceptDetailPage() {
 
     if (getOverlayMode(selectedOverlay) === 'row') {
       const rowPlant = ROW_PREVIEW_PLANT_OPTIONS.find((p) => p.name === selectedOverlay.plantName)
-      const asset = getAssetByKey(selectedOverlay.assetKey)
+      const asset = resolvePreviewAsset(selectedOverlay.assetKey)
       const reset = createRowOverlayFromAsset(
         selectedOverlay.plantName,
         rowPlant ? resolveOverlayAsset([rowPlant.name], rowPlant.detectedIntent) : asset,
@@ -617,10 +648,13 @@ export default function VisualConceptDetailPage() {
     }
 
     const plant = PREVIEW_PLANT_OPTIONS.find((p) => p.name === selectedOverlay.plantName)
-    const asset = getAssetByKey(selectedOverlay.assetKey)
+    const devAsset = isDevAlphaPreviewPlant(selectedOverlay.plantName)
+      ? getDevAlphaAssetForPlant(selectedOverlay.plantName)
+      : undefined
+    const asset = resolvePreviewAsset(selectedOverlay.assetKey)
     const reset = createOverlayFromAsset(
       selectedOverlay.plantName,
-      plant ? resolveOverlayAsset([plant.name], plant.detectedIntent) : asset,
+      devAsset ?? (plant ? resolveOverlayAsset([plant.name], plant.detectedIntent) : asset),
       previewDims.w,
       previewDims.h,
       concept.placement_point,
@@ -803,6 +837,11 @@ export default function VisualConceptDetailPage() {
               <p className="text-[12px] text-gray-600 font-medium mt-1 leading-relaxed">
                 Place plant cut-outs into your photo to test shape, scale, and position.
               </p>
+              {showDevOverlays && (
+                <p className="text-[11px] text-amber-800 font-medium mt-2 leading-relaxed bg-amber-50 border border-amber-100 rounded-xl px-3 py-2">
+                  Dev QA overlays enabled — alpha batch plants appear at the bottom of the picker.
+                </p>
+              )}
             </div>
 
             {/* Add plant */}
@@ -966,13 +1005,33 @@ export default function VisualConceptDetailPage() {
                           </option>
                         ))}
                       </optgroup>
+                      {showDevAlphaGroup && (
+                        <optgroup label="Dev QA (alpha batch)">
+                          {devAlphaPlantOptions.map((plant) => (
+                            <option key={plant.name} value={plant.name}>
+                              {plant.name}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
                     </>
                   ) : (
-                    addPlantOptions.map((plant) => (
-                      <option key={plant.name} value={plant.name}>
-                        {plant.name}
-                      </option>
-                    ))
+                    <>
+                      {productionSingleAddOptions.map((plant) => (
+                        <option key={plant.name} value={plant.name}>
+                          {plant.name}
+                        </option>
+                      ))}
+                      {showDevAlphaGroup && (
+                        <optgroup label="Dev QA (alpha batch)">
+                          {devAlphaPlantOptions.map((plant) => (
+                            <option key={plant.name} value={plant.name}>
+                              {plant.name}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                    </>
                   )}
                 </select>
                 <button
@@ -1002,7 +1061,7 @@ export default function VisualConceptDetailPage() {
               />
 
               {previewReady && overlays.map((overlay) => {
-                const asset = getAssetByKey(overlay.assetKey)
+                const asset = resolvePreviewAsset(overlay.assetKey)
                 const { left, top, width, height } = overlayToPixels(
                   overlay,
                   previewDims.w,
@@ -1082,6 +1141,11 @@ export default function VisualConceptDetailPage() {
                     src={asset.src}
                     alt={overlay.plantName}
                     draggable={false}
+                    onError={() => {
+                      if (isDevAlphaAssetKey(overlay.assetKey)) {
+                        warnMissingDevAlphaOverlay(overlay.plantName, asset.src)
+                      }
+                    }}
                     style={{
                       ...sharedStyle,
                       width,
@@ -1284,8 +1348,10 @@ export default function VisualConceptDetailPage() {
       </div>
 
       {showFuturePlantsModal && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 px-4 pb-8">
-          <div className="bg-white rounded-[2rem] p-6 w-full max-w-sm shadow-xl space-y-4">
+        <div
+          className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/40 px-4 pt-4 overflow-y-auto pb-[max(1.25rem,env(safe-area-inset-bottom,0px))] sm:pb-8"
+        >
+          <div className="bg-white rounded-[2rem] p-6 w-full max-w-sm shadow-xl space-y-4 max-h-[min(85dvh,calc(100dvh-2rem-env(safe-area-inset-bottom,0px)))] overflow-y-auto sm:max-h-none sm:overflow-visible">
             <div>
               <p className="text-[10px] font-black uppercase tracking-widest text-green-800">
                 Preview saved

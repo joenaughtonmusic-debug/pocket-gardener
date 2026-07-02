@@ -1,4 +1,5 @@
-import { getAssetByKey, DEFAULT_ROW_WIDTH, type OverlayAsset } from './plantOverlayAssets'
+import { DEFAULT_ROW_WIDTH, type OverlayAsset } from './plantOverlayAssets'
+import { resolvePreviewAsset } from '../visualiser/devAlphaBatchOverlays'
 import type { PreviewOverlay } from '../../types/garden'
 
 const THUMB_MAX_WIDTH = 480
@@ -70,7 +71,7 @@ export async function capturePreviewThumbnail(
     ctx.drawImage(bg, 0, 0, canvas.width, canvas.height)
 
     for (const overlay of overlays) {
-      const asset = getAssetByKey(overlay.assetKey)
+      const asset = resolvePreviewAsset(overlay.assetKey)
       const img = await loadImage(asset.src)
       const rect = overlayRect(overlay, containerW, containerH, asset)
 

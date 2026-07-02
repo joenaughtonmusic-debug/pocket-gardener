@@ -7,13 +7,22 @@ import type { DevOverlayDef } from './devOverlayAssets'
 
 export const GENERATED_NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = [
   {
+    id: 'batch-acorus-raw',
+    label: 'Acorus Raw',
+    file: 'acorus-raw.png',
+    defaultWidth: 220,
+    aspect: 1,
+    group: 'latest_batch' as const,
+    cacheBust: '1782946162862',
+  },
+  {
     id: 'batch-akeake',
     label: 'Akeake',
     file: 'akeake.png',
     defaultWidth: 220,
     aspect: 1,
     group: 'latest_batch' as const,
-    cacheBust: '1782734589028',
+    cacheBust: '1782946162866',
   },
   {
     id: 'batch-apple',
@@ -22,7 +31,7 @@ export const GENERATED_NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = [
     defaultWidth: 220,
     aspect: 1,
     group: 'latest_batch' as const,
-    cacheBust: '1782734589030',
+    cacheBust: '1782946162869',
   },
   {
     id: 'batch-birds-of-paradise',
@@ -31,7 +40,7 @@ export const GENERATED_NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = [
     defaultWidth: 220,
     aspect: 1,
     group: 'latest_batch' as const,
-    cacheBust: '1782734589032',
+    cacheBust: '1782946162870',
   },
   {
     id: 'batch-boxelder',
@@ -40,7 +49,7 @@ export const GENERATED_NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = [
     defaultWidth: 220,
     aspect: 1,
     group: 'latest_batch' as const,
-    cacheBust: '1782734589034',
+    cacheBust: '1782946162873',
   },
   {
     id: 'batch-buxus-ball',
@@ -49,7 +58,7 @@ export const GENERATED_NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = [
     defaultWidth: 220,
     aspect: 1,
     group: 'latest_batch' as const,
-    cacheBust: '1782734589036',
+    cacheBust: '1782946162877',
   },
   {
     id: 'batch-murraya-paniculata',
@@ -58,7 +67,7 @@ export const GENERATED_NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = [
     defaultWidth: 220,
     aspect: 1,
     group: 'latest_batch' as const,
-    cacheBust: '1782734589040',
+    cacheBust: '1782946162882',
   },
   {
     id: 'batch-norfolk-pine',
@@ -67,7 +76,7 @@ export const GENERATED_NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = [
     defaultWidth: 220,
     aspect: 1,
     group: 'latest_batch' as const,
-    cacheBust: '1782734589041',
+    cacheBust: '1782946162883',
   },
   {
     id: 'batch-pohutakawa',
@@ -76,7 +85,7 @@ export const GENERATED_NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = [
     defaultWidth: 220,
     aspect: 1,
     group: 'latest_batch' as const,
-    cacheBust: '1782734589043',
+    cacheBust: '1782946162885',
   },
   {
     id: 'batch-pyrostegia',
@@ -85,7 +94,7 @@ export const GENERATED_NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = [
     defaultWidth: 220,
     aspect: 1,
     group: 'latest_batch' as const,
-    cacheBust: '1782734589046',
+    cacheBust: '1782946162889',
   },
   {
     id: 'batch-red-bud',
@@ -94,7 +103,7 @@ export const GENERATED_NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = [
     defaultWidth: 220,
     aspect: 1,
     group: 'latest_batch' as const,
-    cacheBust: '1782734589048',
+    cacheBust: '1782946162890',
   },
   {
     id: 'batch-renga-renga',
@@ -103,7 +112,7 @@ export const GENERATED_NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = [
     defaultWidth: 220,
     aspect: 1,
     group: 'latest_batch' as const,
-    cacheBust: '1782734589050',
+    cacheBust: '1782946162891',
   },
   {
     id: 'batch-rhapiolepis',
@@ -112,7 +121,7 @@ export const GENERATED_NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = [
     defaultWidth: 220,
     aspect: 1,
     group: 'latest_batch' as const,
-    cacheBust: '1782734589052',
+    cacheBust: '1782946162898',
   },
   {
     id: 'batch-service-berry',
@@ -121,7 +130,7 @@ export const GENERATED_NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = [
     defaultWidth: 220,
     aspect: 1,
     group: 'latest_batch' as const,
-    cacheBust: '1782734589055',
+    cacheBust: '1782946162900',
   },
   {
     id: 'batch-silver-lady-fern',
@@ -130,7 +139,7 @@ export const GENERATED_NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = [
     defaultWidth: 220,
     aspect: 1,
     group: 'latest_batch' as const,
-    cacheBust: '1782734589058',
+    cacheBust: '1782946162903',
   },
   {
     id: 'batch-small-leaved-lime',
@@ -139,7 +148,7 @@ export const GENERATED_NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = [
     defaultWidth: 220,
     aspect: 1,
     group: 'latest_batch' as const,
-    cacheBust: '1782734589060',
+    cacheBust: '1782946162907',
   },
   {
     id: 'batch-smoke-bush',
@@ -148,7 +157,7 @@ export const GENERATED_NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = [
     defaultWidth: 220,
     aspect: 1,
     group: 'latest_batch' as const,
-    cacheBust: '1782734589062',
+    cacheBust: '1782946162909',
   },
   {
     id: 'batch-spanish-shawl',
@@ -157,7 +166,7 @@ export const GENERATED_NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = [
     defaultWidth: 220,
     aspect: 1,
     group: 'latest_batch' as const,
-    cacheBust: '1782734589065',
+    cacheBust: '1782946162915',
   },
   {
     id: 'batch-sugan-cane-palm',
@@ -166,7 +175,7 @@ export const GENERATED_NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = [
     defaultWidth: 220,
     aspect: 1,
     group: 'latest_batch' as const,
-    cacheBust: '1782734589068',
+    cacheBust: '1782946162917',
   },
   {
     id: 'batch-taraire',
@@ -175,7 +184,7 @@ export const GENERATED_NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = [
     defaultWidth: 220,
     aspect: 1,
     group: 'latest_batch' as const,
-    cacheBust: '1782734589070',
+    cacheBust: '1782946162921',
   },
   {
     id: 'batch-tecomanthe',
@@ -184,7 +193,7 @@ export const GENERATED_NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = [
     defaultWidth: 220,
     aspect: 1,
     group: 'latest_batch' as const,
-    cacheBust: '1782734589071',
+    cacheBust: '1782946162924',
   },
   {
     id: 'batch-titoki',
@@ -193,7 +202,7 @@ export const GENERATED_NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = [
     defaultWidth: 220,
     aspect: 1,
     group: 'latest_batch' as const,
-    cacheBust: '1782734589074',
+    cacheBust: '1782946162925',
   },
   {
     id: 'batch-totara',
@@ -202,7 +211,7 @@ export const GENERATED_NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = [
     defaultWidth: 220,
     aspect: 1,
     group: 'latest_batch' as const,
-    cacheBust: '1782734589076',
+    cacheBust: '1782946162929',
   },
   {
     id: 'batch-tractor-seat-plant',
@@ -211,6 +220,6 @@ export const GENERATED_NEW_BATCH_TEST_OVERLAYS: DevOverlayDef[] = [
     defaultWidth: 220,
     aspect: 1,
     group: 'latest_batch' as const,
-    cacheBust: '1782734589078',
+    cacheBust: '1782946162930',
   }
 ]
